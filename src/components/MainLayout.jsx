@@ -1,209 +1,407 @@
-import InventarioApp from '../modules/inventario/InventarioApp';
-import ExtractosApp from '../modules/extractos/ExtractosApp';
-import VentasApp from '../modules/ventas/VentasApp';
-import PedidosApp from '../modules/pedidos/PedidosApp';
-import KpisApp from '../modules/kpis/KpisApp';
-import PrediccionApp from '../modules/prediccion/PrediccionApp';
+import InventarioApp  from '../modules/inventario/InventarioApp';
+import ExtractosApp   from '../modules/extractos/ExtractosApp';
+import VentasApp      from '../modules/ventas/VentasApp';
+import PedidosApp     from '../modules/pedidos/PedidosApp';
+import KpisApp        from '../modules/kpis/KpisApp';
+import PrediccionApp  from '../modules/prediccion/PrediccionApp';
 import EscandallosApp from '../modules/escandallos/EscandallosApp';
-import HorariosApp from '../modules/horarios/HorariosApp';
-import ProduccionApp from '../modules/produccion/ProduccionApp';
+import HorariosApp    from '../modules/horarios/HorariosApp';
+import ProduccionApp  from '../modules/produccion/ProduccionApp';
+import Configuracion  from '../modules/configuracion/Configuracion.jsx';
 import { useState, useEffect } from 'react';
 import { auth } from '../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import logoCliente from '../assets/logo_cliente.png';
-import Configuracion from '../modules/configuracion/Configuracion.jsx';
 
-// ─── ESTRUCTURA MAESTRA DE MÓDULOS ──────────────────────────────────────────
-const ESTRUCTURA_GLOBAL = {
-  Dashboard:   { icon: '🏠', tabs: ['Inicio', 'Métricas Rápidas'] },
-  Bancos:      { icon: '🏦', tabs: ['Consolidado', 'Resumen', 'Gráficas'] },
-  Ventas:      { icon: '💰', tabs: ['Productos', 'Gráficos', 'Tickets', 'Mesas'] },
-  Inventario:  { icon: '📦', tabs: ['DashBoard', 'Inventario', 'Producción', 'Movimientos', 'Planificación'] },
-  Escandallos: { icon: '🥘', tabs: ['Preparación', 'Platos', 'Productos'] },
-  Compras:     { icon: '📋', tabs: ['Orden', 'Historial'] },
-  Producción:  { icon: '🍳', tabs: ['Registro', 'Historial', 'Resumen'] },
-  Personal:    { icon: '👥', tabs: ['Fichajes', 'Incidencias', 'Empleados', 'Informes'] },
-  KPI:         { icon: '📈', tabs: ['Importar / Exportar', 'DashBoard', 'Análisis', 'Productos', 'Predicción', 'Acciones'] },
-  Predicción:  { icon: '🔮', tabs: ['Carga', 'Stock', 'Predicciones'] },
-  Config:      { icon: '⚙️',  tabs: ['Accesos', 'Empresa', 'Usuarios'] },
+/* ─── ESTRUCTURA MAESTRA ──────────────────────────────────────────────────── */
+const MODULOS = {
+  Dashboard:   { icon: '⌂',  label: 'Dashboard',   tabs: ['Inicio', 'Métricas Rápidas'],                                           group: 'principal' },
+  Bancos:      { icon: '🏦', label: 'Bancos',       tabs: ['Consolidado', 'Resumen', 'Gráficas'],                                   group: 'finanzas'  },
+  Ventas:      { icon: '💳', label: 'Ventas',       tabs: ['Productos', 'Gráficos', 'Tickets', 'Mesas'],                            group: 'finanzas'  },
+  KPI:         { icon: '📈', label: 'KPIs',         tabs: ['DashBoard', 'Análisis', 'Productos', 'Predicción', 'Acciones'],         group: 'finanzas'  },
+  Inventario:  { icon: '📦', label: 'Inventario',   tabs: ['DashBoard', 'Inventario', 'Producción', 'Movimientos', 'Planificación'],group: 'operaciones'},
+  Escandallos: { icon: '🥘', label: 'Escandallos',  tabs: ['Preparación', 'Platos', 'Productos'],                                  group: 'operaciones'},
+  Compras:     { icon: '🛒', label: 'Compras',      tabs: ['Orden', 'Historial'],                                                  group: 'operaciones'},
+  Producción:  { icon: '🍳', label: 'Producción',   tabs: ['Registro', 'Historial', 'Resumen'],                                    group: 'operaciones'},
+  Personal:    { icon: '👤', label: 'Personal',     tabs: ['Fichajes', 'Incidencias', 'Empleados', 'Informes'],                     group: 'rrhh'       },
+  Predicción:  { icon: '🔮', label: 'Predicción',   tabs: ['Carga', 'Stock', 'Predicciones'],                                       group: 'analytics' },
+  Config:      { icon: '⚙',  label: 'Config',       tabs: ['Accesos', 'Empresa', 'Usuarios'],                                       group: 'sistema'   },
 };
 
-// ─── COLORES MARCA EL CRIOLLO ────────────────────────────────────────────────
-const COL_PRIMARIO   = '#E2231A';
-const COL_SECUNDARIO = '#006847';
+const GRUPOS = {
+  principal:   { label: 'Principal',    color: '#6B7280' },
+  finanzas:    { label: 'Finanzas',     color: '#F59E0B' },
+  operaciones: { label: 'Operaciones',  color: '#10B981' },
+  rrhh:        { label: 'Personal',     color: '#3B82F6' },
+  analytics:   { label: 'Analytics',   color: '#8B5CF6' },
+  sistema:     { label: 'Sistema',      color: '#6B7280' },
+};
 
-// ─── PERMISOS POR USUARIO ────────────────────────────────────────────────────
+/* ─── PERMISOS ────────────────────────────────────────────────────────────── */
 const PERMISOS = {
-  'emilianodirosa1@gmail.com': Object.keys(ESTRUCTURA_GLOBAL), // Admin total
-  'epalacios1194@gmail.com':   ['Compras', 'Personal'],         // Gerente
+  'emilianodirosa1@gmail.com': Object.keys(MODULOS),
+  'epalacios1194@gmail.com':   ['Compras', 'Personal'],
 };
 
+/* ─── RENDER DE CONTENIDO ────────────────────────────────────────────────── */
+const renderModulo = (modulo, tab, user) => {
+  switch (modulo) {
+    case 'Bancos':      return <ExtractosApp    tabActiva={tab} />;
+    case 'Inventario':  return <InventarioApp   tabActiva={tab} />;
+    case 'Ventas':      return <VentasApp       tabActiva={tab} />;
+    case 'Compras':     return <PedidosApp      tabActiva={tab} />;
+    case 'KPI':         return <KpisApp         tabActiva={tab} />;
+    case 'Predicción':  return <PrediccionApp   tabActiva={tab} />;
+    case 'Escandallos': return <EscandallosApp  tabActiva={tab} />;
+    case 'Personal':    return <HorariosApp     tabActiva={tab} />;
+    case 'Producción':  return <ProduccionApp   tabActiva={tab} />;
+    case 'Config':      return <Configuracion />;
+    default:
+      return (
+        <div className="flex flex-col items-center justify-center py-24 text-center select-none">
+          <span style={{ fontSize: '3.5rem', lineHeight: 1 }}>{MODULOS[modulo]?.icon}</span>
+          <p className="mt-4 text-lg font-semibold" style={{ color: 'var(--c-text-2)' }}>{tab}</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--c-text-4)' }}>Módulo en desarrollo · {user?.email}</p>
+        </div>
+      );
+  }
+};
+
+/* ─── ACCESO RESTRINGIDO ─────────────────────────────────────────────────── */
+const AccesoRestringido = ({ modulo }) => (
+  <div className="flex flex-col items-center justify-center py-24 text-center">
+    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4"
+         style={{ background: 'var(--c-brand-light)' }}>
+      🔒
+    </div>
+    <h3 className="heading-section text-xl mb-2">Acceso restringido</h3>
+    <p style={{ color: 'var(--c-text-3)', maxWidth: '360px', fontSize: '0.9rem' }}>
+      No tenés permisos para el módulo <strong>{modulo}</strong>. Contactá al administrador.
+    </p>
+  </div>
+);
+
+/* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
 const MainLayout = ({ user }) => {
-  const [sidebarOpen,      setSidebarOpen]      = useState(true);
-  const [moduloActivo,     setModuloActivo]      = useState('Dashboard');
-  const [tabActiva,        setTabActiva]         = useState('Inicio');
-  const [modulosPermitidos, setModulosPermitidos] = useState([]);
+  const [moduloActivo,      setModuloActivo]      = useState('Dashboard');
+  const [tabActiva,         setTabActiva]          = useState('Inicio');
+  const [sidebarOpen,       setSidebarOpen]        = useState(true);
+  const [modulosPermitidos, setModulosPermitidos]  = useState([]);
 
   useEffect(() => {
-    const permisos = PERMISOS[user?.email] ?? ['Dashboard'];
-    setModulosPermitidos(permisos);
+    setModulosPermitidos(PERMISOS[user?.email] ?? ['Dashboard']);
   }, [user]);
-
-  const modulosDisponibles = Object.keys(ESTRUCTURA_GLOBAL);
 
   const cambiarModulo = (mod) => {
     setModuloActivo(mod);
-    setTabActiva(ESTRUCTURA_GLOBAL[mod].tabs[0]);
+    setTabActiva(MODULOS[mod].tabs[0]);
   };
 
   const cerrarSesion = async () => {
     try { await signOut(auth); } catch (e) { console.error(e); }
   };
 
-  // ─── Render del contenido según módulo y tab ──────────────────────────────
-  const renderContenido = () => {
-    if (!modulosPermitidos.includes(moduloActivo)) {
-      return (
-        <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <div className="text-7xl mb-4">🔒</div>
-          <h3 className="text-2xl font-bold text-gray-700 mb-2">Acceso Restringido</h3>
-          <p className="text-gray-500 max-w-md">
-            No tenés permisos para el módulo <strong>{moduloActivo}</strong>.<br />
-            Contactá al administrador.
-          </p>
-        </div>
-      );
-    }
+  // Agrupar módulos por grupo para la nav top
+  const gruposConModulos = Object.entries(GRUPOS).map(([key, grupo]) => ({
+    key,
+    ...grupo,
+    modulos: Object.entries(MODULOS).filter(([, m]) => m.group === key).map(([k]) => k),
+  })).filter(g => g.modulos.length > 0);
 
-    switch (moduloActivo) {
-      case 'Bancos':      return <ExtractosApp    tabActiva={tabActiva} />;
-      case 'Inventario':  return <InventarioApp   tabActiva={tabActiva} />;
-      case 'Ventas':      return <VentasApp       tabActiva={tabActiva} />;
-      case 'Compras':     return <PedidosApp      tabActiva={tabActiva} />;
-      case 'KPI':         return <KpisApp         tabActiva={tabActiva} />;
-      case 'Predicción':  return <PrediccionApp   tabActiva={tabActiva} />;
-      case 'Escandallos': return <EscandallosApp  tabActiva={tabActiva} />;
-      case 'Personal':    return <HorariosApp     tabActiva={tabActiva} />;
-      case 'Producción':  return <ProduccionApp   tabActiva={tabActiva} />;
-      case 'Config':      return <Configuracion />;
-      default:
-        return (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
-            <p className="text-lg font-semibold text-gray-600 italic">{tabActiva}</p>
-            <p className="text-sm mt-1">Módulo en desarrollo · {user?.email}</p>
-          </div>
-        );
-    }
-  };
+  const tabActual = MODULOS[moduloActivo];
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50 font-sans text-gray-900 overflow-hidden">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--c-bg)', fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
 
-      {/* ── TOPBAR ─────────────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-gray-100 h-16 flex items-center justify-between px-6 shadow-sm z-30">
-        <div className="flex items-center gap-8">
-          <img src={logoCliente} alt="El Criollo" className="h-10 w-auto object-contain" />
+      {/* ══════════════════════════════════════════════════
+          TOPBAR
+      ══════════════════════════════════════════════════ */}
+      <header style={{
+        height: '60px',
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid var(--c-border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 1.5rem',
+        zIndex: 30,
+        position: 'sticky',
+        top: 0,
+        boxShadow: 'var(--shadow-xs)',
+      }}>
+        {/* Logo + Nav */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <img src={logoCliente} alt="El Criollo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
 
-          <nav className="hidden lg:flex gap-1">
-            {modulosDisponibles.map((mod) => (
-              <button
-                key={mod}
-                onClick={() => cambiarModulo(mod)}
-                className="px-4 py-1.5 text-sm font-medium transition-colors"
-                style={
-                  moduloActivo === mod
-                    ? { color: COL_PRIMARIO, borderBottom: `2px solid ${COL_PRIMARIO}`, borderRadius: 0 }
-                    : { color: '#6B7280', borderBottom: '2px solid transparent', borderRadius: 0 }
-                }
-              >
-                {ESTRUCTURA_GLOBAL[mod].icon} {mod}
-              </button>
-            ))}
+          {/* Línea divisoria */}
+          <div style={{ width: '1px', height: '28px', background: 'var(--c-border)' }} />
+
+          {/* Navegación por grupos */}
+          <nav style={{ display: 'flex', gap: '0.125rem', flexWrap: 'nowrap' }}>
+            {Object.entries(MODULOS).map(([key, mod]) => {
+              const isActive = moduloActivo === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => cambiarModulo(key)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.375rem 0.75rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: isActive ? 600 : 500,
+                    borderRadius: 'var(--r-lg)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all var(--t-fast)',
+                    background:  isActive ? 'var(--c-brand-light)' : 'transparent',
+                    color:       isActive ? 'var(--c-brand)' : 'var(--c-text-3)',
+                    fontFamily:  'var(--font-body)',
+                    whiteSpace:  'nowrap',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'var(--c-surface-2)';
+                      e.currentTarget.style.color = 'var(--c-text-1)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--c-text-3)';
+                    }
+                  }}
+                >
+                  <span style={{ fontSize: '0.875rem' }}>{mod.icon}</span>
+                  <span>{mod.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="w-px h-6 bg-gray-200" />
-          <img
-            src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || user?.email)}&background=E2231A&color=fff`}
-            alt="avatar"
-            className="w-8 h-8 rounded-full border border-gray-200"
-          />
-          <span className="text-sm font-semibold hidden md:block">
-            {user?.displayName || user?.email}
-          </span>
+        {/* Perfil */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+          <div style={{ textAlign: 'right', display: 'none' }}>
+            {/* Desktop only label */}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <img
+              src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || user?.email || 'U')}&background=E2231A&color=fff&bold=true&size=64`}
+              alt="avatar"
+              style={{ width: '34px', height: '34px', borderRadius: '50%', border: '2px solid var(--c-border)', objectFit: 'cover' }}
+            />
+            <div style={{ lineHeight: 1.2 }}>
+              <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--c-text-1)', margin: 0 }}>
+                {user?.displayName || 'Usuario'}
+              </p>
+              <p style={{ fontSize: '0.6875rem', color: 'var(--c-text-4)', margin: 0 }}>
+                {user?.email}
+              </p>
+            </div>
+          </div>
+          <div style={{ width: '1px', height: '24px', background: 'var(--c-border)' }} />
           <button
             onClick={cerrarSesion}
             title="Cerrar sesión"
-            className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 transition"
+            style={{
+              width: '34px', height: '34px',
+              borderRadius: 'var(--r-lg)',
+              border: '1px solid var(--c-border)',
+              background: 'transparent',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--c-text-3)',
+              transition: 'all var(--t-fast)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--c-danger-bg)'; e.currentTarget.style.color = 'var(--c-danger)'; e.currentTarget.style.borderColor = 'var(--c-danger)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--c-text-3)'; e.currentTarget.style.borderColor = 'var(--c-border)'; }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
             </svg>
           </button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
-        <aside
-          className={`${sidebarOpen ? 'w-56' : 'w-16'} bg-white border-r border-gray-100 transition-all duration-300 flex flex-col z-20`}
-        >
-          <div className="p-4 border-b border-gray-100 text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
-            <span>{ESTRUCTURA_GLOBAL[moduloActivo]?.icon}</span>
-            {sidebarOpen && <span>{moduloActivo}</span>}
+      {/* ══════════════════════════════════════════════════
+          BODY (sidebar + main)
+      ══════════════════════════════════════════════════ */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+        {/* ── SIDEBAR ───────────────────────────────────── */}
+        <aside style={{
+          width: sidebarOpen ? '196px' : '56px',
+          background: '#0F172A',
+          borderRight: '1px solid rgba(255,255,255,0.05)',
+          transition: 'width 300ms cubic-bezier(0.4,0,0.2,1)',
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: 20,
+          flexShrink: 0,
+        }}>
+          {/* Módulo header */}
+          <div style={{
+            padding: '1rem 0.875rem 0.75rem',
+            borderBottom: '1px solid rgba(255,255,255,0.07)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.625rem',
+            minHeight: '56px',
+          }}>
+            <div style={{
+              width: '30px', height: '30px',
+              borderRadius: 'var(--r-md)',
+              background: 'rgba(226,35,26,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1rem',
+              flexShrink: 0,
+            }}>
+              {tabActual?.icon}
+            </div>
+            {sidebarOpen && (
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.02em', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                {tabActual?.label}
+              </span>
+            )}
           </div>
 
-          <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
-            {ESTRUCTURA_GLOBAL[moduloActivo]?.tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setTabActiva(tab)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  tabActiva === tab
-                    ? 'bg-red-50 text-red-700 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: tabActiva === tab ? COL_SECUNDARIO : '#D1D5DB' }}
-                />
-                {sidebarOpen && <span className="truncate">{tab}</span>}
-              </button>
-            ))}
+          {/* Nav tabs */}
+          <nav style={{ flex: 1, padding: '0.625rem', overflowY: 'auto', overflowX: 'hidden' }}>
+            {tabActual?.tabs.map((tab, i) => {
+              const isActive = tabActiva === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setTabActiva(tab)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.5rem 0.625rem',
+                    borderRadius: 'var(--r-md)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all var(--t-fast)',
+                    background:  isActive ? 'rgba(226,35,26,0.15)' : 'transparent',
+                    color:       isActive ? '#FCA5A5' : 'rgba(255,255,255,0.5)',
+                    fontFamily:  'var(--font-body)',
+                    fontSize:    '0.8125rem',
+                    fontWeight:  isActive ? 600 : 400,
+                    textAlign:   'left',
+                    marginBottom: '0.125rem',
+                    animation:   `fadeIn ${100 + i * 50}ms ease both`,
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                      e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
+                    }
+                  }}
+                  title={!sidebarOpen ? tab : undefined}
+                >
+                  {/* Dot indicator */}
+                  <span style={{
+                    width: '5px', height: '5px',
+                    borderRadius: '50%',
+                    background:  isActive ? '#F87171' : 'rgba(255,255,255,0.2)',
+                    flexShrink:  0,
+                    transition:  'all var(--t-fast)',
+                  }} />
+                  {sidebarOpen && (
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {tab}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </nav>
 
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-4 border-t border-gray-100 text-gray-400 hover:text-gray-600 flex justify-center transition"
-            title={sidebarOpen ? 'Colapsar' : 'Expandir'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={`w-4 h-4 transition-transform ${sidebarOpen ? '' : 'rotate-180'}`}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
-            </svg>
-          </button>
+          {/* Toggle + versión */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '0.625rem' }}>
+            <button
+              onClick={() => setSidebarOpen(s => !s)}
+              style={{
+                width: '100%', padding: '0.5rem',
+                borderRadius: 'var(--r-md)',
+                border: 'none',
+                background: 'transparent',
+                color: 'rgba(255,255,255,0.3)',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: sidebarOpen ? 'flex-end' : 'center',
+                gap: '0.5rem',
+                transition: 'all var(--t-fast)',
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.75rem',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
+            >
+              {sidebarOpen && <span>Colapsar</span>}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                   style={{ transform: sidebarOpen ? 'none' : 'rotate(180deg)', transition: 'transform var(--t-base)' }}>
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            </button>
+          </div>
         </aside>
 
-        {/* ── CONTENIDO PRINCIPAL ───────────────────────────────────────────── */}
-        <main className="flex-1 overflow-y-auto p-8 bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            {/* Breadcrumb / Header */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-1">
-                  {moduloActivo}
-                </p>
-                <h2 className="text-3xl font-extrabold text-gray-950 tracking-tight">
+        {/* ── CONTENIDO PRINCIPAL ───────────────────────── */}
+        <main style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '2rem',
+          background: 'var(--c-bg)',
+        }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+
+            {/* Page header */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
+                <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {MODULOS[moduloActivo]?.label}
+                </span>
+                <span style={{ color: 'var(--c-border)', fontSize: '0.75rem' }}>›</span>
+                <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--c-brand)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   {tabActiva}
-                </h2>
-                <div className="h-1 w-8 mt-2 rounded-full" style={{ backgroundColor: COL_PRIMARIO }} />
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                <h1 className="heading-display" style={{ fontSize: '1.75rem', margin: 0 }}>
+                  {tabActiva}
+                </h1>
+                <div style={{
+                  height: '6px', width: '6px', borderRadius: '50%',
+                  background: 'var(--c-brand)', marginTop: '2px', flexShrink: 0,
+                }} />
               </div>
             </div>
 
             {/* Panel de contenido */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 min-h-[400px] p-8">
-              {renderContenido()}
+            <div style={{
+              background: 'var(--c-surface)',
+              borderRadius: 'var(--r-2xl)',
+              border: '1px solid var(--c-border)',
+              boxShadow: 'var(--shadow-sm)',
+              minHeight: '480px',
+              padding: '2rem',
+              animation: 'fadeIn 200ms ease',
+            }}>
+              {!modulosPermitidos.includes(moduloActivo)
+                ? <AccesoRestringido modulo={moduloActivo} />
+                : renderModulo(moduloActivo, tabActiva, user)
+              }
             </div>
           </div>
         </main>
