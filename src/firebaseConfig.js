@@ -1,19 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-// Estos son los datos que copiaste de la consola de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyCGhhv5HXLYkPY-pkpyONkCX96W2dFRuBg",
-  authDomain: "ec-plataforma.firebaseapp.com",
-  projectId: "ec-plataforma",
-  storageBucket: "ec-plataforma.firebasestorage.app",
-  messagingSenderId: "825471376058",
-  appId: "1:825471376058:web:4bd00ca055444a56fa0083",
-  measurementId: "G-FDYGFBS3Q7"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Inicializamos la App
 const app = initializeApp(firebaseConfig);
-
-// Exportamos la autenticación para usarla en el Login
 export const auth = getAuth(app);

@@ -1,83 +1,85 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-// Esta es la fuente de verdad del sistema (debería coincidir con tu MainLayout)
-const ESTRUCTURA_SISTEMA = {
-  Dashboard: ["Inicio", "Métricas Rápidas"],
-  Inventario: ["DashBoard", "Inventario", "Producción", "Movimientos", "Planificación"],
-  Pedidos: ["Orden", "Historial"],
-  Extractos: ["Importar / Exportar", "DashBoard", "Consolidado", "Proveedores", "Análisis"],
-  KPI: ["Importar / Exportar", "DashBoard", "Análisis", "Productos", "Predicción", "Acciones"],
-  Ventas: ["Productos", "Gráficos", "Tickets", "Mesas"]
-};
+const Configuracion = ({ ESTRUCTURA_GLOBAL }) => {
+  const [emailObjetivo, setEmailObjetivo] = useState('epalacios1194@gmail.com');
+  const [permisosGlobales, setPermisosGlobales] = useState(() => JSON.parse(localStorage.getItem('vdc_permisos')) || {});
+  
+  // Computamos los permisos sobre la marcha para el email objetivo (en lugar de doble estado)
+  const permisosUsuario = permisosGlobales[emailObjetivo] || ['Dashboard'];
 
-const Configuracion = () => {
-  // Simulamos el estado de permisos de un usuario específico
-  const [permisos, setPermisos] = useState({
-    Dashboard: ["Inicio"],
-    Inventario: ["Inventario", "Movimientos"]
-  });
-
-  const toggleTab = (modulo, tab) => {
-    setPermisos(prev => {
-      const tabsActuales = prev[modulo] || [];
-      const nuevasTabs = tabsActuales.includes(tab)
-        ? tabsActuales.filter(t => t !== tab) // Quitar si ya está
-        : [...tabsActuales, tab]; // Agregar si no está
-
-      return { ...prev, [modulo]: nuevasTabs };
-    });
+  const toggleModulo = (modulo) => {
+    const prev = permisosUsuario;
+    const newPerms = prev.includes(modulo) ? prev.filter(m => m !== modulo) : [...prev, modulo];
+    setPermisosGlobales({ ...permisosGlobales, [emailObjetivo]: newPerms });
   };
 
   const guardarConfiguracion = () => {
-    console.log("Guardando en Firebase/Supabase:", permisos);
-    alert("Configuración de permisos guardada con éxito.");
+    localStorage.setItem('vdc_permisos', JSON.stringify(permisosGlobales));
+    alert(`Permisos para ${emailObjetivo} guardados con éxito. Los cambios se aplicarán en su próximo inicio de sesión o al refrescar.`);
   };
+
+  if (!ESTRUCTURA_GLOBAL) return null; // Safety check
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-gray-100 pb-6">
         <div>
-          <h3 className="text-xl font-bold text-gray-800">Control de Accesos</h3>
-          <p className="text-sm text-gray-500">Define qué módulos y pestañas están visibles para este perfil.</p>
+          <h3 className="text-2xl font-bold text-gray-800">Control de Accesos y Módulos</h3>
+          <p className="text-sm text-gray-500 mt-1">Configura qué módulos completos están disponibles para cada usuario de tu equipo.</p>
         </div>
-        <button 
-          onClick={guardarConfiguracion}
-          className="bg-gray-900 text-white px-6 py-2 rounded-full font-bold hover:bg-black transition shadow-lg"
-        >
-          Guardar Cambios
-        </button>
+        <div className="flex gap-3 w-full md:w-auto">
+          <input 
+            type="email" 
+            value={emailObjetivo}
+            onChange={(e) => setEmailObjetivo(e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-64 focus:ring-2 focus:ring-red-600 outline-none"
+            placeholder="Email del usuario..."
+          />
+          <button 
+            onClick={guardarConfiguracion}
+            className="bg-gray-900 text-white px-6 py-2 rounded-full font-bold hover:bg-black transition shadow-lg whitespace-nowrap"
+          >
+            Guardar Cambios
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Object.keys(ESTRUCTURA_SISTEMA).map((modulo) => (
-          <div key={modulo} className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-50">
-              <span className="font-black text-gray-900 uppercase tracking-tighter">{modulo}</span>
-              <input 
-                type="checkbox" 
-                checked={permisos[modulo]?.length > 0}
-                readOnly
-                className="w-5 h-5 accent-green-600"
-              />
-            </div>
-            
-            <div className="space-y-3">
-              {ESTRUCTURA_SISTEMA[modulo].map((tab) => (
-                <label key={tab} className="flex items-center gap-3 cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    checked={permisos[modulo]?.includes(tab)}
-                    onChange={() => toggleTab(modulo, tab)}
-                    className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                  />
-                  <span className={`text-sm font-medium transition ${permisos[modulo]?.includes(tab) ? 'text-gray-900' : 'text-gray-400'}`}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Object.keys(ESTRUCTURA_GLOBAL).map((modulo) => {
+          if (modulo === 'Configuración') return null; // No auto-asignamos config
+          const data = ESTRUCTURA_GLOBAL[modulo];
+          const hasAccess = permisosUsuario.includes(modulo);
+          
+          return (
+            <div 
+              key={modulo} 
+              className={`border rounded-2xl p-5 transition-all cursor-pointer ${hasAccess ? 'border-red-600 bg-red-50 shadow-md' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+              onClick={() => toggleModulo(modulo)}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{data.icon}</span>
+                  <h4 className={`font-black uppercase tracking-tight ${hasAccess ? 'text-red-900' : 'text-gray-700'}`}>{modulo}</h4>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={hasAccess}
+                  readOnly
+                  className="w-5 h-5 accent-red-600 cursor-pointer pointer-events-none"
+                />
+              </div>
+              
+              <div className="space-y-1">
+                {data.tabs.map((tab) => (
+                  <div key={tab} className="flex items-center gap-2 text-sm text-gray-500 pl-9">
+                    <span className={`w-1.5 h-1.5 rounded-full ${hasAccess ? 'bg-red-400' : 'bg-gray-300'}`}></span>
                     {tab}
-                  </span>
-                </label>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

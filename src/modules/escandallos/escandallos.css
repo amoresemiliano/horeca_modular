@@ -1,0 +1,106 @@
+/* Variables para facilitar el branding dinámico del cliente */
+:root {
+    --primary-color: #4f46e5;
+    --secondary-color: #6366f1;
+    --bg-body: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --accent-alert: #f97316;
+    --accent-success: #22c55e;
+}
+
+/* * { ... } removed */
+
+/* body { ... } removed */
+
+/* .container { ... } removed */
+
+/* Header */
+.main-header {
+    background: var(--bg-card);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo-placeholder {
+    width: 32px; height: 32px; background: var(--primary-color);
+    color: white; border-radius: 6px; display: flex;
+    align-items: center; justify-content: center; font-weight: bold;
+}
+.brand h1 { font-size: 1.1rem; }
+.brand h1 span { color: var(--primary-color); }
+
+/* Cards Genéricos */
+.card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Recipe Header */
+.badge {
+    background: #e0e7ff; color: var(--primary-color);
+    font-size: 0.7rem; font-weight: bold; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 20px;
+}
+.input-title {
+    width: 100%; border: none; font-size: 1.5rem; font-weight: bold;
+    margin-top: 10px; outline: none;
+}
+
+.recipe-meta-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);
+}
+
+.form-group label { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+.input-unit { display: flex; align-items: center; gap: 5px; }
+.input-unit input { width: 80px; padding: 5px; border: 1px solid var(--border-color); border-radius: 6px; }
+
+.highlight-price { color: var(--accent-success); font-weight: bold; font-size: 1.4rem; }
+
+/* Ingredients */
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.btn-add { background: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+.ingredient-card { padding: 0; overflow: hidden; }
+.ingredient-info { background: #f1f5f9; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+.ingredient-info h3 { font-size: 0.9rem; text-transform: uppercase; }
+.vendor { font-size: 0.75rem; color: var(--text-muted); }
+
+.ingredient-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; }
+
+.detail-item label { display: block; font-size: 0.65rem; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; }
+.detail-item input { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+.detail-item.alert input { background: #fff7ed; border-color: #ffedd5; color: var(--accent-alert); }
+
+.detail-total { text-align: right; grid-column: span 2; border-top: 1px dashed var(--border-color); pt: 10px; }
+.subtotal-price { font-size: 1.2rem; font-weight: bold; }
+
+/* Finance Summary */
+.finance-summary { background: var(--text-main); color: white; border: none; }
+.finance-grid { display: flex; justify-content: space-between; margin: 20px 0; }
+.finance-item span { display: block; color: #94a3b8; font-size: 0.8rem; }
+.finance-item strong { font-size: 1.3rem; }
+
+.health-bar-container { margin-top: 20px; }
+.health-bar-label { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; }
+.progress-bg { background: #334155; height: 8px; border-radius: 10px; overflow: hidden; }
+.progress-fill { background: var(--accent-success); height: 100%; transition: width 0.3s ease; }
+
+@media (min-width: 600px) {
+    .ingredient-details { grid-template-columns: repeat(4, 1fr); }
+    .detail-total { grid-column: span 1; text-align: right; border-top: none; }
+}
