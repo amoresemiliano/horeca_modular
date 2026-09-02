@@ -55,7 +55,7 @@ export async function checkFileDuplicate(fileHash, orgId = DEFAULT_ORG_ID) {
 
 // ─── Importación completa con Persistencia en Supabase ─────────────────────────
 export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_ID) {
-  const { file_name, file_hash, account_code, movements } = parsedResult;
+  const { file_name, file_hash, account_code, accountCode = account_code, movements } = parsedResult;
 
   // 1. Resolve source_account_id
   const { data: accData } = await supabase
@@ -220,7 +220,7 @@ export async function fetchConsolidatedMovements(orgId = DEFAULT_ORG_ID) {
       .select(`
         *,
         source_account:eco_financial_accounts(*),
-        allocations:eco_movement_allocations(
+        allocations:eco_movement_allocations!eco_movement_allocations_movement_id_fkey(
           *,
           counterparty:eco_counterparties(*),
           category:eco_tax_categories(*),
