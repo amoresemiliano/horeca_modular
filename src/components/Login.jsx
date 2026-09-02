@@ -10,7 +10,9 @@ const Login = () => {
   const handleLogin = async () => {
     setStatus('loading');
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithPopup(auth, provider);
     } catch (err) {
       console.error(err.message);
       setStatus('error');
