@@ -22,6 +22,18 @@ export function AuthProvider({ children }) {
   const [organizationId, setOrganizationId] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper to safely clean OAuth tokens or auth code parameters from the browser address bar
+  function cleanUrlAuthParams() {
+    if (typeof window === 'undefined') return;
+    const hasHashTokens = window.location.hash && (window.location.hash.includes('access_token=') || window.location.hash.includes('refresh_token='));
+    const hasQueryCode = window.location.search && (window.location.search.includes('code=') || window.location.search.includes('error='));
+
+    if (hasHashTokens || hasQueryCode) {
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState(null, document.title, cleanUrl);
+    }
+  }
+
   async function fetchUserRoleAndProfile(authUser) {
     if (!authUser) {
       setProfile(null);
@@ -81,22 +93,42 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    // 1. Initial Session Restore
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let isMounted = true;
+
+    // 1. Subscribe to Auth State Changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+
       const currentUser = session?.user || null;
       setUser(currentUser);
-      fetchUserRoleAndProfile(currentUser).finally(() => setLoading(false));
+
+      if (currentUser) {
+        await fetchUserRoleAndProfile(currentUser);
+        cleanUrlAuthParams();
+      } else {
+        setProfile(null);
+        setMembership(null);
+        setRole(null);
+        setOrganizationId(null);
+      }
+
+      if (isMounted) setLoading(false);
     });
 
-    // 2. Auth State Change Listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // 2. Fallback Initial Session Check (in case onAuthStateChange didn't fire immediately)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return;
       const currentUser = session?.user || null;
-      setUser(currentUser);
-      await fetchUserRoleAndProfile(currentUser);
-      setLoading(false);
+      if (currentUser && !user) {
+        setUser(currentUser);
+        await fetchUserRoleAndProfile(currentUser);
+        cleanUrlAuthParams();
+      }
+      if (isMounted) setLoading(false);
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -121,7 +153,12 @@ export function AuthProvider({ children }) {
       options,
     });
 
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('not enabled') || error.status === 400) {
+        throw new Error(`El proveedor ${providerName === 'google' ? 'Google' : 'GitHub'} no está habilitado en el proyecto Supabase Staging. Por favor, usá Google o contactá al administrador.`);
+      }
+      throw error;
+    }
   };
 
   const loginWithGoogle = async () => loginWithProvider('google');
