@@ -1,20 +1,18 @@
 import { useState } from 'react';
-import { auth } from '../firebaseConfig';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useAuth } from '../context/AuthContext';
 import logoVDC from '../assets/icono_VDC.png';
 import logoCliente from '../assets/logo_cliente.png';
 
 const Login = () => {
   const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'error'
+  const { loginWithGoogle } = useAuth();
 
   const handleLogin = async () => {
     setStatus('loading');
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(auth, provider);
+      await loginWithGoogle();
     } catch (err) {
-      console.error(err.message);
+      console.error('Error durante autenticación Google:', err.message);
       setStatus('error');
       setTimeout(() => setStatus('idle'), 3500);
     }
@@ -52,7 +50,7 @@ const Login = () => {
           backgroundSize: '48px 48px',
         }} />
 
-        {/* Orbe decorativo */}
+        {/* Orbes decorativos */}
         <div style={{
           position: 'absolute',
           top: '-80px', right: '-80px',
@@ -153,7 +151,7 @@ const Login = () => {
                 letterSpacing: '0.05em', marginBottom: '0.5rem',
               }}>Email</label>
               <input
-                type="email" disabled placeholder="Gestionado por Google"
+                type="email" disabled placeholder="Gestionado por Supabase Auth"
                 style={{
                   width: '100%', padding: '0.65rem 1rem',
                   border: '1.5px solid var(--c-border)',
@@ -195,7 +193,7 @@ const Login = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
               <div style={{ flex: 1, height: '1px', background: 'var(--c-border)' }} />
               <span style={{ fontSize: '0.6875rem', color: 'var(--c-text-4)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Acceso mediante
+                Acceso mediante Google OAuth
               </span>
               <div style={{ flex: 1, height: '1px', background: 'var(--c-border)' }} />
             </div>
@@ -244,7 +242,7 @@ const Login = () => {
                   borderRadius: '50%',
                   animation: 'spin 0.7s linear infinite',
                 }} />
-                <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-3)', fontWeight: 600 }}>Verificando credenciales…</p>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-3)', fontWeight: 600 }}>Redirigiendo a Google OAuth…</p>
               </div>
             )}
 
@@ -259,7 +257,7 @@ const Login = () => {
                 fontWeight: 600,
               }}>
                 <span style={{ fontSize: '1.25rem' }}>⚠️</span>
-                Acceso denegado. Verificá que tu cuenta tenga permisos.
+                Error de autenticación. Intentalo de nuevo.
               </div>
             )}
           </div>

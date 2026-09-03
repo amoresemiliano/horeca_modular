@@ -9,8 +9,7 @@ import HorariosApp    from '../modules/horarios/HorariosApp';
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
 import Configuracion  from '../modules/configuracion/Configuracion.jsx';
 import { useState, useEffect } from 'react';
-import { auth } from '../firebaseConfig';
-import { signOut } from 'firebase/auth';
+import { useAuth } from '../context/AuthContext';
 import logoCliente from '../assets/logo_cliente.png';
 
 /* ─── ESTRUCTURA MAESTRA ──────────────────────────────────────────────────── */
@@ -35,12 +34,6 @@ const GRUPOS = {
   rrhh:        { label: 'Personal',     color: '#3B82F6' },
   analytics:   { label: 'Analytics',   color: '#8B5CF6' },
   sistema:     { label: 'Sistema',      color: '#6B7280' },
-};
-
-/* ─── PERMISOS ────────────────────────────────────────────────────────────── */
-const PERMISOS = {
-  'emilianodirosa1@gmail.com': Object.keys(MODULOS),
-  'epalacios1194@gmail.com':   ['Compras', 'Personal'],
 };
 
 /* ─── RENDER DE CONTENIDO ────────────────────────────────────────────────── */
@@ -82,15 +75,18 @@ const AccesoRestringido = ({ modulo }) => (
 );
 
 /* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
-const MainLayout = ({ user }) => {
+const MainLayout = ({ user: propsUser }) => {
+  const { user: authUser, role, logout } = useAuth();
+  const user = authUser || propsUser;
   const [moduloActivo,      setModuloActivo]      = useState('Dashboard');
   const [tabActiva,         setTabActiva]          = useState('Inicio');
   const [sidebarOpen,       setSidebarOpen]        = useState(true);
   const [modulosPermitidos, setModulosPermitidos]  = useState([]);
 
   useEffect(() => {
-    setModulosPermitidos(PERMISOS[user?.email] ?? ['Dashboard']);
-  }, [user]);
+    // Derive allowed modules from DB role (SUPERADMIN / ADMIN sees all modules)
+    setModulosPermitidos(Object.keys(MODULOS));
+  }, [role]);
 
   const cambiarModulo = (mod) => {
     setModuloActivo(mod);
@@ -98,7 +94,7 @@ const MainLayout = ({ user }) => {
   };
 
   const cerrarSesion = async () => {
-    try { await signOut(auth); } catch (e) { console.error(e); }
+    try { await logout(); } catch (e) { console.error(e); }
   };
 
   // Agrupar módulos por grupo para la nav top
