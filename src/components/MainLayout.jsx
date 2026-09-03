@@ -84,8 +84,17 @@ const MainLayout = ({ user: propsUser }) => {
   const [modulosPermitidos, setModulosPermitidos]  = useState([]);
 
   useEffect(() => {
-    // Derive allowed modules from DB role (SUPERADMIN / ADMIN sees all modules)
-    setModulosPermitidos(Object.keys(MODULOS));
+    // FAIL-CLOSED: Module permission resolution strictly derived from validated DB membership role
+    if (role === 'SUPERADMIN' || role === 'ADMIN') {
+      setModulosPermitidos(Object.keys(MODULOS));
+    } else if (role === 'GERENTE' || role === 'OPERADOR') {
+      setModulosPermitidos(['Dashboard', 'Bancos', 'Ventas', 'KPI', 'Inventario', 'Producción', 'Personal']);
+    } else if (role === 'CONSULTA') {
+      setModulosPermitidos(['Dashboard', 'Bancos', 'Ventas', 'KPI']);
+    } else {
+      // FAIL-CLOSED: Deny access to all modules if role is null, undefined, or unrecognized
+      setModulosPermitidos([]);
+    }
   }, [role]);
 
   const cambiarModulo = (mod) => {

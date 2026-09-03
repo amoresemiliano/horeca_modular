@@ -30,42 +30,51 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      // Fetch profile and active membership
-      const { data: profData } = await supabase
+      // 1. Fetch active global user profile matching auth_user_id
+      const { data: profData, error: profErr } = await supabase
         .from('eco_user_profiles')
         .select('*')
         .eq('auth_user_id', authUser.id)
+        .eq('is_active', true)
         .maybeSingle();
 
-      if (profData) {
-        setProfile(profData);
-        
-        // Fetch active organization membership
-        const { data: memData } = await supabase
-          .from('eco_organization_members')
-          .select('*')
-          .eq('user_profile_id', profData.id)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (memData) {
-          setMembership(memData);
-          setRole(memData.role || profData.role || 'SUPERADMIN');
-          setOrganizationId(memData.organization_id || profData.organization_id || '59436df3-9f15-4f5e-b17e-37c55482521c');
-        } else {
-          // Fallback to profile role/org if membership pending
-          setRole(profData.role || 'SUPERADMIN');
-          setOrganizationId(profData.organization_id || '59436df3-9f15-4f5e-b17e-37c55482521c');
-        }
-      } else {
-        // Default for initial superadmin bootstrap session
-        setRole('SUPERADMIN');
-        setOrganizationId('59436df3-9f15-4f5e-b17e-37c55482521c');
+      if (profErr || !profData) {
+        console.warn('FAIL-CLOSED: No active user profile found for auth_user_id:', authUser.id);
+        setProfile(null);
+        setMembership(null);
+        setRole(null);
+        setOrganizationId(null);
+        return;
       }
+
+      setProfile(profData);
+
+      // 2. Fetch active organization membership for this profile
+      const { data: memData, error: memErr } = await supabase
+        .from('eco_organization_members')
+        .select('*')
+        .eq('user_profile_id', profData.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (memErr || !memData) {
+        console.warn('FAIL-CLOSED: No active organization membership found for profile_id:', profData.id);
+        setMembership(null);
+        setRole(null);
+        setOrganizationId(null);
+        return;
+      }
+
+      // FAIL-CLOSED: Role and organizationId are strictly derived from validated DB membership
+      setMembership(memData);
+      setRole(memData.role || null);
+      setOrganizationId(memData.organization_id || null);
     } catch (err) {
-      console.error('Error fetching user profile/membership:', err);
-      setRole('SUPERADMIN');
-      setOrganizationId('59436df3-9f15-4f5e-b17e-37c55482521c');
+      console.error('FAIL-CLOSED: Exception fetching user profile/membership:', err);
+      setProfile(null);
+      setMembership(null);
+      setRole(null);
+      setOrganizationId(null);
     }
   }
 
