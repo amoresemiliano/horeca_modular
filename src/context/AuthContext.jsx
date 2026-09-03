@@ -8,7 +8,9 @@ const AuthContext = createContext({
   role: null,
   organizationId: null,
   loading: true,
+  loginWithProvider: async (_provider) => {},
   loginWithGoogle: async () => {},
+  loginWithGithub: async () => {},
   logout: async () => {},
 });
 
@@ -99,18 +101,31 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const loginWithGoogle = async () => {
+  const loginWithProvider = async (providerName) => {
+    if (providerName !== 'google' && providerName !== 'github') {
+      throw new Error(`Unsupported OAuth provider: ${providerName}`);
+    }
+
+    const options = {
+      redirectTo: window.location.origin,
+    };
+
+    if (providerName === 'google') {
+      options.queryParams = {
+        prompt: 'select_account',
+      };
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-        queryParams: {
-          prompt: 'select_account',
-        },
-      },
+      provider: providerName,
+      options,
     });
+
     if (error) throw error;
   };
+
+  const loginWithGoogle = async () => loginWithProvider('google');
+  const loginWithGithub = async () => loginWithProvider('github');
 
   const logout = async () => {
     setLoading(true);
@@ -132,7 +147,9 @@ export function AuthProvider({ children }) {
         role,
         organizationId,
         loading,
+        loginWithProvider,
         loginWithGoogle,
+        loginWithGithub,
         logout,
       }}
     >
