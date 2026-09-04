@@ -8,10 +8,13 @@ const AuthContext = createContext({
   role: null,
   organizationId: null,
   loading: true,
+  isPasswordRecovery: false,
   loginWithProvider: async (_provider) => {},
   loginWithGoogle: async () => {},
   loginWithGithub: async () => {},
   loginWithPassword: async (_email, _password) => {},
+  requestPasswordReset: async (_email) => {},
+  updatePassword: async (_newPassword) => {},
   logout: async () => {},
 });
 
@@ -22,6 +25,7 @@ export function AuthProvider({ children }) {
   const [role, setRole] = useState(null);
   const [organizationId, setOrganizationId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   // Helper to safely clean OAuth tokens or auth code parameters from the browser address bar
   function cleanUrlAuthParams() {
@@ -96,9 +100,21 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
 
+    // Check if current URL indicates a password recovery callback
+    if (typeof window !== 'undefined') {
+      const isRecovery = window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+      if (isRecovery) {
+        setIsPasswordRecovery(true);
+      }
+    }
+
     // 1. Subscribe to Auth State Changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
+
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+      }
 
       const currentUser = session?.user || null;
       setUser(currentUser);
@@ -116,7 +132,7 @@ export function AuthProvider({ children }) {
       if (isMounted) setLoading(false);
     });
 
-    // 2. Fallback Initial Session Check (in case onAuthStateChange didn't fire immediately)
+    // 2. Fallback Initial Session Check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!isMounted) return;
       const currentUser = session?.user || null;
@@ -175,14 +191,35 @@ export function AuthProvider({ children }) {
       password,
     });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     if (data?.user) {
       setUser(data.user);
       await fetchUserRoleAndProfile(data.user);
     }
+  };
+
+  const requestPasswordReset = async (email) => {
+    if (!email) throw new Error('Ingresá tu email.');
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+
+    if (error) throw error;
+  };
+
+  const updatePassword = async (newPassword) => {
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('La contraseña debe tener al menos 6 caracteres.');
+    }
+
+    const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) throw error;
+
+    setIsPasswordRecovery(false);
+    return data;
   };
 
   const logout = async () => {
@@ -193,6 +230,7 @@ export function AuthProvider({ children }) {
     setMembership(null);
     setRole(null);
     setOrganizationId(null);
+    setIsPasswordRecovery(false);
     setLoading(false);
   };
 
@@ -205,10 +243,13 @@ export function AuthProvider({ children }) {
         role,
         organizationId,
         loading,
+        isPasswordRecovery,
         loginWithProvider,
         loginWithGoogle,
         loginWithGithub,
         loginWithPassword,
+        requestPasswordReset,
+        updatePassword,
         logout,
       }}
     >

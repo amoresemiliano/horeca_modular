@@ -4,12 +4,21 @@ import logoVDC from '../assets/icono_VDC.png';
 import logoCliente from '../assets/logo_cliente.png';
 
 const Login = () => {
-  const [status, setStatus] = useState('idle'); // 'idle' | 'loading_google' | 'loading_github' | 'loading_password' | 'error'
+  const [status, setStatus] = useState('idle'); // 'idle' | 'loading_google' | 'loading_github' | 'loading_password' | 'loading_reset' | 'loading_update' | 'success_reset' | 'success_update' | 'error'
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [mode, setMode] = useState('login'); // 'login' | 'reset_request'
 
-  const { loginWithProvider, loginWithPassword } = useAuth();
+  const {
+    loginWithProvider,
+    loginWithPassword,
+    requestPasswordReset,
+    updatePassword,
+    isPasswordRecovery,
+  } = useAuth();
 
   // Flag controlling whether DEV password authentication UI is enabled
   const isDevPasswordAuthEnabled = import.meta.env.VITE_DEV_PASSWORD_AUTH === 'true';
@@ -17,6 +26,7 @@ const Login = () => {
   const handleOAuthLogin = async (provider) => {
     setStatus(`loading_${provider}`);
     setErrorMsg('');
+    setSuccessMsg('');
     try {
       await loginWithProvider(provider);
     } catch (err) {
@@ -38,6 +48,7 @@ const Login = () => {
 
     setStatus('loading_password');
     setErrorMsg('');
+    setSuccessMsg('');
     try {
       await loginWithPassword(emailInput, passwordInput);
     } catch (err) {
@@ -45,6 +56,52 @@ const Login = () => {
       setErrorMsg('Credenciales inválidas. Verificá tu email y contraseña.');
       setStatus('error');
       setTimeout(() => setStatus('idle'), 4000);
+    }
+  };
+
+  const handleResetRequestSubmit = async (e) => {
+    e.preventDefault();
+    if (!emailInput) {
+      setErrorMsg('Ingresá tu email para recibir el enlace de recuperación.');
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 3500);
+      return;
+    }
+
+    setStatus('loading_reset');
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await requestPasswordReset(emailInput);
+      setSuccessMsg('Se envió el enlace de recuperación a tu correo. Revisá tu bandeja de entrada o spam.');
+      setStatus('success_reset');
+    } catch (err) {
+      console.error('Error durante solicitud de recuperación:', err.message);
+      setErrorMsg(err.message || 'No se pudo enviar el correo de recuperación.');
+      setStatus('error');
+    }
+  };
+
+  const handleUpdatePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPasswordInput || newPasswordInput.length < 6) {
+      setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 3500);
+      return;
+    }
+
+    setStatus('loading_update');
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await updatePassword(newPasswordInput);
+      setSuccessMsg('¡Contraseña actualizada correctamente! Ingresando a la plataforma…');
+      setStatus('success_update');
+    } catch (err) {
+      console.error('Error durante actualización de contraseña:', err.message);
+      setErrorMsg(err.message || 'No se pudo actualizar la contraseña.');
+      setStatus('error');
     }
   };
 
@@ -174,15 +231,15 @@ const Login = () => {
             padding: '2.25rem 2rem',
           }}>
 
-            {/* SECCIÓN DEV: Formulario Email/Password (únicamente si VITE_DEV_PASSWORD_AUTH=true) */}
-            {isDevPasswordAuthEnabled ? (
-              <form onSubmit={handlePasswordSubmit} style={{ marginBottom: '1.5rem' }}>
+            {/* CASE 1: VISTA DE ESTABLECER NUEVA CONTRASEÑA (PASSWORD RECOVERY CALLBACK) */}
+            {isPasswordRecovery ? (
+              <form onSubmit={handleUpdatePasswordSubmit} style={{ marginBottom: '1.5rem' }}>
                 <div style={{
                   padding: '0.35rem 0.75rem',
                   borderRadius: 'var(--r-md)',
-                  background: 'rgba(245,158,11,0.1)',
-                  border: '1px solid rgba(245,158,11,0.3)',
-                  color: '#D97706',
+                  background: 'rgba(16,185,129,0.1)',
+                  border: '1px solid rgba(16,185,129,0.3)',
+                  color: '#059669',
                   fontSize: '0.6875rem',
                   fontWeight: 700,
                   textTransform: 'uppercase',
@@ -190,33 +247,7 @@ const Login = () => {
                   marginBottom: '1.25rem',
                   textAlign: 'center',
                 }}>
-                  🛠️ Acceso de Desarrollo (DEV-ONLY)
-                </div>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{
-                    display: 'block', fontSize: '0.75rem', fontWeight: 700,
-                    color: 'var(--c-text-3)', textTransform: 'uppercase',
-                    letterSpacing: '0.05em', marginBottom: '0.5rem',
-                  }}>Email</label>
-                  <input
-                    type="email"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="emilianodirosa1@gmail.com"
-                    required
-                    style={{
-                      width: '100%', padding: '0.65rem 1rem',
-                      border: '1.5px solid var(--c-border)',
-                      borderRadius: 'var(--r-lg)',
-                      background: 'var(--c-bg)',
-                      color: 'var(--c-text-1)',
-                      fontSize: '0.875rem',
-                      outline: 'none',
-                      fontFamily: 'var(--font-body)',
-                      boxSizing: 'border-box',
-                    }}
-                  />
+                  🔑 Establecer nueva contraseña (DEV)
                 </div>
 
                 <div style={{ marginBottom: '1.25rem' }}>
@@ -224,13 +255,16 @@ const Login = () => {
                     display: 'block', fontSize: '0.75rem', fontWeight: 700,
                     color: 'var(--c-text-3)', textTransform: 'uppercase',
                     letterSpacing: '0.05em', marginBottom: '0.5rem',
-                  }}>Contraseña</label>
+                  }}>Nueva Contraseña</label>
                   <input
                     type="password"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    placeholder="••••••••"
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
                     required
+                    minLength={6}
+                    disabled={false}
+                    readOnly={false}
                     style={{
                       width: '100%', padding: '0.65rem 1rem',
                       border: '1.5px solid var(--c-border)',
@@ -239,6 +273,7 @@ const Login = () => {
                       color: 'var(--c-text-1)',
                       fontSize: '0.875rem',
                       outline: 'none',
+                      cursor: 'text',
                       fontFamily: 'var(--font-body)',
                       boxSizing: 'border-box',
                     }}
@@ -247,7 +282,7 @@ const Login = () => {
 
                 <button
                   type="submit"
-                  disabled={status === 'loading_password'}
+                  disabled={status === 'loading_update'}
                   style={{
                     width: '100%',
                     padding: '0.75rem 1.25rem',
@@ -261,14 +296,223 @@ const Login = () => {
                     fontFamily: 'var(--font-body)',
                     transition: 'all 200ms ease',
                     boxShadow: '0 2px 8px rgba(0,104,71,0.25)',
-                    opacity: status === 'loading_password' ? 0.6 : 1,
+                    opacity: status === 'loading_update' ? 0.6 : 1,
                   }}
                 >
-                  {status === 'loading_password' ? 'Iniciando sesión…' : 'Iniciar sesión con contraseña (DEV)'}
+                  {status === 'loading_update' ? 'Guardando contraseña…' : 'Guardar nueva contraseña'}
                 </button>
               </form>
+            ) : isDevPasswordAuthEnabled ? (
+              /* CASE 2: ENTORNOS DEV CON BANDERA VITE_DEV_PASSWORD_AUTH=true */
+              mode === 'reset_request' ? (
+                /* FORMULARIO DE SOLICITUD DE RECUPERACIÓN DE CONTRASEÑA */
+                <form onSubmit={handleResetRequestSubmit} style={{ marginBottom: '1.5rem' }}>
+                  <div style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: 'var(--r-md)',
+                    background: 'rgba(59,130,246,0.1)',
+                    border: '1px solid rgba(59,130,246,0.3)',
+                    color: '#2563EB',
+                    fontSize: '0.6875rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '1.25rem',
+                    textAlign: 'center',
+                  }}>
+                    📧 Recuperación / Creación de Contraseña (DEV)
+                  </div>
+
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label style={{
+                      display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                      color: 'var(--c-text-3)', textTransform: 'uppercase',
+                      letterSpacing: '0.05em', marginBottom: '0.5rem',
+                    }}>Email registrado</label>
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      placeholder="emilianodirosa1@gmail.com"
+                      required
+                      disabled={false}
+                      readOnly={false}
+                      style={{
+                        width: '100%', padding: '0.65rem 1rem',
+                        border: '1.5px solid var(--c-border)',
+                        borderRadius: 'var(--r-lg)',
+                        background: 'var(--c-bg)',
+                        color: 'var(--c-text-1)',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        cursor: 'text',
+                        fontFamily: 'var(--font-body)',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={status === 'loading_reset'}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1.25rem',
+                      background: '#2563EB',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 'var(--r-xl)',
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-body)',
+                      transition: 'all 200ms ease',
+                      boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                      opacity: status === 'loading_reset' ? 0.6 : 1,
+                    }}
+                  >
+                    {status === 'loading_reset' ? 'Enviando enlace…' : 'Enviar enlace de recuperación'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+                    style={{
+                      width: '100%',
+                      marginTop: '0.75rem',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--c-text-3)',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    ← Volver a inicio de sesión
+                  </button>
+                </form>
+              ) : (
+                /* FORMULARIO EDITABLE DE LOGIN CON CONTRASEÑA (DEV) */
+                <form onSubmit={handlePasswordSubmit} style={{ marginBottom: '1.5rem' }}>
+                  <div style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: 'var(--r-md)',
+                    background: 'rgba(245,158,11,0.1)',
+                    border: '1px solid rgba(245,158,11,0.3)',
+                    color: '#D97706',
+                    fontSize: '0.6875rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '1.25rem',
+                    textAlign: 'center',
+                  }}>
+                    🛠️ Acceso de Desarrollo (DEV-ONLY)
+                  </div>
+
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{
+                      display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                      color: 'var(--c-text-3)', textTransform: 'uppercase',
+                      letterSpacing: '0.05em', marginBottom: '0.5rem',
+                    }}>Email</label>
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      placeholder="emilianodirosa1@gmail.com"
+                      required
+                      disabled={false}
+                      readOnly={false}
+                      style={{
+                        width: '100%', padding: '0.65rem 1rem',
+                        border: '1.5px solid var(--c-border)',
+                        borderRadius: 'var(--r-lg)',
+                        background: 'var(--c-bg)',
+                        color: 'var(--c-text-1)',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        cursor: 'text',
+                        fontFamily: 'var(--font-body)',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{
+                      display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                      color: 'var(--c-text-3)', textTransform: 'uppercase',
+                      letterSpacing: '0.05em', marginBottom: '0.5rem',
+                    }}>Contraseña</label>
+                    <input
+                      type="password"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      disabled={false}
+                      readOnly={false}
+                      style={{
+                        width: '100%', padding: '0.65rem 1rem',
+                        border: '1.5px solid var(--c-border)',
+                        borderRadius: 'var(--r-lg)',
+                        background: 'var(--c-bg)',
+                        color: 'var(--c-text-1)',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        cursor: 'text',
+                        fontFamily: 'var(--font-body)',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  {/* Enlace para solicitar/cambiar contraseña privada */}
+                  <div style={{ textAlign: 'right', marginBottom: '1.25rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => { setMode('reset_request'); setErrorMsg(''); setSuccessMsg(''); }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--c-brand)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      ¿Olvidaste o querés crear tu contraseña DEV?
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={status === 'loading_password'}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1.25rem',
+                      background: '#006847',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 'var(--r-xl)',
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-body)',
+                      transition: 'all 200ms ease',
+                      boxShadow: '0 2px 8px rgba(0,104,71,0.25)',
+                      opacity: status === 'loading_password' ? 0.6 : 1,
+                    }}
+                  >
+                    {status === 'loading_password' ? 'Iniciando sesión…' : 'Iniciar sesión con contraseña (DEV)'}
+                  </button>
+                </form>
+              )
             ) : (
-              // Formulario estándar para producción (Campos deshabilitados)
+              /* CASE 3: PRODUCCIÓN (Campos deshabilitados informativos) */
               <>
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={{
@@ -401,13 +645,28 @@ const Login = () => {
                 <div style={{
                   width: '36px', height: '36px',
                   border: '3px solid var(--c-border)',
-                  borderTopColor: status === 'loading_github' ? '#24292F' : status === 'loading_password' ? '#006847' : 'var(--c-brand)',
+                  borderTopColor: status === 'loading_github' ? '#24292F' : status === 'loading_password' ? '#006847' : status === 'loading_reset' ? '#2563EB' : 'var(--c-brand)',
                   borderRadius: '50%',
                   animation: 'spin 0.7s linear infinite',
                 }} />
                 <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-3)', fontWeight: 600 }}>
-                  {status === 'loading_github' ? 'Redirigiendo a GitHub OAuth…' : status === 'loading_password' ? 'Iniciando sesión con contraseña…' : 'Redirigiendo a Google OAuth…'}
+                  {status === 'loading_github' ? 'Redirigiendo a GitHub OAuth…' : status === 'loading_password' ? 'Iniciando sesión con contraseña…' : status === 'loading_reset' ? 'Enviando correo de recuperación…' : status === 'loading_update' ? 'Guardando nueva contraseña…' : 'Redirigiendo a Google OAuth…'}
                 </p>
+              </div>
+            )}
+
+            {status.startsWith('success_') && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                padding: '0.875rem 1rem',
+                background: 'rgba(16,185,129,0.1)',
+                borderRadius: 'var(--r-lg)',
+                color: '#059669',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+              }}>
+                <span style={{ fontSize: '1.25rem' }}>✅</span>
+                {successMsg}
               </div>
             )}
 
