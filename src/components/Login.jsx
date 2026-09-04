@@ -4,20 +4,47 @@ import logoVDC from '../assets/icono_VDC.png';
 import logoCliente from '../assets/logo_cliente.png';
 
 const Login = () => {
-  const [status, setStatus] = useState('idle'); // 'idle' | 'loading_google' | 'loading_github' | 'error'
+  const [status, setStatus] = useState('idle'); // 'idle' | 'loading_google' | 'loading_github' | 'loading_password' | 'error'
   const [errorMsg, setErrorMsg] = useState('');
-  const { loginWithProvider } = useAuth();
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
 
-  const handleLogin = async (provider) => {
+  const { loginWithProvider, loginWithPassword } = useAuth();
+
+  // Flag controlling whether DEV password authentication UI is enabled
+  const isDevPasswordAuthEnabled = import.meta.env.VITE_DEV_PASSWORD_AUTH === 'true';
+
+  const handleOAuthLogin = async (provider) => {
     setStatus(`loading_${provider}`);
     setErrorMsg('');
     try {
       await loginWithProvider(provider);
     } catch (err) {
       console.error(`Error durante autenticación ${provider}:`, err.message);
-      setErrorMsg(`Error de autenticación con ${provider === 'google' ? 'Google' : 'GitHub'}. Intentalo de nuevo.`);
+      setErrorMsg(err.message || `Error de autenticación con ${provider === 'google' ? 'Google' : 'GitHub'}. Intentalo de nuevo.`);
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 4000);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!emailInput || !passwordInput) {
+      setErrorMsg('Ingresá email y contraseña.');
       setStatus('error');
       setTimeout(() => setStatus('idle'), 3500);
+      return;
+    }
+
+    setStatus('loading_password');
+    setErrorMsg('');
+    try {
+      await loginWithPassword(emailInput, passwordInput);
+    } catch (err) {
+      console.error('Error durante autenticación con contraseña:', err.message);
+      setErrorMsg('Credenciales inválidas. Verificá tu email y contraseña.');
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 4000);
     }
   };
 
@@ -146,54 +173,152 @@ const Login = () => {
             boxShadow: 'var(--shadow-lg)',
             padding: '2.25rem 2rem',
           }}>
-            {/* Campo usuario (decorativo) */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{
-                display: 'block', fontSize: '0.75rem', fontWeight: 700,
-                color: 'var(--c-text-3)', textTransform: 'uppercase',
-                letterSpacing: '0.05em', marginBottom: '0.5rem',
-              }}>Email</label>
-              <input
-                type="email" disabled placeholder="Gestionado por Supabase Auth"
-                style={{
-                  width: '100%', padding: '0.65rem 1rem',
-                  border: '1.5px solid var(--c-border)',
-                  borderRadius: 'var(--r-lg)',
-                  background: 'var(--c-bg)',
-                  color: 'var(--c-text-4)',
-                  fontSize: '0.875rem',
-                  cursor: 'not-allowed',
-                  outline: 'none',
-                  fontFamily: 'var(--font-body)',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-            <div style={{ marginBottom: '1.75rem' }}>
-              <label style={{
-                display: 'block', fontSize: '0.75rem', fontWeight: 700,
-                color: 'var(--c-text-3)', textTransform: 'uppercase',
-                letterSpacing: '0.05em', marginBottom: '0.5rem',
-              }}>Contraseña</label>
-              <input
-                type="password" disabled placeholder="••••••••"
-                style={{
-                  width: '100%', padding: '0.65rem 1rem',
-                  border: '1.5px solid var(--c-border)',
-                  borderRadius: 'var(--r-lg)',
-                  background: 'var(--c-bg)',
-                  color: 'var(--c-text-4)',
-                  fontSize: '0.875rem',
-                  cursor: 'not-allowed',
-                  outline: 'none',
-                  fontFamily: 'var(--font-body)',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
+
+            {/* SECCIÓN DEV: Formulario Email/Password (únicamente si VITE_DEV_PASSWORD_AUTH=true) */}
+            {isDevPasswordAuthEnabled ? (
+              <form onSubmit={handlePasswordSubmit} style={{ marginBottom: '1.5rem' }}>
+                <div style={{
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: 'var(--r-md)',
+                  background: 'rgba(245,158,11,0.1)',
+                  border: '1px solid rgba(245,158,11,0.3)',
+                  color: '#D97706',
+                  fontSize: '0.6875rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: '1.25rem',
+                  textAlign: 'center',
+                }}>
+                  🛠️ Acceso de Desarrollo (DEV-ONLY)
+                </div>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{
+                    display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                    color: 'var(--c-text-3)', textTransform: 'uppercase',
+                    letterSpacing: '0.05em', marginBottom: '0.5rem',
+                  }}>Email</label>
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="emilianodirosa1@gmail.com"
+                    required
+                    style={{
+                      width: '100%', padding: '0.65rem 1rem',
+                      border: '1.5px solid var(--c-border)',
+                      borderRadius: 'var(--r-lg)',
+                      background: 'var(--c-bg)',
+                      color: 'var(--c-text-1)',
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      fontFamily: 'var(--font-body)',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label style={{
+                    display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                    color: 'var(--c-text-3)', textTransform: 'uppercase',
+                    letterSpacing: '0.05em', marginBottom: '0.5rem',
+                  }}>Contraseña</label>
+                  <input
+                    type="password"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    style={{
+                      width: '100%', padding: '0.65rem 1rem',
+                      border: '1.5px solid var(--c-border)',
+                      borderRadius: 'var(--r-lg)',
+                      background: 'var(--c-bg)',
+                      color: 'var(--c-text-1)',
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      fontFamily: 'var(--font-body)',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={status === 'loading_password'}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1.25rem',
+                    background: '#006847',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 'var(--r-xl)',
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-body)',
+                    transition: 'all 200ms ease',
+                    boxShadow: '0 2px 8px rgba(0,104,71,0.25)',
+                    opacity: status === 'loading_password' ? 0.6 : 1,
+                  }}
+                >
+                  {status === 'loading_password' ? 'Iniciando sesión…' : 'Iniciar sesión con contraseña (DEV)'}
+                </button>
+              </form>
+            ) : (
+              // Formulario estándar para producción (Campos deshabilitados)
+              <>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{
+                    display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                    color: 'var(--c-text-3)', textTransform: 'uppercase',
+                    letterSpacing: '0.05em', marginBottom: '0.5rem',
+                  }}>Email</label>
+                  <input
+                    type="email" disabled placeholder="Gestionado por Supabase Auth"
+                    style={{
+                      width: '100%', padding: '0.65rem 1rem',
+                      border: '1.5px solid var(--c-border)',
+                      borderRadius: 'var(--r-lg)',
+                      background: 'var(--c-bg)',
+                      color: 'var(--c-text-4)',
+                      fontSize: '0.875rem',
+                      cursor: 'not-allowed',
+                      outline: 'none',
+                      fontFamily: 'var(--font-body)',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: '1.75rem' }}>
+                  <label style={{
+                    display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                    color: 'var(--c-text-3)', textTransform: 'uppercase',
+                    letterSpacing: '0.05em', marginBottom: '0.5rem',
+                  }}>Contraseña</label>
+                  <input
+                    type="password" disabled placeholder="••••••••"
+                    style={{
+                      width: '100%', padding: '0.65rem 1rem',
+                      border: '1.5px solid var(--c-border)',
+                      borderRadius: 'var(--r-lg)',
+                      background: 'var(--c-bg)',
+                      color: 'var(--c-text-4)',
+                      fontSize: '0.875rem',
+                      cursor: 'not-allowed',
+                      outline: 'none',
+                      fontFamily: 'var(--font-body)',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Divisor */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', marginTop: isDevPasswordAuthEnabled ? '1.5rem' : '0' }}>
               <div style={{ flex: 1, height: '1px', background: 'var(--c-border)' }} />
               <span style={{ fontSize: '0.6875rem', color: 'var(--c-text-4)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Acceso mediante OAuth
@@ -206,7 +331,8 @@ const Login = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {/* Botón Google */}
                 <button
-                  onClick={() => handleLogin('google')}
+                  type="button"
+                  onClick={() => handleOAuthLogin('google')}
                   style={{
                     width: '100%',
                     display: 'flex',
@@ -239,7 +365,8 @@ const Login = () => {
 
                 {/* Botón GitHub */}
                 <button
-                  onClick={() => handleLogin('github')}
+                  type="button"
+                  onClick={() => handleOAuthLogin('github')}
                   style={{
                     width: '100%',
                     display: 'flex',
@@ -274,12 +401,12 @@ const Login = () => {
                 <div style={{
                   width: '36px', height: '36px',
                   border: '3px solid var(--c-border)',
-                  borderTopColor: status === 'loading_github' ? '#24292F' : 'var(--c-brand)',
+                  borderTopColor: status === 'loading_github' ? '#24292F' : status === 'loading_password' ? '#006847' : 'var(--c-brand)',
                   borderRadius: '50%',
                   animation: 'spin 0.7s linear infinite',
                 }} />
                 <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-3)', fontWeight: 600 }}>
-                  Redirigiendo a {status === 'loading_github' ? 'GitHub' : 'Google'} OAuth…
+                  {status === 'loading_github' ? 'Redirigiendo a GitHub OAuth…' : status === 'loading_password' ? 'Iniciando sesión con contraseña…' : 'Redirigiendo a Google OAuth…'}
                 </p>
               </div>
             )}

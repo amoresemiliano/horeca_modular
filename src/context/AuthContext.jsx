@@ -11,6 +11,7 @@ const AuthContext = createContext({
   loginWithProvider: async (_provider) => {},
   loginWithGoogle: async () => {},
   loginWithGithub: async () => {},
+  loginWithPassword: async (_email, _password) => {},
   logout: async () => {},
 });
 
@@ -96,7 +97,7 @@ export function AuthProvider({ children }) {
     let isMounted = true;
 
     // 1. Subscribe to Auth State Changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!isMounted) return;
 
       const currentUser = session?.user || null;
@@ -164,6 +165,26 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = async () => loginWithProvider('google');
   const loginWithGithub = async () => loginWithProvider('github');
 
+  const loginWithPassword = async (email, password) => {
+    if (!email || !password) {
+      throw new Error('Email y contraseña son requeridos.');
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (data?.user) {
+      setUser(data.user);
+      await fetchUserRoleAndProfile(data.user);
+    }
+  };
+
   const logout = async () => {
     setLoading(true);
     await supabase.auth.signOut();
@@ -187,6 +208,7 @@ export function AuthProvider({ children }) {
         loginWithProvider,
         loginWithGoogle,
         loginWithGithub,
+        loginWithPassword,
         logout,
       }}
     >
