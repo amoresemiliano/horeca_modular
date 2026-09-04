@@ -76,12 +76,43 @@ const AccesoRestringido = ({ modulo }) => (
 
 /* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
 const MainLayout = ({ user: propsUser }) => {
-  const { user: authUser, role, logout } = useAuth();
+  const { user: authUser, role, logout, updatePassword } = useAuth();
   const user = authUser || propsUser;
   const [moduloActivo,      setModuloActivo]      = useState('Dashboard');
   const [tabActiva,         setTabActiva]          = useState('Inicio');
   const [sidebarOpen,       setSidebarOpen]        = useState(true);
   const [modulosPermitidos, setModulosPermitidos]  = useState([]);
+
+  // Change password modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPasswordInput, setNewPasswordInput]   = useState('');
+  const [passwordStatus, setPasswordStatus]       = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
+  const [passwordMsg, setPasswordMsg]             = useState('');
+
+  const handlePasswordChangeSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPasswordInput || newPasswordInput.length < 6) {
+      setPasswordMsg('La contraseña debe tener al menos 6 caracteres.');
+      setPasswordStatus('error');
+      return;
+    }
+    setPasswordStatus('loading');
+    setPasswordMsg('');
+    try {
+      await updatePassword(newPasswordInput);
+      setPasswordStatus('success');
+      setPasswordMsg('¡Contraseña actualizada correctamente!');
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordStatus('idle');
+        setNewPasswordInput('');
+        setPasswordMsg('');
+      }, 1500);
+    } catch (err) {
+      setPasswordStatus('error');
+      setPasswordMsg(err.message || 'Error al actualizar la contraseña.');
+    }
+  };
 
   useEffect(() => {
     // FAIL-CLOSED: Module permission resolution strictly derived from validated DB membership role
@@ -208,6 +239,30 @@ const MainLayout = ({ user: propsUser }) => {
             </div>
           </div>
           <div style={{ width: '1px', height: '24px', background: 'var(--c-border)' }} />
+          <button
+            onClick={() => setShowPasswordModal(true)}
+            title="Cambiar contraseña"
+            style={{
+              padding: '0.35rem 0.65rem',
+              borderRadius: 'var(--r-lg)',
+              border: '1px solid var(--c-border)',
+              background: 'var(--c-surface-2)',
+              color: 'var(--c-text-2)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              transition: 'all var(--t-fast)',
+              fontFamily: 'var(--font-body)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--c-brand-light)'; e.currentTarget.style.color = 'var(--c-brand)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--c-surface-2)'; e.currentTarget.style.color = 'var(--c-text-2)'; }}
+          >
+            <span>🔑</span>
+            <span style={{ display: 'none' }} className="md:inline">Cambiar contraseña</span>
+          </button>
           <button
             onClick={cerrarSesion}
             title="Cerrar sesión"
@@ -411,6 +466,117 @@ const MainLayout = ({ user: propsUser }) => {
           </div>
         </main>
       </div>
+
+      {/* ── MODAL CAMBIAR CONTRASEÑA ────────────────────── */}
+      {showPasswordModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 50,
+          background: 'rgba(15,23,42,0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem',
+        }}>
+          <div style={{
+            background: 'var(--c-surface)',
+            borderRadius: 'var(--r-2xl)',
+            border: '1px solid var(--c-border)',
+            boxShadow: 'var(--shadow-xl)',
+            width: '100%', maxWidth: '400px',
+            padding: '2rem',
+            animation: 'fadeIn 150ms ease-out',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--c-text-1)', margin: 0 }}>
+                🔑 Cambiar contraseña
+              </h3>
+              <button
+                onClick={() => { setShowPasswordModal(false); setPasswordStatus('idle'); setPasswordMsg(''); }}
+                style={{ background: 'none', border: 'none', color: 'var(--c-text-4)', cursor: 'pointer', fontSize: '1.25rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-3)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+              Ingresá tu nueva contraseña para reemplazar la contraseña temporal de tu usuario (<strong>{user?.email}</strong>).
+            </p>
+
+            <form onSubmit={handlePasswordChangeSubmit}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--c-text-3)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                  Nueva Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={newPasswordInput}
+                  onChange={(e) => setNewPasswordInput(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  minLength={6}
+                  style={{
+                    width: '100%', padding: '0.65rem 1rem',
+                    border: '1.5px solid var(--c-border)',
+                    borderRadius: 'var(--r-lg)',
+                    background: 'var(--c-bg)',
+                    color: 'var(--c-text-1)',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {passwordStatus === 'error' && (
+                <div style={{ padding: '0.75rem', borderRadius: 'var(--r-md)', background: 'var(--c-brand-light)', color: 'var(--c-brand)', fontSize: '0.8125rem', marginBottom: '1rem', fontWeight: 600 }}>
+                  ⚠️ {passwordMsg}
+                </div>
+              )}
+
+              {passwordStatus === 'success' && (
+                <div style={{ padding: '0.75rem', borderRadius: 'var(--r-md)', background: 'rgba(16,185,129,0.1)', color: '#059669', fontSize: '0.8125rem', marginBottom: '1rem', fontWeight: 600 }}>
+                  ✅ {passwordMsg}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowPasswordModal(false); setPasswordStatus('idle'); setPasswordMsg(''); }}
+                  style={{
+                    padding: '0.625rem 1rem',
+                    borderRadius: 'var(--r-xl)',
+                    border: '1px solid var(--c-border)',
+                    background: 'transparent',
+                    color: 'var(--c-text-3)',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={passwordStatus === 'loading'}
+                  style={{
+                    padding: '0.625rem 1.25rem',
+                    borderRadius: 'var(--r-xl)',
+                    border: 'none',
+                    background: '#006847',
+                    color: '#fff',
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    opacity: passwordStatus === 'loading' ? 0.6 : 1,
+                  }}
+                >
+                  {passwordStatus === 'loading' ? 'Guardando…' : 'Guardar nueva contraseña'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
