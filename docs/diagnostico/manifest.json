@@ -1,0 +1,141 @@
+{
+  "project": "Taquería El Criollo - Plataforma Modular HORECA (Vegen Digital SL)",
+  "phase": "Fase 0.5: Control de Calidad, Rectificación y Trazabilidad Documental",
+  "version": "2.1.0-audit-qc-approved",
+  "generated_at": "2026-08-03T01:45:00Z",
+  "audit_scope": {
+    "authorized_root": "el-criollo-ecosistema/",
+    "main_repository": "el_criollo_modular",
+    "npm_package_name": "ec-plataforma-maestra",
+    "restrictions": [
+      "No recursive searches outside workspace root",
+      "No database queries or SQL execution",
+      "No modifying or removing existing changes in MainLayout.jsx or app/",
+      "No commits, pushes, or deployments",
+      "Anonymize all sensitive credentials, passwords, and tokens",
+      "Exclusively documental revision without code modifications or Phase 1 initiation"
+    ]
+  },
+  "quality_control_compliance": {
+    "evidence_rule_enforced": true,
+    "unsupported_metrics_purged": true,
+    "multi_tenant_horizon_separated": true,
+    "excel_binary_reading_limitation_noted": true,
+    "all_future_roadmap_tasks_marked_uncompleted": true,
+    "forbidden_superlative_adjectives_purged": true
+  },
+  "deliverables": [
+    {
+      "id": "00",
+      "filename": "00-resumen-ejecutivo.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/00-resumen-ejecutivo.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Resumen ejecutivo rectificado aplicando la Regla de Evidencia, separando el horizonte multi-tenant y aclarando el alcance frente a TPV y asesoría fiscal."
+    },
+    {
+      "id": "01",
+      "filename": "01-inventario-repositorios.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/01-inventario-repositorios.md",
+      "status": "COMPLETED",
+      "description": "Inventario técnico verificando remotes Git de 9 repositorios y aclarando la nomenclatura ec-plataforma-maestra."
+    },
+    {
+      "id": "02",
+      "filename": "02-mapa-funcional.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/02-mapa-funcional.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Matriz del ecosistema saneada bajo Criterio Funcional Estricto y evitando presunciones o juicios de valor ilógicos sin segmentación de datos demostrable."
+    },
+    {
+      "id": "03",
+      "filename": "03-arquitectura-actual.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/03-arquitectura-actual.md",
+      "status": "COMPLETED",
+      "description": "Radiografía del ecosistema híbrido (SPA, PHP legacy y Node.js) con diagramas Mermaid."
+    },
+    {
+      "id": "04",
+      "filename": "04-bases-de-datos.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/04-bases-de-datos.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Auditoría relacional que distingue lo verificable en JS/DDL frente al estado no verificable del motor RLS y las políticas remotas en la consola Supabase."
+    },
+    {
+      "id": "05",
+      "filename": "05-seguridad.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/05-seguridad.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Auditoría de seguridad que diferencia la anon key pública de secretos MySQL en Git, estipulando el protocolo no invasivo por fases de remediación."
+    },
+    {
+      "id": "06",
+      "filename": "06-deuda-tecnica.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/06-deuda-tecnica.md",
+      "status": "COMPLETED",
+      "description": "Clasificación de antipatrones de diseño, dependencia de localStorage y ausencia acreditada en repositorio de cobertura de testea unitarios."
+    },
+    {
+      "id": "07",
+      "filename": "07-extractos.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/07-extractos.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Evaluación del módulo de extractos que descarta el hash mágico universal, estructuyendo tres niveles de deduplicación contable sin bloquear gastos legítimos idénticos."
+    },
+    {
+      "id": "07a",
+      "filename": "07a-formatos-bancarios.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/07a-formatos-bancarios.md",
+      "status": "RECTIFIED_APPROVED_PRELIMINARY",
+      "description": "Especificación preliminar pendiente de validación estructural binario-Excel que contrasta y documenta inconsistencias acreditadas en el código fuente."
+    },
+    {
+      "id": "08",
+      "filename": "08-pedidos.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/08-pedidos.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Evaluación dimensional de 16 aspectos del flujo por WhatsApp y comparativa estratégica objetiva sin calificativos sesgados entre las 4 alternativas arquitectónicas."
+    },
+    {
+      "id": "09",
+      "filename": "09-integracion-last.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/09-integracion-last.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Radiografía del servidor TPV en Node y Matriz BCG, clasificando la firma como no verificable sin manual e instruyendo el menú imparcial de 8 controles para webhooks."
+    },
+    {
+      "id": "10",
+      "filename": "10-fuentes-de-verdad.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/10-fuentes-de-verdad.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Mapa que desglosa fuentes operativas actuales, históricas, propuestas y marcadas solemnemente en firme como destino pendiente de decisión humana prioritaria."
+    },
+    {
+      "id": "11",
+      "filename": "11-estrategia-consolidacion.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/11-estrategia-consolidacion.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Estrategia progresiva por dominios y contratos orientada por la Regla de Oro sin imponer anticipadamente un proveedor nube soberano ni comprometer en sala la operación diaria."
+    },
+    {
+      "id": "12",
+      "filename": "12-roadmap.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/12-roadmap.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Hoja de ruta reingenierízada por completo sobre 9 fases evolutivas basadas en dependencias verificadas, sin tareas dadas por completadas y sin cronogramas inventados."
+    },
+    {
+      "id": "13",
+      "filename": "13-preguntas-abiertas.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/13-preguntas-abiertas.md",
+      "status": "RECTIFIED_APPROVED",
+      "description": "Cuestionario directivo que suprime inferencias legales o sanciones sin respaldo y eleva a deliberación humana y fiscal las decisiones inamovibles antes de programar la Fase 1."
+    },
+    {
+      "id": "14",
+      "filename": "14-control-calidad.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/diagnostico/14-control-calidad.md",
+      "status": "COMPLETED_INPUT_QC",
+      "description": "Informe maestro de control de calidad independiente y trazabilidad que rige como insumo obligatorio de remediación documental y analítica de esta Fase 0.5."
+    }
+  ]
+}
