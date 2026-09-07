@@ -1,19 +1,19 @@
-# CURRENT WORK PACKAGE — WP-000: FOUNDATION PREFLIGHT & DOCUMENTATION FREEZE
+# CURRENT WORK PACKAGE — WP-000: FOUNDATION PREFLIGHT & DOCUMENTATION FREEZE (CLOSURE PASS)
 
 ## 1. Status Overview
 - **Work Package**: WP-000
-- **Title**: Foundation Preflight & Documentation Freeze
+- **Title**: Foundation Preflight & Documentation Freeze (Consolidated Closure Pass)
 - **Status**: COMPLETE & VERIFIED
 - **Target Branch**: `dev`
 
-## 2. Checklist & Deliverables
+## 2. Remediation Summary (Independent Review Findings Addressed)
 
-- [x] **Phase A — Repository Forensic Inventory**: HEAD SHAs verified (`main`: `8a1fcb1`, `dev`: `9c36e0e`, `origin/feature/escandallos-2485206073148743544`: `eb1644c`).
-- [x] **Phase B — Database & Supabase Forensic Inventory**: All 34 public tables, 8 storage tables, RLS policies, functions, triggers, and storage buckets inventoried on `ourzapkjykzlwsjunzmd`.
-- [x] **Phase C — Migration Drift Analysis**: Drafted `/docs/DATABASE_DRIFT_REPORT.md` classifying all live tables and policy legacy function references (`private.org_id()`).
-- [x] **Phase D — Escandallos Branch & Feature Asset Audit**: Unmerged branch `eb1644c` audited; historical purchases and sales adapter migration pathways identified.
-- [x] **Phase E — Documentation Set Freeze**: Created/updated complete 16-file documentation suite under `/docs` and `/agent` in English.
-- [x] **Phase F — Readiness Verification**: Project confirmed ready for WP-001 initiation.
+- [x] **Blocker 1 Remediated**: `/docs/ARCHITECTURE.md` updated to explicitly demarcate **CURRENT AS-IS ARCHITECTURE** vs **APPROVED TARGET TO-BE ARCHITECTURE**.
+- [x] **Blocker 2 Remediated**: `/docs/SECURITY_MODEL.md`, `/docs/DATA_OWNERSHIP.md`, and `/docs/DATABASE_DRIFT_REPORT.md` updated to clarify `get_auth_user_org_id()` as an **AS-IS single-organization helper** (`LIMIT 1`) and document the **TARGET TO-BE Multi-CIF RLS standard**.
+- [x] **Blocker 3 Remediated**: Created 3 missing forensic audit documents:
+  - [`/docs/ESCANDALLOS_BRANCH_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/ESCANDALLOS_BRANCH_AUDIT.md)
+  - [`/docs/PURCHASES_LEGACY_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/PURCHASES_LEGACY_AUDIT.md)
+  - [`/docs/SALES_LAST_ASSET_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/SALES_LAST_ASSET_AUDIT.md)
 
 ## 3. Next Work Package
 - **Upcoming**: WP-001 — Core Architecture & Fail-Closed Auth Hardening.

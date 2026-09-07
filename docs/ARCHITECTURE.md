@@ -1,47 +1,60 @@
 # ARCHITECTURE SPECIFICATION — HORECA MODULAR
 
-## 1. High-Level System Architecture
-HORECA Modular is structured as a **Modular Monolith** web application designed for fast deployment, low latency, and single-codebase maintainability.
+## 1. Executive Summary
+This document provides a clear demarcation between the **CURRENT AS-IS ARCHITECTURE** operating on the `dev` branch and the **APPROVED TARGET TO-BE ARCHITECTURE** specified under the VEGEN Software Product System.
+
+---
+
+## 2. CURRENT AS-IS ARCHITECTURE
 
 ```mermaid
 graph TD
-    Client[React + Vite Frontend\nHosted on Vercel] -->|Supabase JS SDK PKCE| SupabaseAuth[Supabase Auth Engine]
-    Client -->|PostgREST API + RLS| SupabaseDB[PostgreSQL Managed Database]
-    Client -->|Private S3 Storage| SupabaseStore[Supabase Private Storage]
+    Client[React 19 + Vite 8 Frontend\nHosted on Vercel Preview] -->|Supabase JS SDK PKCE| SupabaseAuth[Supabase Auth Engine]
+    Client -->|PostgREST API| SupabaseDB[Supabase Postgres: ourzapkjykzlwsjunzmd]
+    Client -->|Private S3 API| SupabaseStore[Storage Bucket: eco-imports-private-staging]
+    Client -->|In-Browser Parsing| LocalParsers[PapaParse / XLSX]
 
-    subgraph "Supabase Backend (ourzapkjykzlwsjunzmd)"
+    subgraph "Current Backend State (ourzapkjykzlwsjunzmd)"
         SupabaseAuth -->|Trigger: handle_new_user| SupabaseDB
-        SupabaseDB -->|SECURITY DEFINER| RLS[Strict RLS: get_auth_user_org_id]
-        SupabaseDB -->|Tables| Schemas[eco_organizations, eco_user_profiles, eco_financial_movements, ...]
+        SupabaseDB -->|AS-IS Single-Org Definer| Helper[get_auth_user_org_id: LIMIT 1]
+        SupabaseDB -->|Mixed RLS Policies| Policies[get_auth_user_org_id vs legacy private.org_id]
     end
 ```
 
-## 2. Technology Stack
-- **Frontend Core**: React 19, JavaScript ES Modules, HTML5.
-- **Styling**: Vanilla CSS with custom CSS variable design system (`index.css`), Tailwind CSS v4 for utility components.
-- **Build System**: Vite v8.
-- **Hosting**: Vercel Frontend Hosting with automated branch previews (`dev` -> Preview, `main` -> Production).
-- **Backend Infrastructure**: Supabase Managed Backend (`ourzapkjykzlwsjunzmd` Staging/Dev).
-- **Database Engine**: PostgreSQL with `pgcrypto`, `uuid-ossp` extensions.
-- **Authentication**: Supabase Auth (PKCE flow).
+### AS-IS Technical Inventory
+- **Frontend Stack**: React 19, JavaScript ES Modules, Vite 8, Tailwind CSS v4, Lucide React icons.
+- **Hosting & CI/CD**: Vercel Frontend Hosting connected to GitHub repository `amoresemiliano/horeca_modular` (`dev` branch -> Preview, `main` branch -> Production).
+- **Authentication**: Native Supabase Auth (`auth.users`) using PKCE flow. DEV environment features temporary email/password auth (`VITE_DEV_PASSWORD_AUTH=true`). Legacy Firebase dependencies remain in `package.json` pending cleanup in WP-001.
+- **Database Backend**: Canonical Supabase Staging project `ourzapkjykzlwsjunzmd` (`https://ourzapkjykzlwsjunzmd.supabase.co`).
+- **Authorization Primitive**: `get_auth_user_org_id()` helper function that queries `eco_organization_members` and returns `LIMIT 1` active organization UUID for initial bootstrap.
+- **Database RLS Policies**: Mixed state — newly migrated operational tables (`empleados`, `fichajes`, `produccion_registros`, `eco_financial_movements`) evaluate `get_auth_user_org_id()`, while legacy tables (`eco_audit_events`, `eco_import_issues`, `eco_normalized_records`) evaluate legacy helper `private.org_id()`.
+- **Storage**: Single private storage bucket `eco-imports-private-staging` (`public = false`, max file size 20MB). RLS policy evaluates legacy `(storage.foldername(name))[1] = (private.org_id())::text`.
+- **In-Browser Processing**: Bank CSV/XLS statement parsing handled in-browser using `papaparse` and `xlsx`.
+- **State Management Residue**: Prototype/mock state stored in React local state and localStorage for Purchases (`src/modules/pedidos`) and Inventory.
 
-## 3. Directory Layout & Module Boundaries
+---
+
+## 3. APPROVED TARGET TO-BE ARCHITECTURE
+
+```mermaid
+graph TD
+    Client[Modular Monolith React + TS Frontend\nHosted on Vercel] -->|PKCE Auth + Context Token| SupabaseAuth[Supabase Auth Engine]
+    Client -->|Restricted API Requests| SupabaseDB[Supabase Managed PostgreSQL]
+    Client -->|Secure Uploads| SupabaseStore[Private Supabase Storage]
+
+    subgraph "Target Backend Architecture"
+        SupabaseAuth -->|Provision Profile & Allowlist| Triggers[handle_new_user & eco_auth_bootstrap_allowlist]
+        SupabaseDB -->|Multi-CIF RLS| SecurityModel[Multi-Tenant Membership Check\neco_organization_members / eco_user_active_context]
+        SupabaseDB -->|Protected Workflows| EdgeFunctions[Supabase Edge Functions\nOCR, Last.app Sync, Automated Background Jobs]
+        SupabaseDB -->|Postgres Scheduler| PgCron[pg_cron / Background Jobs]
+    end
 ```
-/src
-  /assets          # Brand images, client logos, static SVGs
-  /components      # Core layout (MainLayout.jsx, Login.jsx)
-  /context         # Global AuthContext (AuthProvider, fail-closed state)
-  /lib             # Supabase client singleton (supabase.js)
-  /modules         # Decoupled domain modules
-    /bancos        # Extractos statement parsing & allocation
-    /configuracion # User access & company settings
-    /escandallos   # Recipe costing UI & calculators
-    /extractos     # Statement parsing app
-    /horarios      # Personal & fichajes management
-    /inventario    # Inventory & stock management
-    /kpis          # KPI analytics & executive dashboards
-    /pedidos       # Purchases & supplier orders
-    /prediccion    # Predictive analytics
-    /produccion    # Production line tracking
-    /ventas        # Sales & Last.app POS integration
-```
+
+### TO-BE Architecture Principles
+1. **Modular Monolith Pattern**: Decoupled domain modules (`src/modules/*`) operating within a unified single-repository runtime.
+2. **Multi-CIF / Multi-Organization Membership**: Full support for users managing multiple corporate entities (CIFs) and organizations. Users select an active organization context (`eco_user_active_context` / session claim), and RLS policies validate authorization against `eco_organization_members` for the specific target `organization_id`.
+3. **Strict Database Row-Level Security**: 100% of application tables enforce RLS `TO authenticated` without any public/anon access or single-tenant default fallbacks.
+4. **Supabase Edge Functions**: Heavy computational tasks, secure external API webhooks (Last.app POS integration, AI/OCR parsing), and background tasks execute within protected Edge Functions rather than client-side UI threads.
+5. **Postgres-Native Background Tasks**: Automated reconciliation, recurring report generation, and status checks handled by backend triggers and database scheduling.
+6. **Provider Adapters**: Standardized adapter interfaces for external services (Last.app POS, bank parsers, OCR engines) to ensure seamless maintainability.
+7. **Environment Segregation**: Complete separation between DEV, UAT, and PROD environments across Git branches, Vercel deployments, and Supabase projects.
