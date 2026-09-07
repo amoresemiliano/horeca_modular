@@ -1,0 +1,70 @@
+# 12 - Estrategia y Clasificación para la Transición del Laboratorio de Parsers (Fase 2B)
+
+## 1. Proscripción del Traslado Intacto y Justificación de la Nueva Frontera
+
+La conclusión satisfactoria y probatoria del laboratorio aislado acometido durante la Fase 2A en la ubicación `el_criollo_modular/labs/import-preview/` no justifica, en ningún escenario técnico ni metodológico, el **traslado crudo, íntegro, directo e intacto de dicha carpeta de prácticas al interior del directorio del código operado `src/` ni su entretejida incrustación dentro de los componentes visuales de la interfaz de usuario en React**.
+
+### 1.1. Justificación y Especificación del Espacio Desacoplado
+La inspección estática evidenciada en el repositorio muestra que el directorio actual para las operaciones bancarias es un prototipo estrecho acoplado (`src/modules/extractos/`) circunscrito al uso de bibliotecas simples inyectadas en la interfaz de pantalla (`ImportModal.jsx`). Incorporar sin orden ni fronteras librerías contundentes como `xlsx` y lógicas complejas del laboratorio transicionando de forma indistinta sobre las pantallas del cliente afectaría y enturbiaría la limpieza del enrutamiento frontend del sistema, rompiendo los esquemas de compilación optimizada del proyecto en sala de comedor.
+
+En consecuencia, **se propone y justifica técnicamente habilitar y delimitar una frontera de dominio desacoplada del framework visual React**:
+**`src/domain/import-engine/`** *(o en su alternativa técnica complementaria equiparada: estructurado y empaquetado como una librería purista independiente de JavaScript/Node transaccionando importaciones acoplables transatoriamente sin estado visual, apto a partes iguales para su invocación en el backend y para cargarse diferidamente desde servicios web).*
+Esta separación protege a los componentes gráficos orientados a la experiencia del usuario (HORECA WOW UI) aislándose tras una interfaz predecible encargada al 100% en solitario de las labores mecánicas y especializadas ligadas al reconocimiento, desmontaje, parseo y transposición normalizada de informes comerciales e interacciones con el archivo transaccional de entrada.
+
+---
+
+## 2. Clasificación Exhaustiva y Unitara de Componentes del Laboratorio
+
+Cada archivo, módulo o conjunto generado empíricamente durante las investigaciones procedentes en el laboratorio se dictamina y cataloga individualmente empleando con exclusividad las **cuatro categorías taxonómicas oficiales autorizadas en el mandato directivo**:
+
+```text
+================================================================================================
+                    MAPA Y CLASIFICACIÓN DE TRANSICIÓN DE ARCHIVOS DEL LABORATORIO
+================================================================================================
+  [ REUTILIZABLE SIN CAMBIOS ]        [ REUTILIZABLE CON REFACTOR ]        [ EXCLUIDOS PRODUCCIÓN ]
++----------------------------+      +-----------------------------+      +------------------------+
+| fileTypeDetector.js        |      | unifiedReader.js            |      | CLI (Herramientas Node)|
+| sourceDetector.js          |      | bankAdapter.js              |      | (SOLO EXPERIMENTAL)    |
+| lastAdapter.js             |      | uberAdapter.js              |      +------------------------+
+| anonymizer.js              |      | glovoAdapter.js             |      | outputs/ (Archivos CSV)|
++----------------------------+      | normalizer.js               |      | (NO APTO PRODUCCIÓN)   |
+                                    | tests/ (Pruebas unitarias)  |      +------------------------+
+                                    +-----------------------------+
+```
+
+| Archivo o Subconjunto del Laboratorio | Clasificación Formal Asignada | Fundamentación Técnica y Directivas de Adaptación en la Frontera Desacoplada |
+|---|:---:|---|
+| `unifiedReader.js` | **REUTILIZABLE CON REFACTOR** | Requiere una refactorización para desligarlo de las dependencias locales del sistema del laboratorio, adaptando el consumo del flujo en bytes (`ArrayBuffer` / stream de datos) en lugar de apoyarse indebidamente en lecturas locales por comandos directos del sistema en disco (`fs.readFileSync`), e incorporando cláusulas obligatorias del patrón lazy-load o invocación encapsulada interpuesta sin alterar la SPA in situ. |
+| `fileTypeDetector.js` | **REUTILIZABLE SIN CAMBIOS** | El algorímo lógico de identificación e inspección preliminar de firmas binarias de archivos (*Magic Numbers* de ficheros Excel, libros XLSX y CSV tabulares) exhibió fiabilidad intachable e independiente del entorno durante los ensayos, admitiendo su tránsito puro hacia la carpeta desacoplada sin precisar alteraciones al código interpretativo ni reescrituras innecesarias. |
+| `sourceDetector.js` | **REUTILIZABLE SIN CAMBIOS** | La batería heurística conformada para examinar combinaciones, palabras de reconocimiento y cabeceras operacionales que discriminen a los distintos bancos (Sabadell vs. BBVA) frente al TPV (Last.app) o operadores de entrega es un núcleo funcional excelente y desacoplado transferible directamente como módulo utilitario consolidado en la nueva frontera del motor de importación HORECA. |
+| `bankAdapter.js` | **REUTILIZABLE CON REFACTOR** | Debe actualizarse para enriquecer el manejo riguroso transaccional de discrepancias o variantes poco convencionales que surjan al alterarse por parte de las entidades bancarias interconectadas cabeceras, signos o formatos en las cuentas o extractos de tarjeta de débito en meses ulteriores, adaptándose a las interfaces y estructuras de staging y normalizadas del nuevo esquema. |
+| `lastAdapter.js` | **REUTILIZABLE SIN CAMBIOS** | Su lógica analítica orientada a desarmar el fichero fuente primordial (`tabs-report`) demostró con solvencia intachable su capacidad resolutivo-práctica durante la auditoría probatoria previa al interpretar cabeceras y productos combinados sin pérdida ni alteración ni requerimiento de refactor preliminar en su lógica central e interna. |
+| `uberAdapter.js` | **REUTILIZABLE CON REFACTOR** | Precisará de un ajuste formal para conciliar transitoriamente y mapear adecuadamente sus salidas sobre el molde intermedio homologado sin forzar inferencias o asunciones infundadas, así como prever y controlar discrepancias ligadas a variantes eventuales del archivo de comisiones operadas o ajustes no esperados o vacíos en el canal de liquidaciones de reparto. |
+| `glovoAdapter.js` | **REUTILIZABLE CON REFACTOR** | Refactorización requerida del mismo modo y en simétrica consonancia para empalmar sin fallos sobre las estructuras del staging relacional y la capa intermedia no definitiva proyectada para el MVP, aislando peculiaridades inherentes al proveedor ajenas a las lógicas contables bancarias de la empresa corporativa Vegen Digital SL. |
+| `normalizer.js` | **REUTILIZABLE CON REFACTOR** | Exige una refactorización explícita para ajustarse a las siete nuevas entidades relacionales prescritas para el MVP de la primera vertical (en especial proyectar hacia el esquema analizado de `eco_normalized_records`), en sustitución de las meras salidas a CSV y consolidados simplistas creados por conveniencia durante las indagaciones prácticas elementales del laboratorio intermedio. |
+| `anonymizer.js` | **REUTILIZABLE SIN CAMBIOS** | El filtro para enmascarar o transformar nombres civiles irrestrictos, direcciones y teléfonos del cliente o repartidor delivery se preservará intransitivo e intacto operándose obligatoriamente transicionado como la pieza clave preventiva para acoger el cumplimiento del RGPD en la nueva estructura del módulo ERP. |
+| `CLI` *(Scripts interactivos Node)*| **SOLO EXPERIMENTAL** | Herramientas en consola creadas con carácter exclusivo como apoyo en las investigaciones y comprobaciones de taller del ingeniero desarrollador, inadecuadas por definición para integrarse a una SPA administrable por navegadores y cajeros en el entorno gastronómico operado en sala o producción HORECA de Taquería El Criollo. |
+| `tests/` *(Baterías de ensayo)* | **REUTILIZABLE CON REFACTOR** | Excelente activo de ingeniería (cuyo rendimiento se ratificó en los 10 tests ejecutados sin fallos); las suites de ensayo deberán adaptarse con un refactor de sus enlaces y rutas que permita relocalizarlas dentro de un esquema formal de integración y pruebas automatizadas sobre la nueva carpeta `src/domain/import-engine/` (o su empaquetamiento afín de testing). |
+| `outputs/` *(Carpeta temporaria)* | **NO APTO PARA PRODUCCIÓN** | El repositorio de ficheros de texto generados temporalmente durante las prácticas transicionales de Fase 2A que residen en `labs/import-preview/outputs/` o equivalentes intervinientes quedan en el acto excluidos; los reportes de salida se abandonan al carecer en producción del menor respaldo relacional, encriptación en nube ni capacidad transaccional ACID, siendo prohibida cualquier incrustación o dependencia hacia ellos en el software operado formalmente. |
+
+---
+
+## 3. Dictamen y Directivas sobre la Librería de Parseo (SheetJS / `xlsx`)
+
+Con estricta sujeción a la rigurosidad y sobriedad técnica exigida a esta especificación documental de la Fase 2B, la librería de análisis Excel experimentada durante los laboratorios previos es sometida al siguiente escrutinio institucional y vinculante:
+
+* **Versión Probada:** `xlsx 0.18.5` *(SheetJS)*.
+* **Instalación Aislada y No Autorizada Inicialmente:** Se documenta con formal constancia como un hecho verificado en el repositorio que esta dependencia se encuentra excluida del manifiesto raíz `el_criollo_modular/package.json`. Su instalación e invocación sobre el workspace aconteció con carácter expresamente restringido y aislado como una desviación procesal aprovisionada dentro del laboratorio transitorio para viabilizar durante la Fase 2A la verificación demostrables del parseo.
+* **Formatos Leídos en el Laboratorio:** Demostrada su competencia de forma experimental y satisfactoriamente en entorno Node local para la decodificación computacional en memoria de libros en formato **XLS (Excel Clásico / Binario 97-2003)** y de libros modernos basados en esquemas XML conformados como **XLSX**, adicionalmente a soportar lecturas no especializadas de plantillas planas **CSV**.
+* **Uso Todavía No Aprobado en Producción:** Queda establecido resueltamente que, al término de este informe y conclusión de la Fase 2B, la librería `xlsx` 0.18.5 **NO SE ENCUENTRA TODAVÍA APROBADA NI LIBERADA PARA SU INCORPORACIÓN INCONDICIONAL IN SITU O EN ABIERTO EN LA PRODUCCIÓN REAL EN VIVO Y CONTINUA DE LA APLICACIÓN CLIENTE**.
+* **Necesidad de Revisar Licencia, Mantenimiento y Alternativas:** Antes o con ocasión de transicionar al despliegue definitivo aplicable al proyecto en sala, la dirección técnica ejecutará una comprobación reflexiva y documentable en torno a los siguientes factores colaterales asociados a SheetJS:
+  1. *Condicionantes en materia de licencia y versiones:* Verificar incompatibilidades mercantiles si en el futuro se requiriere subir a versiones modernas propietarias sujetas a licencias duales con restricciones comerciales.
+  2. *Vulnerabilidades o parches de mantenimiento:* Analizar el estado activo o abandonado del soporte de parches en repositorios públicos aplicables a la versión comunitaria congelada en `0.18.5`.
+  3. *Evaluación de alternativas viables:* Contemplar homólogos del mercado contemporáneo de software abierto en Node y JS (por ejemplo `exceljs` para manipular libros `.xlsx` sin restricciones abusivas del proveedor si en fases futuras urgiera jubilar la dependencia de SheetJS, conllevando mínimas o nulas fricciones de reespejado al operar interpuesta).
+* **Encapsulamiento Obligatorio Detrás de una Interfaz Aislada:** Inadmitiéndose inyecciones de código que invoquen o referencien literalmente métodos originarios de la librería (como `XLSX.read(...)` o `XLSX.utils(...)`) a lo ancho del código general de sala HORECA o en el cliente en React, toda importación y empleo de esta biblioteca especializada quedará **estrictamente acordonada y encapsulada por completo detrás de la interfaz transicional del enrutador interno desacoplado del módulo** (ej. tras de la interfaz canónica consolidada por el refactor de `unifiedReader` albergado a cubierto en `src/domain/import-engine/`), facilitando rotar tras bastidores y reemplazar sin traumas la librería computacional en el futuro o interponer otras distintas por decisión técnica sin perturbar jamás el enrutamiento visual web corporativo en los restaurantes.
+* **Carga Diferida si se Adopta en Frontend, o Uso Exclusivo en Backend:**
+  1. *Adopción transicional o parcial en cliente web SPA:* En caso de mantenerse para la pre-validación de previsualización en el cliente o explorador local del operador HORECA en el restaurante, resulta obligatoria e inquebrantable su **Carga Diferida de Naturaleza Asíncrona (*Lazy Loading*)** (`const XLSX = await import('xlsx');`) en exclusiva en el exacto milisegundo o evento de entrada en que el operador intencionalmente ingresa a la ventana o pestaña específica para subir y conciliar su reporte de extracto, no sumando y restando peso estético innecesario al inicio de sesión general operativo transaccionando en el POS del comedor del TPV en la sala gastronómica activa.
+  2. *Vía del uso exclusivo y reclusión absoluta en Backend si resulta más seguro:* Se legitima e instruye a la dirección de ingeniería a valorar y optar subsidiariamente en el transcurso de las fases probatorias por la retirada del cien por cien de la librería `xlsx` de cualquier contacto del cliente del navegador, reclinando todo su uso e instalación de forma monárquica en los servicios transaccionados del servidor en nube del backend o funciones protegidas consolidadas (*Serverless Cloud Sandbox Functions*), salvaguardando en su máxima cota el peso visual al cliente en la sala o comedores corporativos gastronómicos de El Criollo.
+
+### 3.1. Dictamen Oficial Emitido para la Librería de Parseo de Excel (`xlsx` / SheetJS)
+`APROBAR_PARA_PROTOTIPO_CON_RESTRICCIONES`

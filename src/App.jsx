@@ -1,20 +1,9 @@
-import { useState, useEffect } from 'react';
-import { auth } from './firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import MainLayout from './components/MainLayout';
 import Login from './components/Login';
 
-function App() {
-  const [user,    setUser]    = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
+function AppContent() {
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -38,7 +27,7 @@ function App() {
         }} />
         <div style={{ textAlign: 'center' }}>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>
-            Iniciando plataforma
+            Iniciando plataforma (Supabase Auth)
           </p>
           <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
             El Criollo · Sistema HORECA
@@ -49,6 +38,14 @@ function App() {
   }
 
   return user ? <MainLayout user={user} /> : <Login />;
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }
 
 export default App;

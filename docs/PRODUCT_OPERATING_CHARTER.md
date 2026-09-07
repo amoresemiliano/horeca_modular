@@ -56,7 +56,7 @@ Supabase queda definido como backend unificado del Hub:
 - Social Login
 - Row Level Security
 - Storage
-- Edge Functions cuando haya necesidad real de ejecución privilegiada o transaccional server-side
+- Edge Functions cuando haya necesidad real de ejecución privileged o transaccional server-side
 
 Firebase queda fuera de la arquitectura objetivo.
 
@@ -681,7 +681,7 @@ Los agentes están autorizados a:
 
 sin pedir permiso por cada archivo, siempre que:
 
-- no toquen producción;
+- no toque producción;
 - no borren datos reales;
 - no ejecuten cambios destructivos;
 - no hagan deploy productivo sin aprobación;
