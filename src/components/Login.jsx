@@ -1,20 +1,107 @@
 import { useState } from 'react';
-import { auth } from '../firebaseConfig';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useAuth } from '../context/AuthContext';
 import logoVDC from '../assets/icono_VDC.png';
 import logoCliente from '../assets/logo_cliente.png';
 
 const Login = () => {
-  const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'error'
+  const [status, setStatus] = useState('idle'); // 'idle' | 'loading_google' | 'loading_github' | 'loading_password' | 'loading_reset' | 'loading_update' | 'success_reset' | 'success_update' | 'error'
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [mode, setMode] = useState('login'); // 'login' | 'reset_request'
 
-  const handleLogin = async () => {
-    setStatus('loading');
+  const {
+    loginWithProvider,
+    loginWithPassword,
+    requestPasswordReset,
+    updatePassword,
+    isPasswordRecovery,
+  } = useAuth();
+
+  // Flag controlling whether DEV password authentication UI is enabled
+  const isDevPasswordAuthEnabled = import.meta.env.VITE_DEV_PASSWORD_AUTH === 'true';
+
+  const handleOAuthLogin = async (provider) => {
+    setStatus(`loading_${provider}`);
+    setErrorMsg('');
+    setSuccessMsg('');
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      await loginWithProvider(provider);
     } catch (err) {
-      console.error(err.message);
+      console.error(`Error durante autenticación ${provider}:`, err.message);
+      setErrorMsg(err.message || `Error de autenticación con ${provider === 'google' ? 'Google' : 'GitHub'}. Intentalo de nuevo.`);
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 4000);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!emailInput || !passwordInput) {
+      setErrorMsg('Ingresá email y contraseña.');
       setStatus('error');
       setTimeout(() => setStatus('idle'), 3500);
+      return;
+    }
+
+    setStatus('loading_password');
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await loginWithPassword(emailInput, passwordInput);
+    } catch (err) {
+      console.error('Error durante autenticación con contraseña:', err.message);
+      setErrorMsg('Credenciales inválidas. Verificá tu email y contraseña.');
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 4000);
+    }
+  };
+
+  const handleResetRequestSubmit = async (e) => {
+    e.preventDefault();
+    if (!emailInput) {
+      setErrorMsg('Ingresá tu email para recibir el enlace de recuperación.');
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 3500);
+      return;
+    }
+
+    setStatus('loading_reset');
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await requestPasswordReset(emailInput);
+      setSuccessMsg('Se envió el enlace de recuperación a tu correo. Revisá tu bandeja de entrada o spam.');
+      setStatus('success_reset');
+    } catch (err) {
+      console.error('Error durante solicitud de recuperación:', err.message);
+      setErrorMsg(err.message || 'No se pudo enviar el correo de recuperación.');
+      setStatus('error');
+    }
+  };
+
+  const handleUpdatePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPasswordInput || newPasswordInput.length < 6) {
+      setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 3500);
+      return;
+    }
+
+    setStatus('loading_update');
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await updatePassword(newPasswordInput);
+      setSuccessMsg('¡Contraseña actualizada correctamente! Ingresando a la plataforma…');
+      setStatus('success_update');
+    } catch (err) {
+      console.error('Error durante actualización de contraseña:', err.message);
+      setErrorMsg(err.message || 'No se pudo actualizar la contraseña.');
+      setStatus('error');
     }
   };
 
@@ -50,7 +137,7 @@ const Login = () => {
           backgroundSize: '48px 48px',
         }} />
 
-        {/* Orbe decorativo */}
+        {/* Orbes decorativos */}
         <div style={{
           position: 'absolute',
           top: '-80px', right: '-80px',
@@ -143,106 +230,443 @@ const Login = () => {
             boxShadow: 'var(--shadow-lg)',
             padding: '2.25rem 2rem',
           }}>
-            {/* Campo usuario (decorativo) */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{
-                display: 'block', fontSize: '0.75rem', fontWeight: 700,
-                color: 'var(--c-text-3)', textTransform: 'uppercase',
-                letterSpacing: '0.05em', marginBottom: '0.5rem',
-              }}>Email</label>
-              <input
-                type="email" disabled placeholder="Gestionado por Google"
-                style={{
-                  width: '100%', padding: '0.65rem 1rem',
-                  border: '1.5px solid var(--c-border)',
-                  borderRadius: 'var(--r-lg)',
-                  background: 'var(--c-bg)',
-                  color: 'var(--c-text-4)',
-                  fontSize: '0.875rem',
-                  cursor: 'not-allowed',
-                  outline: 'none',
-                  fontFamily: 'var(--font-body)',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-            <div style={{ marginBottom: '1.75rem' }}>
-              <label style={{
-                display: 'block', fontSize: '0.75rem', fontWeight: 700,
-                color: 'var(--c-text-3)', textTransform: 'uppercase',
-                letterSpacing: '0.05em', marginBottom: '0.5rem',
-              }}>Contraseña</label>
-              <input
-                type="password" disabled placeholder="••••••••"
-                style={{
-                  width: '100%', padding: '0.65rem 1rem',
-                  border: '1.5px solid var(--c-border)',
-                  borderRadius: 'var(--r-lg)',
-                  background: 'var(--c-bg)',
-                  color: 'var(--c-text-4)',
-                  fontSize: '0.875rem',
-                  cursor: 'not-allowed',
-                  outline: 'none',
-                  fontFamily: 'var(--font-body)',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
+
+            {/* CASE 1: VISTA DE ESTABLECER NUEVA CONTRASEÑA (PASSWORD RECOVERY CALLBACK) */}
+            {isPasswordRecovery ? (
+              <form onSubmit={handleUpdatePasswordSubmit} style={{ marginBottom: '1.5rem' }}>
+                <div style={{
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: 'var(--r-md)',
+                  background: 'rgba(16,185,129,0.1)',
+                  border: '1px solid rgba(16,185,129,0.3)',
+                  color: '#059669',
+                  fontSize: '0.6875rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: '1.25rem',
+                  textAlign: 'center',
+                }}>
+                  🔑 Establecer nueva contraseña (DEV)
+                </div>
+
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label style={{
+                    display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                    color: 'var(--c-text-3)', textTransform: 'uppercase',
+                    letterSpacing: '0.05em', marginBottom: '0.5rem',
+                  }}>Nueva Contraseña</label>
+                  <input
+                    type="password"
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    required
+                    minLength={6}
+                    disabled={false}
+                    readOnly={false}
+                    style={{
+                      width: '100%', padding: '0.65rem 1rem',
+                      border: '1.5px solid var(--c-border)',
+                      borderRadius: 'var(--r-lg)',
+                      background: 'var(--c-bg)',
+                      color: 'var(--c-text-1)',
+                      fontSize: '0.875rem',
+                      outline: 'none',
+                      cursor: 'text',
+                      fontFamily: 'var(--font-body)',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={status === 'loading_update'}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1.25rem',
+                    background: '#006847',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 'var(--r-xl)',
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-body)',
+                    transition: 'all 200ms ease',
+                    boxShadow: '0 2px 8px rgba(0,104,71,0.25)',
+                    opacity: status === 'loading_update' ? 0.6 : 1,
+                  }}
+                >
+                  {status === 'loading_update' ? 'Guardando contraseña…' : 'Guardar nueva contraseña'}
+                </button>
+              </form>
+            ) : isDevPasswordAuthEnabled ? (
+              /* CASE 2: ENTORNOS DEV CON BANDERA VITE_DEV_PASSWORD_AUTH=true */
+              mode === 'reset_request' ? (
+                /* FORMULARIO DE SOLICITUD DE RECUPERACIÓN DE CONTRASEÑA */
+                <form onSubmit={handleResetRequestSubmit} style={{ marginBottom: '1.5rem' }}>
+                  <div style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: 'var(--r-md)',
+                    background: 'rgba(59,130,246,0.1)',
+                    border: '1px solid rgba(59,130,246,0.3)',
+                    color: '#2563EB',
+                    fontSize: '0.6875rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '1.25rem',
+                    textAlign: 'center',
+                  }}>
+                    📧 Recuperación / Creación de Contraseña (DEV)
+                  </div>
+
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label style={{
+                      display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                      color: 'var(--c-text-3)', textTransform: 'uppercase',
+                      letterSpacing: '0.05em', marginBottom: '0.5rem',
+                    }}>Email registrado</label>
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      placeholder="emilianodirosa1@gmail.com"
+                      required
+                      disabled={false}
+                      readOnly={false}
+                      style={{
+                        width: '100%', padding: '0.65rem 1rem',
+                        border: '1.5px solid var(--c-border)',
+                        borderRadius: 'var(--r-lg)',
+                        background: 'var(--c-bg)',
+                        color: 'var(--c-text-1)',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        cursor: 'text',
+                        fontFamily: 'var(--font-body)',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={status === 'loading_reset'}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1.25rem',
+                      background: '#2563EB',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 'var(--r-xl)',
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-body)',
+                      transition: 'all 200ms ease',
+                      boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                      opacity: status === 'loading_reset' ? 0.6 : 1,
+                    }}
+                  >
+                    {status === 'loading_reset' ? 'Enviando enlace…' : 'Enviar enlace de recuperación'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+                    style={{
+                      width: '100%',
+                      marginTop: '0.75rem',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--c-text-3)',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    ← Volver a inicio de sesión
+                  </button>
+                </form>
+              ) : (
+                /* FORMULARIO EDITABLE DE LOGIN CON CONTRASEÑA (DEV) */
+                <form onSubmit={handlePasswordSubmit} style={{ marginBottom: '1.5rem' }}>
+                  <div style={{
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: 'var(--r-md)',
+                    background: 'rgba(245,158,11,0.1)',
+                    border: '1px solid rgba(245,158,11,0.3)',
+                    color: '#D97706',
+                    fontSize: '0.6875rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '1.25rem',
+                    textAlign: 'center',
+                  }}>
+                    🛠️ Acceso de Desarrollo (DEV-ONLY)
+                  </div>
+
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{
+                      display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                      color: 'var(--c-text-3)', textTransform: 'uppercase',
+                      letterSpacing: '0.05em', marginBottom: '0.5rem',
+                    }}>Email</label>
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      placeholder="emilianodirosa1@gmail.com"
+                      required
+                      disabled={false}
+                      readOnly={false}
+                      style={{
+                        width: '100%', padding: '0.65rem 1rem',
+                        border: '1.5px solid var(--c-border)',
+                        borderRadius: 'var(--r-lg)',
+                        background: 'var(--c-bg)',
+                        color: 'var(--c-text-1)',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        cursor: 'text',
+                        fontFamily: 'var(--font-body)',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{
+                      display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                      color: 'var(--c-text-3)', textTransform: 'uppercase',
+                      letterSpacing: '0.05em', marginBottom: '0.5rem',
+                    }}>Contraseña</label>
+                    <input
+                      type="password"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      disabled={false}
+                      readOnly={false}
+                      style={{
+                        width: '100%', padding: '0.65rem 1rem',
+                        border: '1.5px solid var(--c-border)',
+                        borderRadius: 'var(--r-lg)',
+                        background: 'var(--c-bg)',
+                        color: 'var(--c-text-1)',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        cursor: 'text',
+                        fontFamily: 'var(--font-body)',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  {/* Enlace para solicitar/cambiar contraseña privada */}
+                  <div style={{ textAlign: 'right', marginBottom: '1.25rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => { setMode('reset_request'); setErrorMsg(''); setSuccessMsg(''); }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--c-brand)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      ¿Olvidaste o querés crear tu contraseña DEV?
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={status === 'loading_password'}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1.25rem',
+                      background: '#006847',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 'var(--r-xl)',
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-body)',
+                      transition: 'all 200ms ease',
+                      boxShadow: '0 2px 8px rgba(0,104,71,0.25)',
+                      opacity: status === 'loading_password' ? 0.6 : 1,
+                    }}
+                  >
+                    {status === 'loading_password' ? 'Iniciando sesión…' : 'Iniciar sesión con contraseña (DEV)'}
+                  </button>
+                </form>
+              )
+            ) : (
+              /* CASE 3: PRODUCCIÓN (Campos deshabilitados informativos) */
+              <>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{
+                    display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                    color: 'var(--c-text-3)', textTransform: 'uppercase',
+                    letterSpacing: '0.05em', marginBottom: '0.5rem',
+                  }}>Email</label>
+                  <input
+                    type="email" disabled placeholder="Gestionado por Supabase Auth"
+                    style={{
+                      width: '100%', padding: '0.65rem 1rem',
+                      border: '1.5px solid var(--c-border)',
+                      borderRadius: 'var(--r-lg)',
+                      background: 'var(--c-bg)',
+                      color: 'var(--c-text-4)',
+                      fontSize: '0.875rem',
+                      cursor: 'not-allowed',
+                      outline: 'none',
+                      fontFamily: 'var(--font-body)',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: '1.75rem' }}>
+                  <label style={{
+                    display: 'block', fontSize: '0.75rem', fontWeight: 700,
+                    color: 'var(--c-text-3)', textTransform: 'uppercase',
+                    letterSpacing: '0.05em', marginBottom: '0.5rem',
+                  }}>Contraseña</label>
+                  <input
+                    type="password" disabled placeholder="••••••••"
+                    style={{
+                      width: '100%', padding: '0.65rem 1rem',
+                      border: '1.5px solid var(--c-border)',
+                      borderRadius: 'var(--r-lg)',
+                      background: 'var(--c-bg)',
+                      color: 'var(--c-text-4)',
+                      fontSize: '0.875rem',
+                      cursor: 'not-allowed',
+                      outline: 'none',
+                      fontFamily: 'var(--font-body)',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Divisor */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', marginTop: isDevPasswordAuthEnabled ? '1.5rem' : '0' }}>
               <div style={{ flex: 1, height: '1px', background: 'var(--c-border)' }} />
               <span style={{ fontSize: '0.6875rem', color: 'var(--c-text-4)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Acceso mediante
+                Acceso mediante OAuth
               </span>
               <div style={{ flex: 1, height: '1px', background: 'var(--c-border)' }} />
             </div>
 
-            {/* Botón Google / Estados */}
+            {/* Botones de OAuth / Estados */}
             {status === 'idle' && (
-              <button
-                onClick={handleLogin}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.75rem',
-                  padding: '0.8rem 1.5rem',
-                  background: 'var(--c-text-1)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 'var(--r-xl)',
-                  fontSize: '0.9375rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-body)',
-                  transition: 'all 200ms ease',
-                  boxShadow: '0 2px 8px rgba(15,23,42,0.2)',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#1E293B'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(15,23,42,0.3)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'var(--c-text-1)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(15,23,42,0.2)'; }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" style={{ background: '#fff', borderRadius: '50%', padding: '2px', flexShrink: 0 }}>
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Acceder con Google
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Botón Google */}
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('google')}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.75rem',
+                    padding: '0.8rem 1.5rem',
+                    background: 'var(--c-text-1)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 'var(--r-xl)',
+                    fontSize: '0.9375rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-body)',
+                    transition: 'all 200ms ease',
+                    boxShadow: '0 2px 8px rgba(15,23,42,0.2)',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#1E293B'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(15,23,42,0.3)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--c-text-1)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(15,23,42,0.2)'; }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" style={{ background: '#fff', borderRadius: '50%', padding: '2px', flexShrink: 0 }}>
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Acceder con Google
+                </button>
+
+                {/* Botón GitHub */}
+                <button
+                  type="button"
+                  onClick={() => handleOAuthLogin('github')}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.75rem',
+                    padding: '0.8rem 1.5rem',
+                    background: '#24292F',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 'var(--r-xl)',
+                    fontSize: '0.9375rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-body)',
+                    transition: 'all 200ms ease',
+                    boxShadow: '0 2px 8px rgba(36,41,47,0.2)',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#0D1117'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(36,41,47,0.3)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#24292F'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(36,41,47,0.2)'; }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                  </svg>
+                  Acceder con GitHub
+                </button>
+              </div>
             )}
 
-            {status === 'loading' && (
+            {status.startsWith('loading_') && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '0.5rem 0' }}>
                 <div style={{
                   width: '36px', height: '36px',
                   border: '3px solid var(--c-border)',
-                  borderTopColor: 'var(--c-brand)',
+                  borderTopColor: status === 'loading_github' ? '#24292F' : status === 'loading_password' ? '#006847' : status === 'loading_reset' ? '#2563EB' : 'var(--c-brand)',
                   borderRadius: '50%',
                   animation: 'spin 0.7s linear infinite',
                 }} />
-                <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-3)', fontWeight: 600 }}>Verificando credenciales…</p>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-3)', fontWeight: 600 }}>
+                  {status === 'loading_github' ? 'Redirigiendo a GitHub OAuth…' : status === 'loading_password' ? 'Iniciando sesión con contraseña…' : status === 'loading_reset' ? 'Enviando correo de recuperación…' : status === 'loading_update' ? 'Guardando nueva contraseña…' : 'Redirigiendo a Google OAuth…'}
+                </p>
+              </div>
+            )}
+
+            {status.startsWith('success_') && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                padding: '0.875rem 1rem',
+                background: 'rgba(16,185,129,0.1)',
+                borderRadius: 'var(--r-lg)',
+                color: '#059669',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+              }}>
+                <span style={{ fontSize: '1.25rem' }}>✅</span>
+                {successMsg}
               </div>
             )}
 
@@ -257,7 +681,7 @@ const Login = () => {
                 fontWeight: 600,
               }}>
                 <span style={{ fontSize: '1.25rem' }}>⚠️</span>
-                Acceso denegado. Verificá que tu cuenta tenga permisos.
+                {errorMsg || 'Error de autenticación. Intentalo de nuevo.'}
               </div>
             )}
           </div>

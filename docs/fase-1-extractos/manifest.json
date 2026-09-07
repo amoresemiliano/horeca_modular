@@ -1,0 +1,168 @@
+{
+  "project": "Taquería El Criollo - Hub Económico-Financiero y Módulo de Extractos",
+  "phase": "Fase 1: Especificación Funcional y Técnica (Diseño, Arquitectura, Addendum TPV y Cierre Correctivo Delivery)",
+  "version": "1.3.0-phase1-spec-closure-complete",
+  "generated_at": "2026-08-05T02:26:00Z",
+  "scope_restrictions": {
+    "target_business": "Taquería El Criollo (Single-Tenant)",
+    "not_replacing_tpv_or_official_accounting": true,
+    "no_code_implementation_or_ddl_migrations": true,
+    "no_database_mutations_or_data_imports": true,
+    "exclusively_within_folder": "el_criollo_modular/docs/fase-1-extractos/"
+  },
+  "compliance_with_corrective_closure_and_phase_0_5": {
+    "evidence_tags_strictly_applied": true,
+    "strict_economic_vocabulary_without_official_accounting_terms": true,
+    "primary_sources_identified_by_concrete_operational_facts_without_absolute_supremacy": true,
+    "strict_distinction_between_tab_id_and_account_code": true,
+    "no_available_tag_enforced_when_id_missing": true,
+    "separate_identity_mechanisms_imported_row_vs_candidate_matching": true,
+    "non_automatic_suggestion_states_for_incomplete_records_requiring_human_review": true,
+    "parser_preserves_7_metadata_without_assuming_fixed_4_space_indentation": true,
+    "mixed_payments_preserved_with_no_available_breakdown_without_invented_amounts": true,
+    "delivery_reports_processed_as_separate_operational_facts_without_duplicating_sales": true,
+    "no_invented_commission_percentages_or_fixed_date_windows_tolerances_configurable_by_history": true
+  },
+  "deliverables": [
+    {
+      "id": "00",
+      "filename": "00-resumen.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/00-resumen.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Resumen ejecutivo del hub económico, estructurando los 3 niveles del sistema orientados a inteligencia operativa y preparación para gestoría sin suplir al TPV ni emitir libros de contabilidad oficial."
+    },
+    {
+      "id": "01",
+      "filename": "01-alcance-mvp.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/01-alcance-mvp.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Matriz de alcance funcional separando funcionalidades obligatorias incluidas en el MVP frente a exclusiones de autoliquidación tributaria y multi-tenant."
+    },
+    {
+      "id": "02",
+      "filename": "02-dominio.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/02-dominio.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Diseño de la Capa Económica Común y el concepto universal de contraparte inter-sistemas para articular movimientos económicos de la taquería."
+    },
+    {
+      "id": "03",
+      "filename": "03-modelo-datos.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/03-modelo-datos.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Modelo de datos relacional agnóstico de proveedor con diagrama ER, borrado lógico ineludible e historial inmutable de modificaciones."
+    },
+    {
+      "id": "04",
+      "filename": "04-importaciones-bancarias.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/04-importaciones-bancarias.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Especificación de importación para ficheros Excel binario y CSV de BBVA y Sabadell con normalización monetaria, blindaje de seguridad y preservación de fila original."
+    },
+    {
+      "id": "05",
+      "filename": "05-importacion-last-csv.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/05-importacion-last-csv.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Contrato polimórfico de importación para LastReportAdapter consagrando tabs-report como fuente principal para tickets con distinción estricta de identificadores, identidades separadas (trazabilidad vs. candidato), estados de sugerencia sin eliminación de cuentas incompletas, preservación de los 7 metadatos ante parseo textual y protección sin inventar saldos para pagos mixtos."
+    },
+    {
+      "id": "06",
+      "filename": "06-movimientos-manuales.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/06-movimientos-manuales.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Gestión de movimientos en efectivo, caja chica y depósitos del restaurante con estados Borrador, Confirmado y Anulado, manteniendo estricta prohibición de borrado físico."
+    },
+    {
+      "id": "07",
+      "filename": "07-clasificacion.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/07-clasificacion.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Taxonomía de subcategorías operativas, motor de reglas deterministas con simulador sandbox y puntos de extensión limpios para evoluciones futuras sin invocar contabilidad oficial."
+    },
+    {
+      "id": "08",
+      "filename": "08-deduplicacion.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/08-deduplicacion.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Motor de ingesta en 3 Niveles (A: Hash Fichero, B: Fila inmutada en lote, C: Coincidencia operativa) resolviendo las 7 casuísticas HORECA sin eliminar ni bloquear cobros concurrentes."
+    },
+    {
+      "id": "09",
+      "filename": "09-conciliacion-operativa.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/09-conciliacion-operativa.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Motor de coincidencias y conciliación Nivel 2 en cardinalidades 1:1, 1:N y N:M con tolerancies monetarias y de plazos configurables tras análisis del histórico real, conservando íntegras las diferencias y separando identidad de fila importada de candidato relacional sin depender de posición de fila ni nombre del archivo."
+    },
+    {
+      "id": "10",
+      "filename": "10-panel-economico.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/10-panel-economico.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Panel Económico Preparatorio con 24 indicadores directivos HORECA y código semántico de calidad para auditar saldos, orientado al control directivo y preparación para gestoría."
+    },
+    {
+      "id": "11",
+      "filename": "11-arquitectura-alternativas.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/11-arquitectura-alternativas.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Matriz de evaluación paramétrica contrastando Alternativa A (Supabase Cloud), B (VPS Dedicado Postgres) y C (cPanel MySQL), elevando resolución al liderazgo."
+    },
+    {
+      "id": "12",
+      "filename": "12-seguridad.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/12-seguridad.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Marco de seguridad perimetral, control de accesos RBAC y defensa del cliente SPA contra inyección maliciosa de fórmulas (CSV Injection / DDE)."
+    },
+    {
+      "id": "13",
+      "filename": "13-pantallas-flujos.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/13-pantallas-flujos.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Catálogo normativo con las 14 pantallas del MVP y diagramas Mermaid operacionales, desterrando el vocabulario contable oficial en beneficio de léxico económico e incorporando los mecanismos de sugerencias de revisión, preservación en parseo textual sin indentación fija y tolerancias configurables tras análisis histórico."
+    },
+    {
+      "id": "14",
+      "filename": "14-criterios-aceptacion.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/14-criterios-aceptacion.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Matriz estricta de Criterios de Aceptación verificables para Vitest y React, abarcando blindaje en ingesta, preservación en parseo parcial, separación formal entre Tab Id y código de cuenta, sugerencias no automáticas en cuentas incompletas, bloqueo a duplicidades en Uber/Glovo e independencia del sistema de contabilidad oficial."
+    },
+    {
+      "id": "15",
+      "filename": "15-migracion-historica.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/15-migracion-historica.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Protocolo transaccional de 10 pasos para importar y conciliar en seco el Consolidado Excel con las planillas bancarias sin ejecutar la migración en este acto."
+    },
+    {
+      "id": "16",
+      "filename": "16-decisiones-pendientes.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/16-decisiones-pendientes.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Matriz de 9 Dilemas Directivos pendientes de aprobación humana e institucional, incluyendo la obligatoriedad de que tolerancias se configuren tras estudiar el historial (D-18) y la supervisión humana exclusiva sobre sugerencias en cuentas defectuosas (D-19)."
+    },
+    {
+      "id": "17-addendum",
+      "filename": "17-addendum-reportes-tpv-delivery.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/17-addendum-reportes-tpv-delivery.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Addendum rector purgado de terminología de contabilidad oficial, estructurando fuentes principales por hecho concreto (ticket, productos, método, comisiones, abonos en banco), distinción estricta de identificadores, separación entre identidad de fila importada y candidato relacional, sugerencias operativas sin clasificación automática, preservación de los 7 metadatos sin asumir indentación fija en 4 espacios y proscripción de inventar saldos en pagos mixtos."
+    },
+    {
+      "id": "17-matriz",
+      "filename": "17-matriz-reportes-operativos.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/17-matriz-reportes-operativos.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Matriz normativa obligatoria a 11 columnas catalogando la totalidad de reportes operativos reales en el workspace (Last.app, Uber Eats, Glovo, BBVA, Sabadell), tipificando qué fuente es principal para cada hecho concreto y regulando riesgos de duplicación e identidades diferenciadas."
+    },
+    {
+      "id": "18",
+      "filename": "18-delivery-uber-glovo.md",
+      "path": "C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/18-delivery-uber-glovo.md",
+      "status": "COMPLETED_SPECIFICATION",
+      "description": "Especificación arquitectónica y operacional para el tratamiento de reportes reales de Uber Eats y Glovo, separando sus 6 componentes económicos, explicando la ausencia de equivalencia automática con el TPV y consagrando como norma que tolerancias y márgenes no se reinventen ni fijan rígidamente por software, debiendo ser configurados en sala tras analizar el histórico."
+    }
+  ]
+}
