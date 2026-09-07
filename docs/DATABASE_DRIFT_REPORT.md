@@ -50,13 +50,22 @@ This report details the schema, RLS policy, and function drift between the versi
 ---
 
 ## 3. RLS Function & Security Policy Drift
-- **Modern Security Standard**: `get_auth_user_org_id()` evaluates `auth.uid() -> eco_user_profiles -> eco_organization_members`.
+- **AS-IS Single-Org Helper**: `get_auth_user_org_id()` evaluates `auth.uid() -> eco_user_profiles -> eco_organization_members` with `LIMIT 1`. This serves as an initial bootstrap helper.
+- **TARGET Multi-CIF Standard**: The target RLS policy model will evaluate `organization_id IN (SELECT organization_id FROM eco_organization_members WHERE ...)` or active context resolution to support multi-CIF tenant access.
 - **Legacy Function Drift**: Older tables (`eco_audit_events`, `eco_import_issues`, `eco_normalized_records`, `eco_org_tax_categories`) have RLS policies evaluating legacy helper `private.org_id()`.
-- **Remediation Plan**: In WP-001, update all RLS policies to strictly use `get_auth_user_org_id()`.
+- **Unmerged Escandallos Security Flaw**: Migration `20260901000000_init_escandallos.sql` on branch `origin/feature/escandallos-2485206073148743544` enforces `USING (true)` across all 5 tables. Detailed in [`ESCANDALLOS_BRANCH_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/ESCANDALLOS_BRANCH_AUDIT.md).
+- **Remediation Plan**: In WP-001 and WP-005, refactor all RLS policies to evaluate multi-tenant membership checks.
 
 ---
 
 ## 4. Storage Policy Drift
 - **Storage Bucket**: `eco-imports-private-staging` (`public = false`).
 - **Policy Drift**: Current storage RLS policy evaluates `(storage.foldername(name))[1] = (private.org_id())::text`.
-- **Remediation Plan**: Update storage policy to evaluate `(storage.foldername(name))[1] = get_auth_user_org_id()::text`.
+- **Remediation Plan**: Update storage policy to evaluate tenant folder ownership against `eco_organization_members`.
+
+---
+
+## 5. Related Forensic Audit References
+- Escandallos Branch Audit: [`/docs/ESCANDALLOS_BRANCH_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/ESCANDALLOS_BRANCH_AUDIT.md)
+- Purchases Legacy Audit: [`/docs/PURCHASES_LEGACY_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/PURCHASES_LEGACY_AUDIT.md)
+- Sales / Last.app Asset Audit: [`/docs/SALES_LAST_ASSET_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/SALES_LAST_ASSET_AUDIT.md)
