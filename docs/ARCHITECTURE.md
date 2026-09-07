@@ -58,3 +58,19 @@ graph TD
 5. **Postgres-Native Background Tasks**: Automated reconciliation, recurring report generation, and status checks handled by backend triggers and database scheduling.
 6. **Provider Adapters**: Standardized adapter interfaces for external services (Last.app POS, bank parsers, OCR engines) to ensure seamless maintainability.
 7. **Environment Segregation**: Complete separation between DEV, UAT, and PROD environments across Git branches, Vercel deployments, and Supabase projects.
+
+---
+
+## 4. ENVIRONMENT MAPPING MATRIX (DEV vs UAT vs PROD)
+
+| Environment Parameter | Development (DEV) | User Acceptance Testing (UAT / Staging) | Production (PROD) |
+| :--- | :--- | :--- | :--- |
+| **Git Target Branch** | `dev` | `feature/*` / PR tracking branches | `main` |
+| **Hosting Platform** | Vercel Preview Deployment | Vercel Preview Deployment (PR Isolated) | Vercel Production Deployment |
+| **Canonical URL** | `https://horecamodular-git-dev-vegen-s-projects.vercel.app/` | Generated per-PR Vercel Preview URL | `https://horecamodular.vercel.app/` |
+| **Supabase Project Ref** | `ourzapkjykzlwsjunzmd` | `ourzapkjykzlwsjunzmd` | Production Supabase Instance Ref |
+| **Supabase Project Name** | `horeca_modular_staging` | `horeca_modular_staging` | `horeca_modular_production` |
+| **Publishable Client Key** | `VITE_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_...`) | `VITE_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_...`) | `VITE_SUPABASE_PUBLISHABLE_KEY` (Prod Key) |
+| **Auth Configuration** | Email/Password (`VITE_DEV_PASSWORD_AUTH=true`) + PKCE | Google OAuth + GitHub OAuth + PKCE | Google OAuth + GitHub OAuth (`VITE_DEV_PASSWORD_AUTH=false`) |
+| **Storage Bucket** | `eco-imports-private-staging` | `eco-imports-private-staging` | `eco-imports-private-prod` |
+| **Database Data Reset** | Allowed (Isolated Dev Test Data) | Restricted (Controlled QA Test Fixtures) | Strictly Prohibited (Production Audit Data) |

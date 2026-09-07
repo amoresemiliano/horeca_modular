@@ -7,7 +7,7 @@ The migration roadmap structures system development into sequential, autonomous 
 timeline
     title HORECA Modular Release Roadmap
     WP-000 : Preflight Audit & Documentation Freeze
-    WP-001 : Core Architecture & Fail-Closed Auth Hardening
+    WP-001 : Engineering Foundation & Canonical Core Preparation
     WP-002 : Extractos & Financial Engine Stabilization
     WP-003 : Personal HR & Fichajes Hardening
     WP-004 : Producción & Inventario Operational Integration
@@ -23,8 +23,8 @@ timeline
 - **Objective**: Machine-verifiable forensic audit of repo, Supabase DB, migrations, and storage. Freeze approved VEGEN documentation set.
 - **Deliverables**: Comprehensive audit reports, 16 documentation files in `/docs` and `/agent`, database drift report.
 
-### WP-001: Core Architecture & Fail-Closed Auth Hardening
-- **Objective**: Eliminate legacy RLS functions (`private.org_id()`), remove residue Firebase packages, harmonize environment variables (`VITE_SUPABASE_PUBLISHABLE_KEY`), and solidify fail-closed authorization.
+### WP-001: Engineering Foundation & Canonical Core Preparation
+- **Objective**: Refactor legacy RLS policies to multi-tenant standards, consolidate database schema migrations, sanitize legacy Firebase dependencies, configure modern Supabase publishable keys, and establish Edge Function scaffolding.
 
 ### WP-002: Extractos & Financial Engine Stabilization
 - **Objective**: Finalize multi-format bank statement parsing (BBVA/Sabadell), duplicate detection, row allocation engine, and financial reporting.

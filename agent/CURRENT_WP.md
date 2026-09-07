@@ -16,4 +16,4 @@
   - [`/docs/SALES_LAST_ASSET_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/SALES_LAST_ASSET_AUDIT.md)
 
 ## 3. Next Work Package
-- **Upcoming**: WP-001 — Core Architecture & Fail-Closed Auth Hardening.
+- **Upcoming**: WP-001 — ENGINEERING FOUNDATION & CANONICAL CORE PREPARATION

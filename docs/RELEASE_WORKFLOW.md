@@ -32,3 +32,8 @@ gitGraph
 - NEVER push unvalidated code directly to `main`.
 - NEVER run destructive schema migrations on live database instances without snapshot backups.
 - NEVER weaken database Row-Level Security (RLS) to bypass authorization errors.
+
+## 4. Local Documentation Synchronization Protocol
+- **Product Owner Local Root**: `1. Sistemas/El Criollo/documentación_procesos` (Full local path: `c:\Users\Emiliano\Documents\1. Sistemas\El Criollo\documentación_procesos`).
+- **Sandbox File System Isolation**: Direct automated tool writes from agent execution to directories outside workspace root (`c:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\el_criollo_modular`) are restricted by IDE security policy.
+- **Source of Truth & Synchronization Protocol**: The canonical version-controlled source of truth for all technical and product documentation is maintained inside the repository at `/docs/*.md` and `/agent/*.md`. Upon release tagging or WP completion, the Product Owner or release script copies `/docs/*.md` directly into `1. Sistemas/El Criollo/documentación_procesos`.

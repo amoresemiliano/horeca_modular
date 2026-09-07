@@ -1,35 +1,25 @@
 # FORENSIC AUDIT — PURCHASES (PEDIDOS) LEGACY ASSETS & DATA
 
 ## 1. Executive Summary
-- **Current Module Path**: `src/modules/pedidos/` (`PedidosApp.jsx`, `pedidos.css`)
-- **Audit Objective**: Inventory the current UI state vs historical purchase data assets to define the WP-006 preservation and migration strategy.
+- **Module Path**: `src/modules/pedidos/` (`PedidosApp.jsx`, `pedidos.css`)
+- **Audit Objective**: Perform an empirical forensic audit distinguishing **PHYSICALLY VERIFIED REPOSITORY ASSETS** from **LOCAL WORKSPACE ASSETS** and **UNVERIFIED / UNTRACKED DATABASE ASSETS**.
 
 ---
 
-## 2. Analysis of Current Frontend Code (`src/modules/pedidos/PedidosApp.jsx`)
-- **Implementation Status**: Prototype / Mock UI state.
-- **State Persistence**: Uses React in-memory `useState` with hardcoded seed items (`Carnicería Carlos`, `Bebidas Premium`, `Verduras Frescas`).
-- **Database Integration**: 0 Supabase DB integration. Orders created via UI modal exist only in transient local state.
-- **Mock Handlers**: Export button triggers browser alert (`Función de exportar a Excel en desarrollo`).
+## 2. Asset Verification Breakdown
+
+| Asset Category | Asset Location / Description | Verification Status | Forensic Findings |
+| :--- | :--- | :---: | :--- |
+| **Repository UI Component** | `src/modules/pedidos/PedidosApp.jsx` | **VERIFIED IN REPO** | Prototype / Mock UI state. Uses hardcoded seed arrays (`Carnicería Carlos`, `Bebidas Premium`). Zero Supabase DB integration. |
+| **Repository Stylesheet** | `src/modules/pedidos/pedidos.css` | **VERIFIED IN REPO** | Pure CSS styling rules for purchase order forms and table layouts. |
+| **Repository DB Migrations** | `supabase/migrations/` | **NOT PRESENT IN REPO** | No purchase schema, supplier tables, or purchase order migrations exist in Git. |
+| **Live Database Tables** | Supabase Project `ourzapkjykzlwsjunzmd` | **NOT PRESENT IN DB** | Querying `information_schema.tables` confirms 0 purchase-related tables exist in the live staging database. |
+| **Local Workspace Dump Assets** | `c:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\database-dumps\` | **VERIFIED IN LOCAL WORKSPACE (EXTERNAL TO REPO)** | Present on local developer filesystem outside Git repository root `el_criollo_modular`. Contains raw SQL dumps of legacy databases. |
+| **Local Workspace Sample Files** | `c:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\input-samples\` | **VERIFIED IN LOCAL WORKSPACE (EXTERNAL TO REPO)** | Present on local developer filesystem outside Git repository root. Contains supplier invoices, CSV statement exports, and sample order files. |
 
 ---
 
-## 3. Historical Purchases Data Assets
-Historical purchase records, supplier price catalogs, and delivery logs exist outside the current transient UI:
-- **Historical Assets**: Legacy purchase spreadsheets, PDF invoice archives, and historical DB dumps stored in `/database-dumps/` and `/input-samples/`.
-- **Business Criticality**: Historical purchase unit costs are REQUIRED by the Escandallos module (`IngredientCostProvider.js`) to evaluate `LAST_PURCHASE` ingredient pricing.
-- **Preservation Mandatory Rule**: Historical purchase records MUST NOT be deleted, overwritten, or discarded.
-
----
-
-## 4. Target Architecture & WP-006 Roadmap
-
-### A. Database Schema Requirements for WP-006:
-1. `eco_suppliers`: Master registry of suppliers (VAT number, business name, payment terms, contact info).
-2. `eco_purchase_orders`: Header table tracking purchase orders (`id`, `organization_id`, `supplier_id`, `status` (`DRAFT`, `SENT`, `RECEIVED`, `CANCELLED`), `expected_delivery_date`, `total_amount`, timestamps).
-3. `eco_purchase_order_items`: Line items mapping purchase orders to ingredients/products (`id`, `organization_id`, `purchase_order_id`, `ingredient_id`, `quantity_ordered`, `quantity_received`, `unit_price`, `subtotal`).
-
-### B. Ingestion & Migration Strategy:
-1. Create persistent multi-tenant schema with strict RLS policies.
-2. Build bulk import pipeline to ingest historical purchase spreadsheets into `eco_purchase_orders` and `eco_purchase_order_items`.
-3. Connect `IngredientCostProvider.js` in Escandallos to read latest unit price from `eco_purchase_order_items`.
+## 3. Data Preservation Requirements for WP-006
+1. **Repository Boundary Safety**: Physical sample files and database dumps in the parent workspace directory (`el-criollo-ecosistema`) MUST be ingested during WP-006 into canonical migration scripts rather than checked directly into application Git history.
+2. **Historical Cost Evaluation**: Historical purchase records are required by the Escandallos module (`IngredientCostProvider.js`) for `LAST_PURCHASE` ingredient pricing.
+3. **Database Schema Provisions**: WP-006 will introduce version-controlled migration files for `eco_suppliers`, `eco_purchase_orders`, and `eco_purchase_order_items` with strict multi-tenant RLS policies.

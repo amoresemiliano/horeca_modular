@@ -1,41 +1,31 @@
 # FORENSIC AUDIT — SALES & LAST.APP POS INTEGRATION ASSETS
 
 ## 1. Executive Summary
-- **Current Module Path**: `src/modules/ventas/` (`VentasApp.jsx`)
+- **Module Path**: `src/modules/ventas/` (`VentasApp.jsx`)
 - **Documentation References**: `docs/diagnostico/09-integracion-last.md`, `docs/fase-1-extractos/05-importacion-last-csv.md`
-- **Audit Objective**: Inventory existing CSV parsing logic, product mapping rules, and POS integration specs to prepare for WP-007 implementation.
+- **Audit Objective**: Perform an empirical forensic audit distinguishing **PHYSICALLY VERIFIED REPOSITORY ASSETS** from **LOCAL WORKSPACE ASSETS** and **UNVERIFIED / UNTRACKED DATABASE ASSETS**.
 
 ---
 
-## 2. Analysis of Current Frontend Code (`src/modules/ventas/VentasApp.jsx`)
-- **Implementation Status**: Client-side CSV file reader using `papaparse`.
-- **Parsing Capabilities**: Parses uploaded POS ticket CSV files and maps fields:
-  - `ticket` (Ticket ID)
-  - `fecha` / `hora` (Date & Time)
-  - `productos` (Item names/descriptions)
-  - `comensales` (Guest count)
-  - `tiempo` (Duration)
-  - `zona` (Seating area / Dining room / Terrace)
-  - `total` (Total ticket amount in EUR)
-- **Database Integration**: Current UI renders parsed CSV rows in transient React state without database persistence.
+## 2. Asset Verification Breakdown
+
+| Asset Category | Asset Location / Description | Verification Status | Forensic Findings |
+| :--- | :--- | :---: | :--- |
+| **Repository UI Component** | `src/modules/ventas/VentasApp.jsx` | **VERIFIED IN REPO** | Frontend component containing client-side CSV parsing using `papaparse`. Parses ticket ID, date, time, products, guest count, dining zone, and amount. Rendered in transient state. |
+| **Repository Design Specifications** | `docs/diagnostico/09-integracion-last.md`, `docs/fase-1-extractos/05-importacion-last-csv.md` | **VERIFIED IN REPO** | Architectural specifications for Last.app CSV structure, column definitions, and product mapping rules. |
+| **Repository DB Migrations** | `supabase/migrations/` | **NOT PRESENT IN REPO** | 0 database migration files for sales tickets, POS items, or Last.app product mappings exist in Git. |
+| **Live Database Tables** | Supabase Project `ourzapkjykzlwsjunzmd` | **NOT PRESENT IN DB** | Querying `information_schema.tables` confirms 0 sales or POS tables exist in the live database. |
+| **Local Workspace Last.app API Assets** | `c:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\last_API\` | **VERIFIED IN LOCAL WORKSPACE (EXTERNAL TO REPO)** | Present on local developer filesystem outside Git repository root `el_criollo_modular`. Contains Last.app API documentation, sample JSON payloads, and integration notes. |
 
 ---
 
-## 3. Last.app POS Integration Specifications
+## 3. Target Architecture & WP-007 Roadmap
 
-### A. Data Channels
-1. **File Import Channel (CSV/XLS)**: Manual upload of exported daily sales reports from Last.app back-office.
+### A. Data Channels for Sales Ingestion:
+1. **File Import Channel (CSV/XLS)**: Manual upload of exported daily sales reports from Last.app back-office via `VentasApp.jsx`.
 2. **API Integration Channel (Webhook / REST)**: Automated REST API synchronization connecting Last.app POS webhooks to Supabase Edge Functions.
 
-### B. Core Data Model Requirements for WP-007:
-1. `eco_pos_tickets`: Header table storing sales tickets (`id`, `organization_id`, `external_ticket_id`, `pos_source` (`last_app`), `opened_at`, `closed_at`, `diners_count`, `zone_name`, `subtotal`, `tax_amount`, `total_amount`, `payment_method`).
+### B. Core Data Model Provisions for WP-007:
+1. `eco_pos_tickets`: Header table storing sales tickets (`id`, `organization_id`, `external_ticket_id`, `pos_source`, `opened_at`, `closed_at`, `diners_count`, `zone_name`, `subtotal`, `tax_amount`, `total_amount`, `payment_method`).
 2. `eco_pos_ticket_items`: Itemized sales lines (`id`, `organization_id`, `ticket_id`, `external_product_id`, `product_name`, `quantity`, `unit_price`, `total_price`).
 3. `eco_external_product_mapping`: Maps `external_product_id` from Last.app to internal recipe IDs (`recipes.id` / `escandallos`) for automated stock depletion and recipe cost tracking.
-
----
-
-## 4. WP-007 Implementation Roadmap
-1. Create persistent multi-tenant tables (`eco_pos_tickets`, `eco_pos_ticket_items`, `eco_external_product_mapping`) with strict RLS policies.
-2. Refactor `VentasApp.jsx` to upload CSV sales reports directly to `eco_pos_tickets` via Supabase JS Client.
-3. Build Last.app POS webhook endpoint using a Supabase Edge Function to process real-time ticket sales.
-4. Integrate sales ticket items with Escandallos to automatically update ingredient consumption and food cost metrics.
