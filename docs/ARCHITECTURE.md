@@ -1,76 +1,123 @@
 # ARCHITECTURE SPECIFICATION — HORECA MODULAR
 
-## 1. Executive Summary
-This document provides a clear demarcation between the **CURRENT AS-IS ARCHITECTURE** operating on the `dev` branch and the **APPROVED TARGET TO-BE ARCHITECTURE** specified under the VEGEN Software Product System.
+> **Status**: APPROVED CANONICAL ARCHITECTURE (WP-001)  
+> **Repository Baseline**: `https://github.com/amoresemiliano/horeca_modular`  
+> **Architectural Pattern**: Modular Monolith with Clean / Hexagonal Layer Boundaries
 
 ---
 
-## 2. CURRENT AS-IS ARCHITECTURE
+## 1. Architectural Principles & Layer Boundaries
 
-```mermaid
-graph TD
-    Client[React 19 + Vite 8 Frontend\nHosted on Vercel Preview] -->|Supabase JS SDK PKCE| SupabaseAuth[Supabase Auth Engine]
-    Client -->|PostgREST API| SupabaseDB[Supabase Postgres: ourzapkjykzlwsjunzmd]
-    Client -->|Private S3 API| SupabaseStore[Storage Bucket: eco-imports-private-staging]
-    Client -->|In-Browser Parsing| LocalParsers[PapaParse / XLSX]
-    
-    subgraph "Current Backend State (ourzapkjykzlwsjunzmd)"
-        SupabaseAuth -->|Trigger: handle_new_user| SupabaseDB
-        SupabaseDB -->|AS-IS Single-Org Definer| Helper[get_auth_user_org_id: LIMIT 1]
-        SupabaseDB -->|Mixed RLS Policies| Policies[get_auth_user_org_id vs legacy private.org_id]
-    end
+HORECA Modular follows a strict, unidirectional dependency rule:
+
+```
+UI / React Components
+       ↓
+Application / Use Cases
+       ↓
+Domain (Entities, Capabilities, Pure Business Rules)
+       ↓
+Repository Interfaces / Ports
+       ↓
+Infrastructure Adapters (Supabase, File Parsers, External APIs)
 ```
 
-### AS-IS Technical Inventory
-- **Frontend Stack**: React 19, JavaScript ES Modules, Vite 8, Tailwind CSS v4, Lucide React icons.
-- **Hosting & CI/CD**: Vercel Frontend Hosting connected to GitHub repository `amoresemiliano/horeca_modular` (`dev` branch -> Preview, `main` branch -> Production).
-- **Authentication**: Native Supabase Auth (`auth.users`) using PKCE flow. DEV environment features temporary email/password auth (`VITE_DEV_PASSWORD_AUTH=true`). Legacy Firebase dependencies remain in `package.json` pending cleanup in WP-001.
-- **Database Backend**: Canonical Supabase Staging project `ourzapkjykzlwsjunzmd` (`https://ourzapkjykzlwsjunzmd.supabase.co`).
-- **Authorization Primitive**: `get_auth_user_org_id()` helper function that queries `eco_organization_members` and returns `LIMIT 1` active organization UUID for initial bootstrap.
-- **Database RLS Policies**: Mixed state — newly migrated operational tables (`empleados`, `fichajes`, `produccion_registros`, `eco_financial_movements`) evaluate `get_auth_user_org_id()`, while legacy tables (`eco_audit_events`, `eco_import_issues`, `eco_normalized_records`) evaluate legacy helper `private.org_id()`.
-- **Storage**: Single private storage bucket `eco-imports-private-staging` (`public = false`, max file size 20MB). RLS policy evaluates legacy `(storage.foldername(name))[1] = (private.org_id())::text`.
-- **In-Browser Processing**: Bank CSV/XLS statement parsing handled in-browser using `papaparse` and `xlsx`.
-- **State Management Residue**: Prototype/mock state stored in React local state and localStorage for Purchases (`src/modules/pedidos`) and Inventory.
+### Core Invariants
+1. **Supabase is Infrastructure**: Supabase is a persistence and auth adapter, not domain authority. UI components must not execute arbitrary direct database queries.
+2. **React Components are Not Business Authorities**: Components render state and dispatch user intent to Application Use Cases.
+3. **Pure Domain Primitives**: The `domain/` layer has zero external framework dependencies and executes purely in standard TypeScript.
+4. **Explicit Result / Error Model**: All application boundaries return `Result<T, AppError>` rather than throwing unhandled exceptions or returning silent empty arrays.
 
 ---
 
-## 3. APPROVED TARGET TO-BE ARCHITECTURE
+## 2. Canonical Source Structure
 
-```mermaid
-graph TD
-    Client[Modular Monolith React + TS Frontend\nHosted on Vercel] -->|PKCE Auth + Context Token| SupabaseAuth[Supabase Auth Engine]
-    Client -->|Restricted API Requests| SupabaseDB[Supabase Managed PostgreSQL]
-    Client -->|Secure Uploads| SupabaseStore[Private Supabase Storage]
-    
-    subgraph "Target Backend Architecture"
-        SupabaseAuth -->|Provision Profile & Allowlist| Triggers[handle_new_user & eco_auth_bootstrap_allowlist]
-        SupabaseDB -->|Multi-CIF RLS| SecurityModel[Multi-Tenant Membership Check\neco_organization_members / eco_user_active_context]
-        SupabaseDB -->|Protected Workflows| EdgeFunctions[Supabase Edge Functions\nOCR, Last.app Sync, Automated Background Jobs]
-        SupabaseDB -->|Postgres Scheduler| PgCron[pg_cron / Background Jobs]
-    end
+```
+src/
+  ├── app/                  # Application bootstrap, routing, and provider shells
+  ├── domain/               # Enterprise domain entities, capability rules, value objects
+  │     ├── auth/           # User identity, auth session types
+  │     ├── tenancy/        # Organizations, memberships, capabilities, roles, can() evaluator
+  │     └── shared/         # BaseEntity, AuditableEntity, EntityId primitives
+  ├── application/          # Use cases, orchestrators, DTOs, application services
+  │     └── tenancy/        # Active context validation, membership resolution use cases
+  ├── infrastructure/       # External service adapters, repositories, database clients
+  │     ├── supabase/       # Typed Supabase client singleton, config, error mappers
+  │     └── repositories/   # SupabaseOrganizationMembershipRepository adapter
+  ├── shared/               # Cross-cutting primitives (config, errors, validation)
+  │     ├── config/         # Zod-validated environment config with safe logging
+  │     ├── errors/         # AppError (7 discrete error codes), Result<T, E> container
+  │     └── validation/     # Schema validation helpers
+  └── modules/              # Coexisting legacy business modules (Extractos, Inventario, HR)
 ```
 
-### TO-BE Architecture Principles
-1. **Modular Monolith Pattern**: Decoupled domain modules (`src/modules/*`) operating within a unified single-repository runtime.
-2. **Multi-CIF / Multi-Organization Membership**: Full support for users managing multiple corporate entities (CIFs) and organizations. Users select an active organization context (`eco_user_active_context` / session claim), and RLS policies validate authorization against `eco_organization_members` for the specific target `organization_id`.
-3. **Strict Database Row-Level Security**: 100% of application tables enforce RLS `TO authenticated` without any public/anon access or single-tenant default fallbacks.
-4. **Supabase Edge Functions**: Heavy computational tasks, secure external API webhooks (Last.app POS integration, AI/OCR parsing), and background tasks execute within protected Edge Functions rather than client-side UI threads.
-5. **Postgres-Native Background Tasks**: Automated reconciliation, recurring report generation, and status checks handled by backend triggers and database scheduling.
-6. **Provider Adapters**: Standardized adapter interfaces for external services (Last.app POS, bank parsers, OCR engines) to ensure seamless maintainability.
-7. **Environment Segregation**: Complete separation between DEV, UAT, and PROD environments across Git branches, Vercel deployments, and Supabase projects.
+### Coexistence Mapping (Legacy vs Target)
 
----
-
-## 4. ENVIRONMENT MAPPING MATRIX (DEV vs UAT vs PROD)
-
-| Environment Parameter | Development (DEV) | User Acceptance Testing (UAT / Staging) | Production (PROD) |
+| Component Area | Current Legacy Path (`src/modules/`) | Target Architectural Foundation | Migration Plan |
 | :--- | :--- | :--- | :--- |
-| **Git Target Branch** | `dev` | `feature/*` / PR tracking branches | `main` |
-| **Hosting Platform** | Vercel Preview Deployment | Vercel Preview Deployment (PR Isolated) | Vercel Production Deployment |
-| **Canonical URL** | `https://horecamodular-git-dev-vegen-s-projects.vercel.app/` | Generated per-PR Vercel Preview URL | `https://horecamodular.vercel.app/` |
-| **Supabase Project Ref** | `ourzapkjykzlwsjunzmd` | `ourzapkjykzlwsjunzmd` | Production Supabase Instance Ref |
-| **Supabase Project Name** | `horeca_modular_staging` | `horeca_modular_staging` | `horeca_modular_production` |
-| **Publishable Client Key** | `VITE_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_...`) | `VITE_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_...`) | `VITE_SUPABASE_PUBLISHABLE_KEY` (Prod Key) |
-| **Auth Configuration** | Email/Password (`VITE_DEV_PASSWORD_AUTH=true`) + PKCE | Google OAuth + GitHub OAuth + PKCE | Google OAuth + GitHub OAuth (`VITE_DEV_PASSWORD_AUTH=false`) |
-| **Storage Bucket** | `eco-imports-private-staging` | `eco-imports-private-staging` | `eco-imports-private-prod` |
-| **Database Data Reset** | Allowed (Isolated Dev Test Data) | Restricted (Controlled QA Test Fixtures) | Strictly Prohibited (Production Audit Data) |
+| **Authentication & Profile** | `src/context/AuthContext.jsx` | `src/domain/auth/`, `src/infrastructure/supabase/` | Standardized in WP-001 foundation; AuthContext delegates to use cases. |
+| **Tenancy & Membership** | `src/context/AuthContext.jsx` (`LIMIT 1`) | `src/domain/tenancy/`, `src/application/tenancy/` | Established in WP-001; full schema binding in subsequent WPs. |
+| **Extractos & Financial** | `src/modules/extractos/` | `src/modules/extractos/` + Target Domain / Repositories | Preserved in WP-001; migrated in WP-002. |
+| **Personal & HR** | `src/modules/personal/` | `src/modules/personal/` + Target Domain / Repositories | Preserved in WP-001; migrated in WP-003. |
+| **Inventario & Producción** | `src/modules/inventario/`, `src/modules/produccion/` | Target Domain / Repositories | Preserved in WP-001; migrated in WP-004. |
+| **Escandallos (Recipes)** | Branch `feature/escandallos-*` | `src/domain/escandallos/`, `src/modules/escandallos/` | Preserved on branch; audited and integrated in WP-005. |
+| **Purchases & Orders** | `src/modules/pedidos/` | `src/domain/purchases/`, `src/modules/purchases/` | Preserved in WP-001; migrated in WP-006. |
+| **Ventas & Last.app POS** | Standalone repo `last_horeca_integracion` | `src/infrastructure/adapters/lastapp/` | Integrated via adapter in WP-007. |
+
+---
+
+## 3. Infrastructure & Repository Pattern
+
+All persistence operations implement explicit port interfaces:
+
+```typescript
+// Domain Port Interface (src/domain/tenancy/repositories/IOrganizationMembershipRepository.ts)
+export interface IOrganizationMembershipRepository {
+  findByUserId(userId: string): Promise<Result<OrganizationMembership[], AppError>>;
+  findActiveMembership(userId: string, organizationId: string): Promise<Result<OrganizationMembership | null, AppError>>;
+  getUserActiveContext(userId: string): Promise<Result<ActiveContext | null, AppError>>;
+  setActiveContext(userId: string, organizationId: string, operationalUnitId?: string): Promise<Result<void, AppError>>;
+}
+```
+
+```typescript
+// Concrete Infrastructure Adapter (src/infrastructure/repositories/SupabaseOrganizationMembershipRepository.ts)
+export class SupabaseOrganizationMembershipRepository implements IOrganizationMembershipRepository {
+  // Queries Supabase PostgREST, maps database errors to AppError, returns Result<T, AppError>
+}
+```
+
+---
+
+## 4. Error & Result Model
+
+All new architectural boundaries use the functional container `Result<T, E>` and `AppError`:
+
+```typescript
+export type AppErrorCode =
+  | 'AUTHENTICATION'
+  | 'AUTHORIZATION'
+  | 'VALIDATION'
+  | 'NOT_FOUND'
+  | 'CONFLICT'
+  | 'INFRASTRUCTURE'
+  | 'UNEXPECTED';
+```
+
+---
+
+## 5. Runtime Environment Contract
+
+Config is parsed through Zod schema validation on application boot ([`src/shared/config/env.ts`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/src/shared/config/env.ts)).
+- **Explicit Environments**: `development`, `uat`, `production`.
+- **Secret Protection**: Only variables prefixed with `VITE_` are exposed to the client. API keys are masked in diagnostic outputs (`sb_pub...`).
+
+---
+
+## 6. Prohibited Architectural Patterns
+
+- ❌ Microservices (unjustified operational complexity for current scale).
+- ❌ Redux or complex global state libraries (use React Context / TanStack Query where needed).
+- ❌ Redis or separate caching layers.
+- ❌ Separate custom backend framework layered over Supabase without demonstrated need.
+- ❌ Client-side direct table mutations bypassing domain validation.

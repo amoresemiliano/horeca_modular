@@ -4,7 +4,7 @@
 
 | Environment | Git Branch | Git SHA | Vercel URL | Supabase Project Ref | Status | Verification |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **DEV** | `dev` | `4274f39204a4321cb20a0a7ec4dac78052be9555` | `https://horecamodular-git-dev-vegen-s-projects.vercel.app/` | `ourzapkjykzlwsjunzmd` | **ACTIVE** | `VERIFIED_BY_LOCAL_AGENT` |
+| **DEV** | `dev` | `a90724d47b2a6aea2248187b1806bfd13bb8d9fa` (baseline) | `https://horecamodular-git-dev-vegen-s-projects.vercel.app/` | `ourzapkjykzlwsjunzmd` | **ACTIVE** | `VERIFIED_BY_LOCAL_AGENT` |
 | **UAT** | *None* | *None* | *None* | *None* | **NOT PROVISIONED** | `NOT PROVISIONED` |
 | **PROD** | `main` | `8a1fcb1a502a291165aff53dcd3005048c01cd65` | `https://horecamodular.vercel.app/` | *Unproven* | **ACTIVE (FRONTEND ONLY)** | `NOT VERIFIED (BACKEND)` |
 
@@ -38,6 +38,7 @@ graph LR
 - **Canonical Repository**: `https://github.com/amoresemiliano/horeca_modular`
 - **Default Branch**: `main`
 - **Active Development Branch**: `dev`
+- **Active Working Package Branch**: `wp/001-engineering-foundation`
 - **Staging Database Project**: `ourzapkjykzlwsjunzmd` (`https://ourzapkjykzlwsjunzmd.supabase.co`)
 - **Key Fingerprint (Publishable)**: `sb_publishable_...Smhggsu`
 - **Storage Bucket**: `eco-imports-private-staging` (1 private bucket in staging)
@@ -45,11 +46,20 @@ graph LR
 
 ---
 
-## 4. Work Package WP-000 Status
-- **Preflight Audit**: COMPLETE
-- **Documentation Freeze**: COMPLETE
-- **Database Drift Report**: GENERATED (`./DATABASE_DRIFT_REPORT.md`)
-- **Status**: TECHNICALLY_READY_FOR_FINAL_ACCEPTANCE
+## 4. Work Package Status
+
+- **WP-000**: CLOSED & APPROVED (SHA: `a90724d47b2a6aea2248187b1806bfd13bb8d9fa`)
+- **WP-001 (Engineering Foundation & Canonical Core Preparation)**:
+  - TypeScript 5.8 & Vite Tooling: **PASS**
+  - Canonical Source Layer Boundaries: **PASS**
+  - Vitest Automated Test Runner & 34 Tests: **PASS**
+  - GitHub Actions CI Workflow: **PASS**
+  - Runtime Environment Contract: **PASS**
+  - Firebase Dependency Sanitization: **PASS (REMOVED)**
+  - Canonical DB Reconstruction Plan: **PASS** (`docs/CANONICAL_DB_RECONSTRUCTION_PLAN.md`)
+  - Tenancy & Authorization Technical Design: **PASS** (`docs/TENANCY_AUTHORIZATION_TECHNICAL_DESIGN.md`)
+  - Security Isolation Acceptance Contract (10 Scenarios): **PASS**
+  - Status: **TECHNICALLY_READY_FOR_INDEPENDENT_REVIEW**
 
 ---
 
@@ -57,6 +67,5 @@ graph LR
 
 - **Sync Status**: `VERIFIED_BY_LOCAL_AGENT`
 - **Local Root Path**: `c:\Users\Emiliano\Documents\1. Sistemas\El Criollo\documentación_procesos\`
-- **Synchronization Timestamp**: `2026-09-09T01:20:00Z`
-- **Files Synchronized**: 19 canonical documentation markdown files
+- **Files Synchronized**: Canonical documentation markdown files in `/docs` and `/agent`
 - **Independent Verification**: `NOT AVAILABLE FROM REPOSITORY` (Local filesystem operation only)

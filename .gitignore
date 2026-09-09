@@ -23,6 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
-# Local private data
+# Local private data & scratch
 .local-data/
-
+scratch/
+staging/
+labs/
+app/

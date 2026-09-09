@@ -1,22 +1,32 @@
-# CURRENT WORK PACKAGE — WP-000: FOUNDATION PREFLIGHT & DOCUMENTATION FREEZE (CLOSURE PASS)
+# CURRENT WORK PACKAGE — WP-001: ENGINEERING FOUNDATION & CANONICAL CORE PREPARATION
 
 ## 1. Status Overview
-- **Work Package**: WP-000
-- **Title**: Foundation Preflight & Documentation Freeze (Residual Closure Pass)
-- **Status**: COMPLETE & VERIFIED
+- **Work Package**: WP-001
+- **Title**: Engineering Foundation & Canonical Core Preparation
+- **Status**: COMPLETE & VERIFIED (TECHNICALLY_READY_FOR_INDEPENDENT_REVIEW)
 - **Target Branch**: `dev`
+- **WP Branch**: `wp/001-engineering-foundation`
 
-## 2. Remediation Summary (Residual Documentation Defects Resolved)
+## 2. Deliverables & Technical Scopes Summary
 
-- [x] **Defect 1 Remediated**: `docs/ROLE_CAPABILITY_MATRIX.md` rewritten completely to reflect canonical VEGEN model (`User + OrganizationMembership + Effective Capabilities + OperationalUnit Scope + Module Entitlement + ActiveContext`), approved 10 role templates, 16 capability families, 5 scopes, explicit human gates, and non-authoritative JWT statement.
-- [x] **Defect 2 Remediated**: `docs/PURCHASES_LEGACY_AUDIT.md` and `docs/SALES_LAST_ASSET_AUDIT.md` rewritten with canonical evidence taxonomy (`VERIFIED_IN_REPOSITORY`, `VERIFIED_BY_LOCAL_AGENT`, `NOT_INDEPENDENTLY_VERIFIED`, `NOT_VERIFIED`), empirical workstation inspection details, and domain entities.
-- [x] **Defect 3 Remediated**: `docs/PROJECT_STATE.md` updated with explicit current-state DEV / UAT / PROD matrix (`UAT: NOT PROVISIONED`, `PROD Supabase: NOT VERIFIED`), separated from target environment topology.
-- [x] **Defect 4 Remediated**: Removed all non-portable `file:///` hyperlinks across documentation. All intra-repository links converted to portable relative paths.
+- [x] **Scope A (TypeScript Foundation)**: TypeScript 5.8 configured with `tsconfig.json`, `@/` aliases, strict compiler settings for core layers, and npm script `npm run typecheck`.
+- [x] **Scope B (Canonical Source Structure)**: Established `src/domain/`, `src/application/`, `src/infrastructure/`, and `src/shared/`, with temporary coexistence for `src/modules/`.
+- [x] **Scope C (Infrastructure Boundary)**: Created typed Supabase client singleton, repository port `IOrganizationMembershipRepository`, and concrete adapter `SupabaseOrganizationMembershipRepository`.
+- [x] **Scope D (Error / Result Model)**: Implemented `AppError` with 7 error categories (`AUTHENTICATION`, `AUTHORIZATION`, `VALIDATION`, `NOT_FOUND`, `CONFLICT`, `INFRASTRUCTURE`, `UNEXPECTED`) and functional `Result<T, E>` container.
+- [x] **Scope E (Validation)**: Introduced Zod runtime boundary validation for environment configuration and DTOs.
+- [x] **Scope F (Test Foundation)**: Adopted Vitest 5.0, creating 34 tests across 6 files (`tests/unit/`, `tests/integration/`, and `tests/extractos.test.js`), runnable via `npm run test:run`. Defined 8 test layers in `docs/TEST_STRATEGY.md`.
+- [x] **Scope G (CI Foundation)**: Created GitHub Actions pipeline `.github/workflows/ci.yml` executing `npm ci`, `lint`, `typecheck`, `test:run`, `build`, and secret scanning.
+- [x] **Scope H (Environment Contract)**: Documented explicit environment matrix for `development`, `uat`, and `production` with safe key masking in `src/shared/config/env.ts`.
+- [x] **Scope I (Firebase Sanitization)**: Uninstalled `firebase` npm package and removed obsolete references.
+- [x] **Scope J (Database Reconstruction Plan)**: Created machine-readable inventory `docs/CANONICAL_DB_RECONSTRUCTION_PLAN.md` mapping all 34 tables to target dispositions (`KEEP`, `MIGRATE`, `REBUILD`, `REMOVE`, `HOLD_FOR_AUDIT`).
+- [x] **Scope K (Tenancy & Authorization Design)**: Created `docs/TENANCY_AUTHORIZATION_TECHNICAL_DESIGN.md` defining `can(ctx)` evaluator, multi-CIF RLS model, and fail-closed security.
+- [x] **Scope L (Security Test Specifications)**: Created executable integration suite `tests/integration/security_isolation.test.ts` covering 10 tenant isolation scenarios (SEC-01 through SEC-10).
+- [x] **Scope M (Documentation Discipline)**: Synchronized and updated all project documentation.
 
 ## 3. Work Package Execution Gate
 
-WP-000 — FOUNDATION PREFLIGHT & DOCUMENTATION FREEZE
-STATUS: COMPLETE & VERIFIED
+WP-001 — ENGINEERING FOUNDATION & CANONICAL CORE PREPARATION  
+STATUS: TECHNICALLY_READY_FOR_INDEPENDENT_REVIEW  
 
-NEXT:
-WP-001 — ENGINEERING FOUNDATION & CANONICAL CORE PREPARATION
+NEXT:  
+Await Development Captain + Jules independent review and Product Owner UAT.

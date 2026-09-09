@@ -1,0 +1,52 @@
+name: CI Quality Gates
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+      - 'wp/**'
+      - 'feature/**'
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+  validate:
+    name: Technical Quality Gates & Build Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Prevent Accidental Secret & .env Commits
+        run: |
+          echo "Scanning for accidental secret leaks..."
+          if git ls-files | grep -E "^\.env$|\.env\.local$"; then
+            echo "::error::Direct .env files must never be tracked in git repository!"
+            exit 1
+          fi
+          echo "Secret scan passed cleanly."
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: ESLint Code Quality Gate
+        run: npm run lint
+
+      - name: TypeScript Compiler Verification Gate
+        run: npm run typecheck
+
+      - name: Automated Unit & Integration Tests Gate
+        run: npm run test:run
+
+      - name: Production Bundle Compilation Gate
+        run: npm run build
