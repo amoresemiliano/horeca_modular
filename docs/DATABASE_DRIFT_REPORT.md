@@ -3,6 +3,8 @@
 ## 1. Audit Overview
 This report details the exact schema, RLS policy, and migration drift between repository migration SQL files (`supabase/migrations/*.sql`) and the live canonical database `ourzapkjykzlwsjunzmd`.
 
+> **CRITICAL RECONSTRUCTION NOTICE**: Repository migrations committed to date (`supabase/migrations/20260903000000_supabase_auth_rls.sql`) **cannot** reconstruct the live database schema from an empty state (`scratch/` / fresh database). Several foundational tables pre-existed in the live database and are only referenced by foreign keys or RLS policies, while other tables remain completely untracked in Git.
+
 - **Repository Migration Files**: 1 file (`supabase/migrations/20260903000000_supabase_auth_rls.sql`).
 - **Unmerged Branch Migration Files**: 1 file (`supabase/migrations/20260901000000_init_escandallos.sql` on branch `origin/feature/escandallos-2485206073148743544`).
 - **Live Database Schemas**: 34 public tables, 8 storage tables in `ourzapkjykzlwsjunzmd`.
@@ -12,7 +14,7 @@ This report details the exact schema, RLS policy, and migration drift between re
 ## 2. Factually Accurate Table Migration Classification
 
 | Table Name | Live Row Count | Created in Repo Migration? | Referenced in Repo Migration? | Status / Classification | Notes |
-| :--- | :---: | :---: | :---: | :--- | :--- |
+| :--- | :---: | :---: | :---: | :---: | :--- |
 | `eco_organization_members` | 2 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
 | `eco_auth_bootstrap_allowlist` | 2 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
 | `empleados` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
@@ -58,6 +60,6 @@ This report details the exact schema, RLS policy, and migration drift between re
 ---
 
 ## 4. Related Forensic Audit References
-- Escandallos Branch Audit: [`/docs/ESCANDALLOS_BRANCH_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/ESCANDALLOS_BRANCH_AUDIT.md)
-- Purchases Legacy Audit: [`/docs/PURCHASES_LEGACY_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/PURCHASES_LEGACY_AUDIT.md)
-- Sales / Last.app Asset Audit: [`/docs/SALES_LAST_ASSET_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/SALES_LAST_ASSET_AUDIT.md)
+- Escandallos Branch Audit: [`./ESCANDALLOS_BRANCH_AUDIT.md`](./ESCANDALLOS_BRANCH_AUDIT.md)
+- Purchases Legacy Audit: [`./PURCHASES_LEGACY_AUDIT.md`](./PURCHASES_LEGACY_AUDIT.md)
+- Sales / Last.app Asset Audit: [`./SALES_LAST_ASSET_AUDIT.md`](./SALES_LAST_ASSET_AUDIT.md)

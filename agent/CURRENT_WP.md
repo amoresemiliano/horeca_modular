@@ -2,18 +2,21 @@
 
 ## 1. Status Overview
 - **Work Package**: WP-000
-- **Title**: Foundation Preflight & Documentation Freeze (Consolidated Closure Pass)
+- **Title**: Foundation Preflight & Documentation Freeze (Residual Closure Pass)
 - **Status**: COMPLETE & VERIFIED
 - **Target Branch**: `dev`
 
-## 2. Remediation Summary (Independent Review Findings Addressed)
+## 2. Remediation Summary (Residual Documentation Defects Resolved)
 
-- [x] **Blocker 1 Remediated**: `/docs/ARCHITECTURE.md` updated to explicitly demarcate **CURRENT AS-IS ARCHITECTURE** vs **APPROVED TARGET TO-BE ARCHITECTURE**.
-- [x] **Blocker 2 Remediated**: `/docs/SECURITY_MODEL.md`, `/docs/DATA_OWNERSHIP.md`, and `/docs/DATABASE_DRIFT_REPORT.md` updated to clarify `get_auth_user_org_id()` as an **AS-IS single-organization helper** (`LIMIT 1`) and document the **TARGET TO-BE Multi-CIF RLS standard**.
-- [x] **Blocker 3 Remediated**: Created 3 missing forensic audit documents:
-  - [`/docs/ESCANDALLOS_BRANCH_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/ESCANDALLOS_BRANCH_AUDIT.md)
-  - [`/docs/PURCHASES_LEGACY_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/PURCHASES_LEGACY_AUDIT.md)
-  - [`/docs/SALES_LAST_ASSET_AUDIT.md`](file:///c:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/SALES_LAST_ASSET_AUDIT.md)
+- [x] **Defect 1 Remediated**: `docs/ROLE_CAPABILITY_MATRIX.md` rewritten completely to reflect canonical VEGEN model (`User + OrganizationMembership + Effective Capabilities + OperationalUnit Scope + Module Entitlement + ActiveContext`), approved 10 role templates, 16 capability families, 5 scopes, explicit human gates, and non-authoritative JWT statement.
+- [x] **Defect 2 Remediated**: `docs/PURCHASES_LEGACY_AUDIT.md` and `docs/SALES_LAST_ASSET_AUDIT.md` rewritten with canonical evidence taxonomy (`VERIFIED_IN_REPOSITORY`, `VERIFIED_BY_LOCAL_AGENT`, `NOT_INDEPENDENTLY_VERIFIED`, `NOT_VERIFIED`), empirical workstation inspection details, and domain entities.
+- [x] **Defect 3 Remediated**: `docs/PROJECT_STATE.md` updated with explicit current-state DEV / UAT / PROD matrix (`UAT: NOT PROVISIONED`, `PROD Supabase: NOT VERIFIED`), separated from target environment topology.
+- [x] **Defect 4 Remediated**: Removed all non-portable `file:///` hyperlinks across documentation. All intra-repository links converted to portable relative paths.
 
-## 3. Next Work Package
-- **Upcoming**: WP-001 — ENGINEERING FOUNDATION & CANONICAL CORE PREPARATION
+## 3. Work Package Execution Gate
+
+WP-000 — FOUNDATION PREFLIGHT & DOCUMENTATION FREEZE
+STATUS: COMPLETE & VERIFIED
+
+NEXT:
+WP-001 — ENGINEERING FOUNDATION & CANONICAL CORE PREPARATION

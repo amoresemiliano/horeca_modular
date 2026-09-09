@@ -19,7 +19,7 @@ En estricta sujeción a las directrices de la **Metodología Vegen Digital**, el
 
 ## 2. Inventario Oficial y Clasificación de Fuentes Autorizadas
 
-Todos los reportes reales se alojan de manera exclusiva en la ubicación autorizada del workspace: `el-criollo-ecosistema/reportes_elcriollo/`, dividida en las subcarpetas `Last.app/`, `Uber/` y `Glovo/`. Su correlación técnica detallada y análisis de riesgos se desglosa en la matriz obligatoria de [17-matriz-reportes-operativos.md](file:///C:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/17-matriz-reportes-operativos.md).
+Todos los reportes reales se alojan de manera exclusiva en la ubicación autorizada del workspace: `el-criollo-ecosistema/reportes_elcriollo/`, dividida en las subcarpetas `Last.app/`, `Uber/` y `Glovo/`. Su correlación técnica detallada y análisis de riesgos se desglosa en la matriz obligatoria de [17-matriz-reportes-operativos.md](./17-matriz-reportes-operativos.md).
 
 ### 2.1. Jerarquía Operativa por Hecho Económico Concreto
 Prohíbese utilizar expresiones dogmáticas como "fuente soberana universal", "supremacía absoluta", "100% de granularidad" o "fuente indiscutida". Cada documento se asume documentalmente como la **fuente principal conocida** para un hecho específico del servicio:
@@ -178,7 +178,7 @@ Por consiguiente, este Addendum y todo el cuerpo técnico eliminan el léxico co
 
 ## 10. Circuito Relacional con Agregadores y Configuración de Tolerancias
 
-La interconexión monetaria entre los pedidos servidos por cocina en Last.app, las liquidaciones retenidas por Uber Eats o Glovo y los ingresos en el banco Sabadell o BBVA es gobernada bajo una arquitectura de conciliación por compensación documentada en profundidad en [18-delivery-uber-glovo.md](file:///C:/Users/Emiliano/Documents/1.%20Sistemas/El%20Criollo/el-criollo-ecosistema/el_criollo_modular/docs/fase-1-extractos/18-delivery-uber-glovo.md).
+La interconexión monetaria entre los pedidos servidos por cocina en Last.app, las liquidaciones retenidas por Uber Eats o Glovo y los ingresos en el banco Sabadell o BBVA es gobernada bajo una arquitectura de conciliación por compensación documentada en profundidad en [18-delivery-uber-glovo.md](./18-delivery-uber-glovo.md).
 
 ### 10.1. Regla en Tolerancias Monetarias y Plazos
 * **Prohibición de invención o dogmatismo:** Prohíbese codificar en la especificación porcentajes fijos inalterables de comisión de las plataformas de delivery o ventanas temporales fijas para la alineación bancaria.
