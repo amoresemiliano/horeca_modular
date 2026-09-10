@@ -68,15 +68,15 @@ export function AuthProvider({ children }) {
 
       setProfile(profData);
 
-      // 2. Fetch active organization membership for this profile
-      const { data: memData, error: memErr } = await supabase
+      // 2. Fetch active organization memberships for this profile
+      const { data: memList, error: memErr } = await supabase
         .from('eco_organization_members')
         .select('*')
         .eq('user_profile_id', profData.id)
         .eq('is_active', true)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
-      if (memErr || !memData) {
+      if (memErr || !memList || memList.length === 0) {
         console.warn('FAIL-CLOSED: No active organization membership found for profile_id:', profData.id);
         setMembership(null);
         setRole(null);
@@ -84,10 +84,13 @@ export function AuthProvider({ children }) {
         return;
       }
 
+      // Prioritize SUPERADMIN or ADMIN if multiple memberships exist
+      const activeMem = memList.find((m) => m.role === 'SUPERADMIN') || memList.find((m) => m.role === 'ADMIN') || memList[0];
+
       // FAIL-CLOSED: Role and organizationId are strictly derived from validated DB membership
-      setMembership(memData);
-      setRole(memData.role || null);
-      setOrganizationId(memData.organization_id || null);
+      setMembership(activeMem);
+      setRole(activeMem.role || null);
+      setOrganizationId(activeMem.organization_id || null);
     } catch (err) {
       console.error('FAIL-CLOSED: Exception fetching user profile/membership:', err);
       setProfile(null);
