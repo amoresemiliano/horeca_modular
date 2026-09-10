@@ -37,9 +37,17 @@ const Login = () => {
     }
   };
 
+  // Safe DEV diagnostic identifiers (no secrets/keys)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+  const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\.supabase\.co/)?.[1] || 'ourzapkjykzlwsjunzmd';
+  const gitSha = (import.meta.env.VITE_RELEASE_SHA || 'd95dcb0').slice(0, 7);
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    if (!emailInput || !passwordInput) {
+    const cleanEmail = (emailInput || '').trim();
+    const cleanPassword = (passwordInput || '').trim();
+
+    if (!cleanEmail || !cleanPassword) {
       setErrorMsg('Ingresá email y contraseña.');
       setStatus('error');
       setTimeout(() => setStatus('idle'), 3500);
@@ -50,7 +58,7 @@ const Login = () => {
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      await loginWithPassword(emailInput, passwordInput);
+      await loginWithPassword(cleanEmail, cleanPassword);
     } catch (err) {
       console.error('Error durante autenticación con contraseña:', err.message);
       setErrorMsg('Credenciales inválidas. Verificá tu email y contraseña.');
@@ -573,6 +581,19 @@ const Login = () => {
           }}>
             Desarrollado por Vegen Digital SL
           </p>
+
+          {isDevPasswordAuthEnabled && (
+            <p style={{
+              textAlign: 'center',
+              marginTop: '0.75rem',
+              fontSize: '0.6875rem',
+              color: 'var(--c-text-4)',
+              fontFamily: 'monospace',
+              letterSpacing: '0.04em',
+            }}>
+              DEV · {gitSha} · Supabase {projectRef}
+            </p>
+          )}
         </div>
       </div>
 
