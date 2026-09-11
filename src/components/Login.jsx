@@ -40,7 +40,7 @@ const Login = () => {
   // Safe DEV diagnostic identifiers (no secrets/keys)
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
   const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\.supabase\.co/)?.[1] || 'ourzapkjykzlwsjunzmd';
-  const gitSha = (import.meta.env.VITE_RELEASE_SHA || 'd95dcb0').slice(0, 7);
+  const gitSha = (import.meta.env.VITE_RELEASE_SHA || import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA || 'c5f73c6').slice(0, 7);
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
