@@ -61,7 +61,11 @@ const Login = () => {
       await loginWithPassword(cleanEmail, cleanPassword);
     } catch (err) {
       console.error('Error durante autenticación con contraseña:', err.message);
-      setErrorMsg('Credenciales inválidas. Verificá tu email y contraseña.');
+      if (err.message && (err.message.includes('Invalid login credentials') || err.message.includes('Invalid credentials'))) {
+        setErrorMsg('Credenciales inválidas. Verificá tu email y contraseña.');
+      } else {
+        setErrorMsg(err.message || 'Credenciales inválidas. Verificá tu email y contraseña.');
+      }
       setStatus('error');
       setTimeout(() => setStatus('idle'), 4000);
     }
