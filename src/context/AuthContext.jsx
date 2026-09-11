@@ -111,6 +111,11 @@ export function AuthProvider({ children }) {
       }
     }
 
+    // Safety timeout to ensure app shell is never stuck indefinitely in loading state
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setLoading(false);
+    }, 2500);
+
     // 1. Subscribe to Auth State Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
@@ -122,33 +127,46 @@ export function AuthProvider({ children }) {
       const currentUser = session?.user || null;
       setUser(currentUser);
 
-      if (currentUser) {
-        await fetchUserRoleAndProfile(currentUser);
-        cleanUrlAuthParams();
-      } else {
-        setProfile(null);
-        setMembership(null);
-        setRole(null);
-        setOrganizationId(null);
+      try {
+        if (currentUser) {
+          await fetchUserRoleAndProfile(currentUser);
+          cleanUrlAuthParams();
+        } else {
+          setProfile(null);
+          setMembership(null);
+          setRole(null);
+          setOrganizationId(null);
+        }
+      } catch (err) {
+        console.error('Error handling auth state change:', err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-
-      if (isMounted) setLoading(false);
     });
 
     // 2. Fallback Initial Session Check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!isMounted) return;
       const currentUser = session?.user || null;
-      if (currentUser && !user) {
-        setUser(currentUser);
-        await fetchUserRoleAndProfile(currentUser);
-        cleanUrlAuthParams();
+      try {
+        if (currentUser && !user) {
+          setUser(currentUser);
+          await fetchUserRoleAndProfile(currentUser);
+          cleanUrlAuthParams();
+        }
+      } catch (err) {
+        console.error('Error in initial getSession:', err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
+    }).catch(err => {
+      console.warn('getSession error:', err);
       if (isMounted) setLoading(false);
     });
 
     return () => {
       isMounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
@@ -226,15 +244,20 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    setLoading(true);
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-    setMembership(null);
-    setRole(null);
-    setOrganizationId(null);
-    setIsPasswordRecovery(false);
-    setLoading(false);
+    try {
+      setLoading(true);
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error during signOut:', err);
+    } finally {
+      setUser(null);
+      setProfile(null);
+      setMembership(null);
+      setRole(null);
+      setOrganizationId(null);
+      setIsPasswordRecovery(false);
+      setLoading(false);
+    }
   };
 
   return (
