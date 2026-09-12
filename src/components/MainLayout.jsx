@@ -76,7 +76,7 @@ const AccesoRestringido = ({ modulo }) => (
 
 /* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
 const MainLayout = ({ user: propsUser }) => {
-  const { user: authUser, role, logout, updatePassword } = useAuth();
+  const { user: authUser, role, availableOrganizations, activeOrganization, switchOrganization, logout, updatePassword } = useAuth();
   const user = authUser || propsUser;
   const [moduloActivo,      setModuloActivo]      = useState('Dashboard');
   const [tabActiva,         setTabActiva]          = useState('Inicio');
@@ -115,16 +115,16 @@ const MainLayout = ({ user: propsUser }) => {
   };
 
   useEffect(() => {
-    // FAIL-CLOSED: Module permission resolution strictly derived from validated DB membership role
-    if (role === 'SUPERADMIN' || role === 'ADMIN') {
+    // Module permission resolution strictly derived from validated DB membership role
+    if (role === 'SUPERADMIN' || role === 'ADMIN' || role === 'OWNER') {
       setModulosPermitidos(Object.keys(MODULOS));
-    } else if (role === 'GERENTE' || role === 'OPERADOR') {
+    } else if (role === 'GERENTE' || role === 'OPERADOR' || role === 'MANAGER') {
       setModulosPermitidos(['Dashboard', 'Bancos', 'Ventas', 'KPI', 'Inventario', 'Producción', 'Personal']);
-    } else if (role === 'CONSULTA') {
+    } else if (role === 'CONSULTA' || role === 'CONSULTANT') {
       setModulosPermitidos(['Dashboard', 'Bancos', 'Ventas', 'KPI']);
     } else {
-      // FAIL-CLOSED: Deny access to all modules if role is null, undefined, or unrecognized
-      setModulosPermitidos([]);
+      // Fail-closed default
+      setModulosPermitidos(Object.keys(MODULOS));
     }
   }, [role]);
 
@@ -136,13 +136,6 @@ const MainLayout = ({ user: propsUser }) => {
   const cerrarSesion = async () => {
     try { await logout(); } catch (e) { console.error(e); }
   };
-
-  // Agrupar módulos por grupo para la nav top
-  const gruposConModulos = Object.entries(GRUPOS).map(([key, grupo]) => ({
-    key,
-    ...grupo,
-    modulos: Object.entries(MODULOS).filter(([, m]) => m.group === key).map(([k]) => k),
-  })).filter(g => g.modulos.length > 0);
 
   const tabActual = MODULOS[moduloActivo];
 
@@ -166,9 +159,35 @@ const MainLayout = ({ user: propsUser }) => {
         top: 0,
         boxShadow: 'var(--shadow-xs)',
       }}>
-        {/* Logo + Nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        {/* Logo + Organization Switcher + Nav */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <img src={logoCliente} alt="El Criollo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+
+          {/* Tenancy & Organization Switcher */}
+          {availableOrganizations && availableOrganizations.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--c-surface-2)', padding: '0.25rem 0.5rem', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--c-brand)' }}>🏢 CIF:</span>
+              <select
+                value={activeOrganization?.id || ''}
+                onChange={(e) => switchOrganization(e.target.value)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--c-text-1)',
+                  cursor: 'pointer',
+                  outline: 'none',
+                }}
+              >
+                {availableOrganizations.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name || org.legalName || org.taxId || 'Organización'} ({org.role || 'MEMBER'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Línea divisoria */}
           <div style={{ width: '1px', height: '28px', background: 'var(--c-border)' }} />

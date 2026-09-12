@@ -1,10 +1,17 @@
-import { AuditableEntity, EntityId } from '../../shared/types';
-
-export interface Organization extends AuditableEntity {
-  readonly legalName: string;
-  readonly commercialName?: string;
-  readonly taxId: string; // CIF / NIF
-  readonly country: string;
-  readonly isActive: boolean;
-  readonly holdingId?: EntityId;
+export interface Organization {
+  id: string;
+  name?: string;
+  legalName?: string | null;
+  commercialName?: string;
+  taxId?: string | null;
+  taxIdType?: string | null;
+  holdingId?: string | null;
+  tradeName?: string | null;
+  country?: string;
+  countryCode?: string | null;
+  currency?: string | null;
+  timezone?: string | null;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }

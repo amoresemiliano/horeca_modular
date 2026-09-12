@@ -50,13 +50,13 @@ export class GetActiveUserContextUseCase {
     // 4. Build response DTO
     const responseDto: ActiveContextResponseDto = {
       activeOrganizationId: activeContextItem.organization.id,
-      legalName: activeContextItem.organization.legalName,
-      taxId: activeContextItem.organization.taxId,
+      legalName: activeContextItem.organization.legalName || activeContextItem.organization.name || '',
+      taxId: activeContextItem.organization.taxId || '',
       roleTemplate: activeContextItem.membership.roleTemplate,
       availableOrganizations: organizations.map((item) => ({
         id: item.organization.id,
-        legalName: item.organization.legalName,
-        taxId: item.organization.taxId,
+        legalName: item.organization.legalName || item.organization.name || '',
+        taxId: item.organization.taxId || '',
         roleTemplate: item.membership.roleTemplate,
       })),
     };

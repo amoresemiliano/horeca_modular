@@ -50,6 +50,11 @@ describe('Tenancy & ActiveContext Use Cases (Scope C & Scope K)', () => {
   };
 
   const mockRepo: IOrganizationMembershipRepository = {
+    findByUserId: vi.fn(),
+    findPrimaryByUserId: vi.fn(),
+    findOrganizationsByUserId: vi.fn(),
+    findOperationalUnitsByOrgId: vi.fn(),
+    findModuleEntitlementsByOrgId: vi.fn(),
     findUserOrganizations: vi.fn().mockResolvedValue(Result.ok([mockOrgA, mockOrgB])),
     findMembership: vi.fn().mockImplementation((_userId: string, orgId: string) => {
       if (orgId === 'org-cif-a') return Promise.resolve(Result.ok(mockOrgA.membership));

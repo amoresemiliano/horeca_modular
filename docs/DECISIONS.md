@@ -54,3 +54,13 @@
 - **Status**: Approved (WP-001)
 - **Context**: Firebase package remained in `package.json` despite the full migration to Supabase Auth.
 - **Decision**: Uninstall `firebase` package, remove obsolete configs and environment references, and verify 0 runtime regressions in Supabase Auth.
+
+## ADR-012: Canonical Multi-Tenant & Multi-CIF Hierarchy (Holding / Organization / OperationalUnit)
+- **Status**: Approved (WP-002)
+- **Context**: HORECA operations require modeling multi-brand, multi-CIF restaurant groups with distinct physical locations (kitchens, bars, warehouses) while maintaining strict legal and operational isolation.
+- **Decision**: Implement a canonical 3-tier tenancy hierarchy (`eco_holdings` -> `eco_organizations` [CIF] -> `eco_operational_units` [Locations]). Membership is managed per-holding (`eco_holding_members`) and per-organization (`eco_organization_members`).
+
+## ADR-013: 13 Canonical Role Templates, Platform Admin Segregation & Capability-Driven Authorization
+- **Status**: Approved (WP-002)
+- **Context**: Role-string matching (`role === 'SUPERADMIN'`) is fragile and blurs the boundary between system maintenance and tenant business data.
+- **Decision**: Formalize the 13 canonical RoleTemplates (`VEGEN_PLATFORM_ADMIN`, `HOLDING_OWNER`, `HOLDING_ADMIN`, `OWNER`, `MANAGER`, `ADMINISTRATIVE`, `PURCHASING`, `RECEPTION_FLOOR`, `PRODUCTION`, `COOK_COST_SHEET_MANAGER`, `HR_PERSONNEL`, `EXTERNAL_ACCOUNTANT`, `CONSULTANT`). Platform administrators do not automatically gain tenant business data access. Permissions resolve via atomic capabilities (`eco_capabilities`), role templates, and explicit overrides with fail-closed `DENY`.

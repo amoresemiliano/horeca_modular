@@ -1,32 +1,31 @@
-# CURRENT WORK PACKAGE — WP-001: ENGINEERING FOUNDATION & CANONICAL CORE PREPARATION
+# CURRENT WORK PACKAGE — WP-002: CANONICAL TENANCY, IDENTITY & AUTHORIZATION CORE
 
 ## 1. Status Overview
-- **Work Package**: WP-001
-- **Title**: Engineering Foundation & Canonical Core Preparation
+- **Work Package**: WP-002
+- **Title**: Canonical Tenancy, Identity & Authorization Core
 - **Status**: COMPLETE & VERIFIED (TECHNICALLY_READY_FOR_INDEPENDENT_REVIEW)
 - **Target Branch**: `dev`
-- **WP Branch**: `wp/001-engineering-foundation`
+- **WP Branch**: `wp/002-canonical-tenancy-auth`
 
 ## 2. Deliverables & Technical Scopes Summary
 
-- [x] **Scope A (TypeScript Foundation)**: TypeScript 5.8 configured with `tsconfig.json`, `@/` aliases, strict compiler settings for core layers, and npm script `npm run typecheck`.
-- [x] **Scope B (Canonical Source Structure)**: Established `src/domain/`, `src/application/`, `src/infrastructure/`, and `src/shared/`, with temporary coexistence for `src/modules/`.
-- [x] **Scope C (Infrastructure Boundary)**: Created typed Supabase client singleton, repository port `IOrganizationMembershipRepository`, and concrete adapter `SupabaseOrganizationMembershipRepository`.
-- [x] **Scope D (Error / Result Model)**: Implemented `AppError` with 7 error categories (`AUTHENTICATION`, `AUTHORIZATION`, `VALIDATION`, `NOT_FOUND`, `CONFLICT`, `INFRASTRUCTURE`, `UNEXPECTED`) and functional `Result<T, E>` container.
-- [x] **Scope E (Validation)**: Introduced Zod runtime boundary validation for environment configuration and DTOs.
-- [x] **Scope F (Test Foundation)**: Adopted Vitest 5.0, creating 34 tests across 6 files (`tests/unit/`, `tests/integration/`, and `tests/extractos.test.js`), runnable via `npm run test:run`. Defined 8 test layers in `docs/TEST_STRATEGY.md`.
-- [x] **Scope G (CI Foundation)**: Created GitHub Actions pipeline `.github/workflows/ci.yml` executing `npm ci`, `lint`, `typecheck`, `test:run`, `build`, and secret scanning.
-- [x] **Scope H (Environment Contract)**: Documented explicit environment matrix for `development`, `uat`, and `production` with safe key masking in `src/shared/config/env.ts`.
-- [x] **Scope I (Firebase Sanitization)**: Uninstalled `firebase` npm package and removed obsolete references.
-- [x] **Scope J (Database Reconstruction Plan)**: Created machine-readable inventory `docs/CANONICAL_DB_RECONSTRUCTION_PLAN.md` mapping all 34 tables to target dispositions (`KEEP`, `MIGRATE`, `REBUILD`, `REMOVE`, `HOLD_FOR_AUDIT`).
-- [x] **Scope K (Tenancy & Authorization Design)**: Created `docs/TENANCY_AUTHORIZATION_TECHNICAL_DESIGN.md` defining `can(ctx)` evaluator, multi-CIF RLS model, and fail-closed security.
-- [x] **Scope L (Security Test Specifications)**: Created executable integration suite `tests/integration/security_isolation.test.ts` covering 10 tenant isolation scenarios (SEC-01 through SEC-10).
-- [x] **Scope M (Documentation Discipline)**: Synchronized and updated all project documentation.
+- [x] **Canonical Tenancy Model**: Implemented `Holding`, `HoldingMembership`, `Organization`, `OperationalUnit`, `Membership`, and `ModuleEntitlement` domain entities.
+- [x] **Canonical 13 Role Templates**: Registered and implemented the 13 canonical role templates (`VEGEN_PLATFORM_ADMIN`, `HOLDING_OWNER`, `HOLDING_ADMIN`, `OWNER`, `MANAGER`, `ADMINISTRATIVE`, `PURCHASING`, `RECEPTION_FLOOR`, `PRODUCTION`, `COOK_COST_SHEET_MANAGER`, `HR_PERSONNEL`, `EXTERNAL_ACCOUNTANT`, `CONSULTANT`).
+- [x] **Platform Admin Segregation**: Ensured `VEGEN_PLATFORM_ADMIN` manages platform infrastructure and global catalogs without automatic tenant business-data access.
+- [x] **Capability-Driven Authorization**: 42 atomic capabilities registered in database and domain, with support for explicit overrides and fail-closed `can(...)` evaluator.
+- [x] **Transitional Entitlements Baseline**: Preserved DEV operational continuity with explicit transitional baseline vs future plan-driven entitlements.
+- [x] **Application Use Cases**: Implemented 8 canonical use cases for organization switching, operational unit switching, capability checks, and active context validation.
+- [x] **Supabase Repository Adapters**: Extended `SupabaseOrganizationMembershipRepository` to support full multi-CIF hierarchies and capability overrides.
+- [x] **Database Migration & RLS**: Versioned SQL migration `20260912000000_canonical_tenancy_and_auth_core.sql` with multi-CIF helper functions and bounded canonical tenancy RLS.
+- [x] **Runtime UI Migration**: Updated `AuthContext.jsx` for multi-tenancy and added organization switcher / badge in `MainLayout.jsx`.
+- [x] **Clean DEV Login Gate**: Verified `emilianodirosa1+horeca-dev@gmail.com` profile, membership, and application access.
+- [x] **Security & RLS Test Suites**: 53 automated tests across 8 suites (100% passing), including honest classification of SEC-RLS-01 through 12.
+- [x] **Documentation & Architecture Records**: Created `docs/CANONICAL_TENANCY_SCHEMA.md`, `docs/AUTHORIZATION_RUNTIME_MODEL.md`, updated `DECISIONS.md` (ADR-012, ADR-013), `DATABASE_DRIFT_REPORT.md`, `PROJECT_STATE.md`, and `TEST_STRATEGY.md`.
 
 ## 3. Work Package Execution Gate
 
-WP-001 — ENGINEERING FOUNDATION & CANONICAL CORE PREPARATION  
+WP-002 — CANONICAL TENANCY, IDENTITY & AUTHORIZATION CORE  
 STATUS: TECHNICALLY_READY_FOR_INDEPENDENT_REVIEW  
 
 NEXT:  
-Await Development Captain + Jules independent review and Product Owner UAT.
+Await Development Captain verification, Jules independent review, and Product Owner UAT. Do not start WP-003.
