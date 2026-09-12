@@ -1,7 +1,9 @@
-import { EntityId } from '../../shared/types';
-import { OrganizationMembership } from '../entities/Membership';
+import { Result } from '@/shared/errors/Result';
+import { AppError } from '@/shared/errors/AppError';
+import { Membership, OrganizationMembership } from '../entities/Membership';
 import { Organization } from '../entities/Organization';
-import { Result } from '../../../shared/errors/Result';
+import { OperationalUnit } from '../entities/OperationalUnit';
+import { ModuleEntitlement } from '../entities/ModuleEntitlement';
 
 export interface UserOrganizationContext {
   readonly organization: Organization;
@@ -9,23 +11,15 @@ export interface UserOrganizationContext {
 }
 
 export interface IOrganizationMembershipRepository {
-  /**
-   * Find all active organization memberships for a user.
-   */
-  findUserOrganizations(userId: EntityId): Promise<Result<readonly UserOrganizationContext[]>>;
+  findByUserId(userId: string): Promise<Result<Membership[], AppError>>;
+  findPrimaryByUserId(userId: string): Promise<Result<Membership | null, AppError>>;
+  findOrganizationsByUserId(userId: string): Promise<Result<Organization[], AppError>>;
+  findOperationalUnitsByOrgId(orgId: string): Promise<Result<OperationalUnit[], AppError>>;
+  findModuleEntitlementsByOrgId(orgId: string): Promise<Result<ModuleEntitlement[], AppError>>;
 
-  /**
-   * Find a specific user membership in a target organization.
-   */
-  findMembership(userId: EntityId, organizationId: EntityId): Promise<Result<OrganizationMembership | null>>;
-
-  /**
-   * Get currently persisted active context for a user session.
-   */
-  getActiveContext(userId: EntityId): Promise<Result<EntityId | null>>;
-
-  /**
-   * Update active context for a user session.
-   */
-  setActiveContext(userId: EntityId, organizationId: EntityId): Promise<Result<void>>;
+  // Legacy compat methods
+  findUserOrganizations(userId: string): Promise<Result<readonly UserOrganizationContext[], AppError>>;
+  findMembership(userId: string, organizationId: string): Promise<Result<OrganizationMembership | null, AppError>>;
+  getActiveContext(userId: string): Promise<Result<string | null, AppError>>;
+  setActiveContext(userId: string, organizationId: string): Promise<Result<void, AppError>>;
 }

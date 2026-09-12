@@ -1,10 +1,20 @@
-import { AuditableEntity, EntityId } from '../../shared/types';
+export type OperationalUnitType =
+  | 'KITCHEN'
+  | 'SALON'
+  | 'BAR'
+  | 'WAREHOUSE'
+  | 'CENTRAL_OFFICE'
+  | 'DELIVERY_HUB'
+  | 'OTHER';
 
-export interface OperationalUnit extends AuditableEntity {
-  readonly organizationId: EntityId;
-  readonly code: string;
-  readonly name: string;
-  readonly unitType: 'RESTAURANT' | 'CENTRAL_KITCHEN' | 'DARK_KITCHEN' | 'WAREHOUSE' | 'OFFICE';
-  readonly address?: string;
-  readonly isActive: boolean;
+export interface OperationalUnit {
+  id: string;
+  organizationId: string;
+  code: string;
+  name: string;
+  unitType: OperationalUnitType;
+  isActive: boolean;
+  metadata?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
 }
