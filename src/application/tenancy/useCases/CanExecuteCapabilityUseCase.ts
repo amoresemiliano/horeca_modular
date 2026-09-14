@@ -29,6 +29,14 @@ export class CanExecuteCapabilityUseCase {
       return Result.ok(false); // Fail-closed default DENY
     }
 
+    // If an operational unit is specified and membership is not organization-wide, verify unit scope
+    if (operationalUnitId && !membership.isOrganizationWide) {
+      const allowedScopes = membership.operationalUnitScopes || [];
+      if (!allowedScopes.includes(operationalUnitId)) {
+        return Result.ok(false); // Scoped out of requested operational unit
+      }
+    }
+
     // Check module entitlement if applicable
     const entitlementsResult = await this.membershipRepo.findModuleEntitlementsByOrgId(organizationId);
     if (entitlementsResult.success) {

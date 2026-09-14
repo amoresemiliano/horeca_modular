@@ -39,6 +39,14 @@ export class SwitchActiveOperationalUnitUseCase {
       if (!unitExists) {
         return Result.fail(AppError.notFound('Target operational unit not found or inactive.'));
       }
+
+      // If membership is scoped (not organization-wide), verify target unit is within allowed scopes
+      if (!membership.isOrganizationWide) {
+        const allowedScopes = membership.operationalUnitScopes || [];
+        if (!allowedScopes.includes(targetOperationalUnitId)) {
+          return Result.fail(AppError.authorization('User does not have access to the specified operational unit.'));
+        }
+      }
     }
 
     const activeContext: ActiveContext = {

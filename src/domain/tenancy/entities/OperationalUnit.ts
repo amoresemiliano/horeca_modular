@@ -1,18 +1,18 @@
-export type OperationalUnitType =
-  | 'KITCHEN'
-  | 'SALON'
-  | 'BAR'
+export type CanonicalOperationalUnitType =
+  | 'LOCAL'
   | 'WAREHOUSE'
-  | 'CENTRAL_OFFICE'
-  | 'DELIVERY_HUB'
+  | 'PRODUCTION_CENTER'
   | 'OTHER';
+
+export type OperationalUnitType = CanonicalOperationalUnitType;
 
 export interface OperationalUnit {
   id: string;
   organizationId: string;
   code: string;
   name: string;
-  unitType: OperationalUnitType;
+  unitType: CanonicalOperationalUnitType;
+  unitSubtype?: string | null;
   isActive: boolean;
   metadata?: Record<string, unknown>;
   createdAt?: string;

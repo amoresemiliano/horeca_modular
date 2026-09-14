@@ -17,13 +17,26 @@ export class GetAccessibleOperationalUnitsUseCase {
       return Result.fail(membershipsResult.error);
     }
 
-    const hasMembership = membershipsResult.value.some(
+    const membership = membershipsResult.value.find(
       (m: Membership) => m.organizationId === organizationId && m.isActive !== false
     );
-    if (!hasMembership) {
+    if (!membership) {
       return Result.fail(AppError.authorization('User does not have an active membership in the requested organization.'));
     }
 
-    return this.membershipRepo.findOperationalUnitsByOrgId(organizationId);
+    const unitsResult = await this.membershipRepo.findOperationalUnitsByOrgId(organizationId);
+    if (!unitsResult.success) {
+      return Result.fail(unitsResult.error);
+    }
+
+    // If organization-wide, return all active units in org
+    if (membership.isOrganizationWide) {
+      return Result.ok(unitsResult.value);
+    }
+
+    // Otherwise, filter strictly by assigned operationalUnitScopes
+    const allowedScopes = new Set(membership.operationalUnitScopes || []);
+    const scopedUnits = unitsResult.value.filter((u: OperationalUnit) => allowedScopes.has(u.id));
+    return Result.ok(scopedUnits);
   }
 }

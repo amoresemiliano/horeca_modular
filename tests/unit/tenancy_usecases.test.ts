@@ -65,6 +65,7 @@ describe('Tenancy & Capability Authorization Use Cases', () => {
           userId,
           role: 'ADMINISTRATIVE',
           roleTemplateCode: 'ADMINISTRATIVE',
+          isOrganizationWide: true,
           capabilities: ['BANK_IMPORT', 'REPORT_VIEW', 'RECORD_VIEW'],
           overrides: [
             { capabilityCode: 'ORG_SETTINGS_MANAGE', effect: 'GRANT' },
@@ -96,6 +97,7 @@ describe('Tenancy & Capability Authorization Use Cases', () => {
           userId,
           role: 'OWNER',
           roleTemplateCode: 'OWNER',
+          isOrganizationWide: true,
           isActive: true,
         },
       ])
@@ -113,6 +115,7 @@ describe('Tenancy & Capability Authorization Use Cases', () => {
           userId,
           role: 'OWNER',
           roleTemplateCode: 'OWNER',
+          isOrganizationWide: true,
           isActive: true,
         },
       ])
@@ -127,10 +130,10 @@ describe('Tenancy & Capability Authorization Use Cases', () => {
 
   it('SwitchActiveOperationalUnitUseCase validates unit exists in tenant', async () => {
     vi.mocked(mockRepo.findByUserId).mockResolvedValueOnce(
-      Result.ok([{ id: 'mem-1', organizationId: orgAId, userId, role: 'OWNER', isActive: true }])
+      Result.ok([{ id: 'mem-1', organizationId: orgAId, userId, role: 'OWNER', isOrganizationWide: true, isActive: true }])
     );
     vi.mocked(mockRepo.findOperationalUnitsByOrgId).mockResolvedValueOnce(
-      Result.ok([{ id: unit1Id, organizationId: orgAId, code: 'KITCHEN_1', name: 'Cocina', unitType: 'KITCHEN', isActive: true }])
+      Result.ok([{ id: unit1Id, organizationId: orgAId, code: 'KITCHEN_1', name: 'Cocina', unitType: 'PRODUCTION_CENTER', unitSubtype: 'KITCHEN', isActive: true }])
     );
 
     const useCase = new SwitchActiveOperationalUnitUseCase(mockRepo);
@@ -167,6 +170,7 @@ describe('Tenancy & Capability Authorization Use Cases', () => {
           userId,
           role: 'OWNER',
           roleTemplateCode: 'OWNER',
+          isOrganizationWide: true,
           capabilities: ['BANK_IMPORT', 'RECORD_VIEW'],
           isActive: true,
         },

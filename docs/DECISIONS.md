@@ -64,3 +64,14 @@
 - **Status**: Approved (WP-002)
 - **Context**: Role-string matching (`role === 'SUPERADMIN'`) is fragile and blurs the boundary between system maintenance and tenant business data.
 - **Decision**: Formalize the 13 canonical RoleTemplates (`VEGEN_PLATFORM_ADMIN`, `HOLDING_OWNER`, `HOLDING_ADMIN`, `OWNER`, `MANAGER`, `ADMINISTRATIVE`, `PURCHASING`, `RECEPTION_FLOOR`, `PRODUCTION`, `COOK_COST_SHEET_MANAGER`, `HR_PERSONNEL`, `EXTERNAL_ACCOUNTANT`, `CONSULTANT`). Platform administrators do not automatically gain tenant business data access. Permissions resolve via atomic capabilities (`eco_capabilities`), role templates, and explicit overrides with fail-closed `DENY`.
+
+## ADR-014: Fail-Closed Legacy Role Migration & Explicit Platform Admin Segregation
+- **Status**: Approved (WP-002 Contract Remediation)
+- **Context**: Legacy role migrations previously fell back to OWNER for unmapped role strings, violating Default Deny and Least Privilege. Furthermore, legacy SUPERADMIN strings were ambiguously documented.
+- **Decision**: All unmapped legacy roles explicitly map to `NULL` (or safe restricted transitional state), failing closed for all capabilities without granting OWNER authority. Legacy `SUPERADMIN` strings map strictly to tenant `OWNER` for organization memberships; `VEGEN_PLATFORM_ADMIN` is a separate platform-tier grant requiring independent evidence.
+
+## ADR-015: Multi-Unit Membership Scoping & Canonical Operational Unit Taxonomy
+- **Status**: Approved (WP-002 Contract Remediation)
+- **Context**: Single `operational_unit_id` on membership could not represent multi-location staff (e.g. manager over Local A + Local B), and operational unit types conflated physical spaces (kitchen, bar) with primary domain classifications.
+- **Decision**: Operational units use canonical primary types (`LOCAL`, `WAREHOUSE`, `PRODUCTION_CENTER`, `OTHER`) with an optional `unit_subtype` for room/functional designations. Membership scoping supports organization-wide access (`is_organization_wide = true`) or multi-unit access via `eco_membership_operational_unit_scopes` (`is_organization_wide = false`).
+

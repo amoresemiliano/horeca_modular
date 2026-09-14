@@ -26,6 +26,7 @@ export class SupabaseOrganizationMembershipRepository implements IOrganizationMe
           role,
           role_template_id,
           operational_unit_id,
+          is_organization_wide,
           is_active,
           created_at,
           updated_at,
@@ -41,6 +42,9 @@ export class SupabaseOrganizationMembershipRepository implements IOrganizationMe
             eco_capabilities (
               code
             )
+          ),
+          eco_membership_operational_unit_scopes (
+            operational_unit_id
           )
         `)
         .eq('user_id', userId)
@@ -78,6 +82,10 @@ export class SupabaseOrganizationMembershipRepository implements IOrganizationMe
           operationalUnitId: o.operational_unit_id,
         }));
 
+        const unitScopes = (row.eco_membership_operational_unit_scopes || []).map(
+          (s: any) => s.operational_unit_id
+        );
+
         memberships.push({
           id: row.id,
           organizationId: row.organization_id,
@@ -85,6 +93,8 @@ export class SupabaseOrganizationMembershipRepository implements IOrganizationMe
           role: row.role || 'CONSULTA',
           roleTemplateId: row.role_template_id,
           roleTemplateCode: row.eco_role_templates?.code || null,
+          isOrganizationWide: row.is_organization_wide ?? (unitScopes.length === 0 && !row.operational_unit_id),
+          operationalUnitScopes: unitScopes,
           operationalUnitId: row.operational_unit_id,
           capabilities: baseCapabilities,
           overrides,
@@ -191,6 +201,7 @@ export class SupabaseOrganizationMembershipRepository implements IOrganizationMe
         code: u.code,
         name: u.name,
         unitType: u.unit_type,
+        unitSubtype: u.unit_subtype,
         isActive: u.is_active,
         metadata: u.metadata,
         createdAt: u.created_at,
@@ -253,6 +264,8 @@ export class SupabaseOrganizationMembershipRepository implements IOrganizationMe
             organizationId: membership.organizationId,
             roleTemplate: (membership.roleTemplateCode as RoleTemplate) || RoleTemplate.CONSULTANT,
             role: membership.role,
+            isOrganizationWide: membership.isOrganizationWide,
+            operationalUnitScopes: membership.operationalUnitScopes,
             isActive: membership.isActive ?? true,
             createdAt: membership.createdAt || '',
             updatedAt: membership.updatedAt || '',
@@ -279,6 +292,8 @@ export class SupabaseOrganizationMembershipRepository implements IOrganizationMe
       organizationId: m.organizationId,
       roleTemplate: (m.roleTemplateCode as RoleTemplate) || RoleTemplate.CONSULTANT,
       role: m.role,
+      isOrganizationWide: m.isOrganizationWide,
+      operationalUnitScopes: m.operationalUnitScopes,
       isActive: m.isActive ?? true,
       createdAt: m.createdAt || '',
       updatedAt: m.updatedAt || '',

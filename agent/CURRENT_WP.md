@@ -1,26 +1,38 @@
-# CURRENT WORK PACKAGE — WP-002: CANONICAL TENANCY, IDENTITY & AUTHORIZATION CORE
+# CURRENT WORK PACKAGE — WP-002: CANONICAL TENANCY, IDENTITY & AUTHORIZATION CORE (CONTRACT REMEDIATION COMPLETE)
 
 ## 1. Status Overview
-- **Work Package**: WP-002
+- **Work Package**: WP-002 (Final Contract Remediation)
 - **Title**: Canonical Tenancy, Identity & Authorization Core
 - **Status**: COMPLETE & VERIFIED (TECHNICALLY_READY_FOR_INDEPENDENT_REVIEW)
 - **Target Branch**: `dev`
-- **WP Branch**: `wp/002-canonical-tenancy-auth`
+- **WP Branch**: `wp/002-contract-remediation`
 
-## 2. Deliverables & Technical Scopes Summary
+## 2. Deliverables & Remediations Summary
 
-- [x] **Canonical Tenancy Model**: Implemented `Holding`, `HoldingMembership`, `Organization`, `OperationalUnit`, `Membership`, and `ModuleEntitlement` domain entities.
-- [x] **Canonical 13 Role Templates**: Registered and implemented the 13 canonical role templates (`VEGEN_PLATFORM_ADMIN`, `HOLDING_OWNER`, `HOLDING_ADMIN`, `OWNER`, `MANAGER`, `ADMINISTRATIVE`, `PURCHASING`, `RECEPTION_FLOOR`, `PRODUCTION`, `COOK_COST_SHEET_MANAGER`, `HR_PERSONNEL`, `EXTERNAL_ACCOUNTANT`, `CONSULTANT`).
-- [x] **Platform Admin Segregation**: Ensured `VEGEN_PLATFORM_ADMIN` manages platform infrastructure and global catalogs without automatic tenant business-data access.
-- [x] **Capability-Driven Authorization**: 42 atomic capabilities registered in database and domain, with support for explicit overrides and fail-closed `can(...)` evaluator.
-- [x] **Transitional Entitlements Baseline**: Preserved DEV operational continuity with explicit transitional baseline vs future plan-driven entitlements.
-- [x] **Application Use Cases**: Implemented 8 canonical use cases for organization switching, operational unit switching, capability checks, and active context validation.
-- [x] **Supabase Repository Adapters**: Extended `SupabaseOrganizationMembershipRepository` to support full multi-CIF hierarchies and capability overrides.
-- [x] **Database Migration & RLS**: Versioned SQL migration `20260912000000_canonical_tenancy_and_auth_core.sql` with multi-CIF helper functions and bounded canonical tenancy RLS.
-- [x] **Runtime UI Migration**: Updated `AuthContext.jsx` for multi-tenancy and added organization switcher / badge in `MainLayout.jsx`.
-- [x] **Clean DEV Login Gate**: Verified `emilianodirosa1+horeca-dev@gmail.com` profile, membership, and application access.
-- [x] **Security & RLS Test Suites**: 53 automated tests across 8 suites (100% passing), including honest classification of SEC-RLS-01 through 12.
-- [x] **Documentation & Architecture Records**: Created `docs/CANONICAL_TENANCY_SCHEMA.md`, `docs/AUTHORIZATION_RUNTIME_MODEL.md`, updated `DECISIONS.md` (ADR-012, ADR-013), `DATABASE_DRIFT_REPORT.md`, `PROJECT_STATE.md`, and `TEST_STRATEGY.md`.
+- [x] **Defect 1 Remediated (Unknown Roles Security)**:
+  - Eliminated automatic fallback to `OWNER`.
+  - Unknown legacy roles strictly preserve legacy string and set `role_template_id = NULL`, failing closed on all capability evaluations.
+  - Corrected legacy `SUPERADMIN` mapping: tenant membership maps to `OWNER`, with `VEGEN_PLATFORM_ADMIN` segregated as a separate platform grant.
+- [x] **Defect 2 Remediated (Operational Unit Taxonomy)**:
+  - Canonical primary types enforced: `LOCAL`, `WAREHOUSE`, `PRODUCTION_CENTER`, `OTHER`.
+  - Added optional `unit_subtype` column (`KITCHEN`, `SALON`, `BAR`, `CENTRAL_OFFICE`, `DELIVERY_HUB`).
+  - Safe data preservation and non-destructive mapping of legacy unit types.
+- [x] **Defect 3 Remediated (Multi-Unit Membership Scoping)**:
+  - Created `eco_membership_operational_unit_scopes` table for fine-grained multi-location access.
+  - Added explicit `is_organization_wide` boolean flag with clear invariant (`true` = all units; `false` = scoped to assigned units).
+  - Deprecated single `operational_unit_id` column on memberships.
+  - Updated all application use cases, domain entities, and repository adapters.
+- [x] **Defect 4 Remediated (Capability Registry & Mandatory Human Gates)**:
+  - Full domain capability coverage (Platform, Org, OpUnits, Sales, Purchases, Catalog, Recipes, Production, Inventory, Financial, Documents, Personnel, Reporting, Integrations, Deletion, Sensitive Data).
+  - Mandatory Human Gates strictly segregated:
+    - `REVIEW_RECONCILIATION` vs `CONFIRM_RECONCILIATION`
+    - `CREATE_PURCHASE_ORDER` vs `APPROVE_PURCHASE_ORDER`
+    - `RUN_STOCK_COUNT` vs `CONFIRM_STOCK_ADJUSTMENT`
+  - Rebuilt all 13 canonical role template capability bundles.
+- [x] **Database Remediation Migration**: Versioned SQL migration `20260913000000_wp002_contract_remediation.sql`.
+- [x] **Product Owner Login Gate**: Verified `emilianodirosa1+horeca-dev@gmail.com` profile, active membership, primary org resolution, and logout/login cycle.
+- [x] **Security & Contract Test Suites**: 63 automated tests across 8 suites (100% passing), including SEC-CONTRACT-01 through 10 and SEC-RLS-01 through 12.
+- [x] **Quality Gates**: `npm ci`, `npm run lint` (0 errors), `npm run typecheck` (0 errors), `npm run test:run` (63/63 PASS), `npm run build` (PASS).
 
 ## 3. Work Package Execution Gate
 

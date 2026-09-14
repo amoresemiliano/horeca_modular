@@ -5,6 +5,8 @@
 2. **Fail-Closed Default Deny**: If a user has no active membership, no matching capability, or if a module entitlement is disabled, authorization evaluates to `DENY` (`false`).
 3. **Platform Admin Segregation**: `VEGEN_PLATFORM_ADMIN` manages platform infrastructure and global catalogs. It does NOT automatically grant access to tenant business data without explicit OrganizationMembership.
 4. **Holding Roles Segregation**: `HOLDING_OWNER` and `HOLDING_ADMIN` provide cross-tenant oversight but do not bypass CIF-specific operational permissions.
+5. **Human Gate Separation**: High-risk actions require distinct, non-implied capabilities (e.g. creating/reviewing vs confirming/approving).
+6. **Multi-Unit Scopes**: Memberships are either organization-wide (`is_organization_wide = true`) or restricted to explicit units (`is_organization_wide = false` + `eco_membership_operational_unit_scopes`).
 
 ---
 
@@ -23,24 +25,40 @@
 | `PRODUCTION` | `ORGANIZATION` | Kitchen and central production batch tracking | **YES** |
 | `COOK_COST_SHEET_MANAGER` | `ORGANIZATION` | Recipe creation, ingredient cost calculation, menu margins | **YES** |
 | `HR_PERSONNEL` | `ORGANIZATION` | Clock-in management, employee records, payroll imports | **YES** |
-| `EXTERNAL_ACCOUNTANT` | `ORGANIZATION` | External gestoría, statement verification, tax exports | **YES** |
-| `CONSULTANT` | `ORGANIZATION` | Read-only analytics, audit logs, and performance reports | Read-Only |
+| `EXTERNAL_ACCOUNTANT` | `ORGANIZATION` | External gestoría, statement verification, tax exports | **YES (Read/Review Biased)** |
+| `CONSULTANT` | `ORGANIZATION` | Read-only analytics, audit logs, and performance reports | **Read-Only** |
 
 ---
 
-## 3. Legacy Role Mapping
+## 3. Legacy Role Mapping & Security Rules
 
 | Legacy Role String | Canonical Role Template | Justification & Modeling | Transitional Field State |
 | :--- | :--- | :--- | :--- |
-| `SUPERADMIN` | `OWNER` (Tenant) + `VEGEN_PLATFORM_ADMIN` (Platform) | Historically combined platform and tenant power. Separated in canonical model. | Retained in `eco_organization_members.role` |
+| `SUPERADMIN` | `OWNER` (Tenant only) | Tenant membership mapped to OWNER. Platform admin is a SEPARATE assignment based on independent evidence. | Retained in `eco_organization_members.role` |
 | `ADMIN` | `ADMINISTRATIVE` | Financial and statement management role. | Retained in `eco_organization_members.role` |
 | `GERENTE` | `MANAGER` | General manager overseeing operations and staff. | Retained in `eco_organization_members.role` |
-| `OPERADOR` | `PRODUCTION` / `RECEPTION_FLOOR` | Daily operational floor and kitchen staff. | Retained in `eco_organization_members.role` |
+| `OPERADOR` | `PRODUCTION` | Kitchen and production staff. | Retained in `eco_organization_members.role` |
 | `CONSULTA` | `CONSULTANT` | Read-only audit and analytics access. | Retained in `eco_organization_members.role` |
+| *UNKNOWN / UNMAPPED* | `NULL` | **FAIL-CLOSED**: Unknown legacy roles are NOT mapped to OWNER. They receive 0 capabilities and are reported for audit. | Retained in `eco_organization_members.role` |
+
+> [!IMPORTANT]
+> **SUPERADMIN != VEGEN_PLATFORM_ADMIN**: A legacy `SUPERADMIN` string on an organization membership grants tenant `OWNER` authority only. `VEGEN_PLATFORM_ADMIN` is a distinct platform-tier authority that is never automatically granted simply from legacy organization role strings.
 
 ---
 
-## 4. Permission Resolution Pipeline
+## 4. Mandatory Human Gate Capability Distinctions
+
+The canonical model strictly separates entry/review capabilities from commitment/approval capabilities:
+
+| Gate Area | Entry / Review Capability | Commitment / Approval Capability | Rationale |
+| :--- | :--- | :--- | :--- |
+| **Financial Reconciliation** | `REVIEW_RECONCILIATION` (`FINANCIAL_RECONCILIATION_REVIEW`) | `CONFIRM_RECONCILIATION` (`FINANCIAL_RECONCILIATION_CONFIRM`) | Reviewing reconciliation proposals is exploratory; confirming commits ledger allocations. |
+| **Procurement Orders** | `CREATE_PURCHASE_ORDER` (`PURCHASES_ORDER_CREATE`) | `APPROVE_PURCHASE_ORDER` (`PURCHASES_ORDER_APPROVE`) | Drafting orders is separated from financial commitment to suppliers. |
+| **Inventory Adjustments** | `RUN_STOCK_COUNT` (`INVENTORY_COUNT_RUN`) | `CONFIRM_STOCK_ADJUSTMENT` (`INVENTORY_ADJUSTMENT_CONFIRM`) | Floor count logging is separated from ledger adjustments and shrinkage write-offs. |
+
+---
+
+## 5. Permission Resolution Pipeline
 
 ```mermaid
 graph TD
@@ -48,13 +66,15 @@ graph TD
     B -- No --> DENY[DENY (false)]
     B -- Yes --> C{Module Entitlement Enabled?}
     C -- No --> DENY
-    C -- Yes --> D{Explicit Override for OpUnit?}
-    D -- GRANT --> ALLOW[ALLOW (true)]
-    D -- REVOKE --> DENY
-    D -- No Override --> E{Explicit Override for Org?}
-    E -- GRANT --> ALLOW
+    C -- Yes --> D{OpUnit Specified & Restricted?}
+    D -- Out of Scope --> DENY
+    D -- In Scope / Org-Wide --> E{Explicit Override for OpUnit?}
+    E -- GRANT --> ALLOW[ALLOW (true)]
     E -- REVOKE --> DENY
-    E -- No Override --> F{Capability in RoleTemplate?}
-    F -- Yes --> ALLOW
-    F -- No --> DENY
+    E -- No Override --> F{Explicit Override for Org?}
+    F -- GRANT --> ALLOW
+    F -- REVOKE --> DENY
+    F -- No Override --> G{Capability in RoleTemplate?}
+    G -- Yes --> ALLOW
+    G -- No --> DENY
 ```
