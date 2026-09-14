@@ -18,18 +18,18 @@ This report details the exact schema, RLS policy, and migration drift between re
 | `eco_holding_members` | - | **YES** | YES | **CREATED_IN_REPO** | Created in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
 | `eco_operational_units` | - | **YES** | YES | **CREATED_IN_REPO** | Created in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
 | `eco_organization_module_entitlements` | - | **YES** | YES | **CREATED_IN_REPO** | Created in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_organization_members` | 9 | **YES** | YES | **CREATED_IN_REPO** | Enhanced in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
+| `eco_organization_members` | 3 | **YES** | YES | **CREATED_IN_REPO** | Enhanced in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
 | `eco_capabilities` | 42 | **YES** | YES | **CREATED_IN_REPO** | Registered in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
 | `eco_role_templates` | 13 | **YES** | YES | **CREATED_IN_REPO** | Registered 13 canonical templates in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
 | `eco_role_template_capabilities` | - | **YES** | YES | **CREATED_IN_REPO** | Registered in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
 | `eco_member_capability_overrides` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_auth_bootstrap_allowlist` | 3 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
+| `eco_auth_bootstrap_allowlist` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
 | `empleados` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
 | `fichajes` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
 | `incidencias` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
 | `produccion_registros` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
-| `eco_organizations` | 4 | **NO** | YES | **REFERENCED_ONLY** | Enhanced with `holding_id`, `trade_name`, `country_code`, etc. in `20260912000000`. |
-| `eco_user_profiles` | 6 | **NO** | YES | **REFERENCED_ONLY** | Pre-existed in DB; referenced by FK in repo migrations. |
+| `eco_organizations` | 1 | **NO** | YES | **REFERENCED_ONLY** | Enhanced with `holding_id`, `trade_name`, `country_code`, etc. in `20260912000000`. |
+| `eco_user_profiles` | 5 | **NO** | YES | **REFERENCED_ONLY** | Pre-existed in DB; referenced by FK in repo migrations. |
 | `eco_financial_movements` | 0 | **NO** | YES | **TARGET REMAINING** | Business module under WP-003+ migration scope. |
 | `eco_source_imports` | 5 | **NO** | YES | **TARGET REMAINING** | Business module under WP-003+ migration scope. |
 | `eco_source_files` | 5 | **NO** | YES | **TARGET REMAINING** | Business module under WP-003+ migration scope. |

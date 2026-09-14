@@ -25,10 +25,10 @@ Every table in the live staging database (`ourzapkjykzlwsjunzmd`, 34 public tabl
 
 | # | Table Name | Live Rows | Primary Domain / Module | Target Disposition | Target Migration Group | Target Schema / Model |
 | :- | :--- | :-: | :--- | :---: | :---: | :--- |
-| 1 | `eco_organizations` | 4 | Tenancy / Platform | **KEEP** | `01_tenancy_core` | Foundational tenant entity (Multi-CIF). |
-| 2 | `eco_user_profiles` | 4 | Auth / Identity | **KEEP** | `01_tenancy_core` | Profile linked to `auth.users(id)`. |
-| 3 | `eco_organization_members` | 2 | Tenancy / Auth | **KEEP** | `01_tenancy_core` | Core membership with role & status. |
-| 4 | `eco_auth_bootstrap_allowlist` | 2 | Platform Bootstrap | **KEEP** | `01_tenancy_core` | First-user setup allowlist. |
+| 1 | `eco_organizations` | 1 | Tenancy / Platform | **KEEP** | `01_tenancy_core` | Foundational tenant entity (Multi-CIF). |
+| 2 | `eco_user_profiles` | 5 | Auth / Identity | **KEEP** | `01_tenancy_core` | Profile linked to `auth.users(id)`. |
+| 3 | `eco_organization_members` | 3 | Tenancy / Auth | **KEEP** | `01_tenancy_core` | Core membership with role & status. |
+| 4 | `eco_auth_bootstrap_allowlist` | 0 | Platform Bootstrap | **KEEP** | `01_tenancy_core` | First-user setup allowlist. |
 | 5 | `eco_capabilities` | 42 | Tenancy / Auth | **KEEP** | `01_reference_data` | Canonical atomic capability catalog. |
 | 6 | `eco_role_templates` | 8 | Tenancy / Auth | **KEEP** | `01_reference_data` | 13 approved VEGEN role templates. |
 | 7 | `eco_role_template_capabilities`| 106 | Tenancy / Auth | **KEEP** | `01_reference_data` | Default role-to-capability mappings. |
