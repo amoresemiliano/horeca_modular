@@ -226,7 +226,15 @@ INSERT INTO public.eco_capabilities (code, scope, description) VALUES
     -- Support & Audit
     ('TICKET_CREATE', 'ORGANIZATION', 'Create support tickets'),
     ('TICKET_VIEW_ORG', 'ORGANIZATION', 'View organization support tickets'),
-    ('AUDIT_VIEW_ORG', 'ORGANIZATION', 'View organization audit log events')
+    ('AUDIT_VIEW_ORG', 'ORGANIZATION', 'View organization audit log events'),
+
+    -- Canonical Human Gate Alias Codes
+    ('REVIEW_RECONCILIATION', 'ORGANIZATION', 'Human Gate: Review bank reconciliation candidate matches'),
+    ('CONFIRM_RECONCILIATION', 'ORGANIZATION', 'Human Gate: Confirm and commit bank reconciliation ledger allocations'),
+    ('CREATE_PURCHASE_ORDER', 'ORGANIZATION', 'Create purchase orders for suppliers'),
+    ('APPROVE_PURCHASE_ORDER', 'ORGANIZATION', 'Human Gate: Approve purchase orders'),
+    ('RUN_STOCK_COUNT', 'ORGANIZATION', 'Human Gate: Initiate and execute physical count'),
+    ('CONFIRM_STOCK_ADJUSTMENT', 'ORGANIZATION', 'Human Gate: Confirm inventory adjustments')
 ON CONFLICT (code) DO UPDATE SET 
     scope = EXCLUDED.scope,
     description = EXCLUDED.description;
@@ -392,3 +400,35 @@ BEGIN
         'CATALOG_ORG_VIEW', 'AUDIT_VIEW_ORG', 'TICKET_CREATE'
     ) ON CONFLICT DO NOTHING;
 END $$;
+
+-- 6. CANONICAL ROLE TEMPLATES RECONCILIATION & SAFE RETIREMENT OF LEGACY ROLES
+-- ------------------------------------------------------------------------------
+
+DO $$
+DECLARE
+    v_platform_admin_id UUID;
+BEGIN
+    SELECT id INTO v_platform_admin_id FROM public.eco_role_templates WHERE code = 'VEGEN_PLATFORM_ADMIN';
+    
+    -- Remap exploratory platform roles if existing
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'eco_user_platform_role') THEN
+        UPDATE public.eco_user_platform_role
+        SET role_template_id = v_platform_admin_id
+        WHERE role_template_id NOT IN (
+            SELECT id FROM public.eco_role_templates WHERE code IN (
+                'VEGEN_PLATFORM_ADMIN', 'HOLDING_OWNER', 'HOLDING_ADMIN', 'OWNER', 'MANAGER',
+                'ADMINISTRATIVE', 'PURCHASING', 'RECEPTION_FLOOR', 'PRODUCTION',
+                'COOK_COST_SHEET_MANAGER', 'HR_PERSONNEL', 'EXTERNAL_ACCOUNTANT', 'CONSULTANT'
+            )
+        );
+    END IF;
+
+    -- Delete obsolete pre-WP-002 role templates to preserve the exact 13 canonical rows
+    DELETE FROM public.eco_role_templates
+    WHERE code NOT IN (
+        'VEGEN_PLATFORM_ADMIN', 'HOLDING_OWNER', 'HOLDING_ADMIN', 'OWNER', 'MANAGER',
+        'ADMINISTRATIVE', 'PURCHASING', 'RECEPTION_FLOOR', 'PRODUCTION',
+        'COOK_COST_SHEET_MANAGER', 'HR_PERSONNEL', 'EXTERNAL_ACCOUNTANT', 'CONSULTANT'
+    );
+END $$;
+

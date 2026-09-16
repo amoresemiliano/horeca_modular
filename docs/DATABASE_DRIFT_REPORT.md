@@ -14,22 +14,23 @@ This report details the exact schema, RLS policy, and migration drift between re
 
 | Table Name | Live Row Count | Created in Repo Migration? | Referenced in Repo Migration? | Status / Classification | Notes |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| `eco_holdings` | - | **YES** | YES | **CREATED_IN_REPO** | Created in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_holding_members` | - | **YES** | YES | **CREATED_IN_REPO** | Created in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_operational_units` | - | **YES** | YES | **CREATED_IN_REPO** | Created in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_organization_module_entitlements` | - | **YES** | YES | **CREATED_IN_REPO** | Created in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_organization_members` | 3 | **YES** | YES | **CREATED_IN_REPO** | Enhanced in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_capabilities` | 42 | **YES** | YES | **CREATED_IN_REPO** | Registered in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_role_templates` | 13 | **YES** | YES | **CREATED_IN_REPO** | Registered 13 canonical templates in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_role_template_capabilities` | - | **YES** | YES | **CREATED_IN_REPO** | Registered in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_member_capability_overrides` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260912000000_canonical_tenancy_and_auth_core.sql`. |
-| `eco_auth_bootstrap_allowlist` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
-| `empleados` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
-| `fichajes` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
-| `incidencias` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
-| `produccion_registros` | 0 | **YES** | YES | **CREATED_IN_REPO** | Created in `20260903000000_supabase_auth_rls.sql`. |
-| `eco_organizations` | 1 | **NO** | YES | **REFERENCED_ONLY** | Enhanced with `holding_id`, `trade_name`, `country_code`, etc. in `20260912000000`. |
-| `eco_user_profiles` | 5 | **NO** | YES | **REFERENCED_ONLY** | Pre-existed in DB; referenced by FK in repo migrations. |
+| `eco_holdings` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000`. Clean baseline (0 fixture rows). |
+| `eco_holding_members` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000`. Clean baseline (0 fixture rows). |
+| `eco_operational_units` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000` & remediated in `20260913000000`. |
+| `eco_organization_module_entitlements` | 44 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000`. 11 modules provisioned across 4 organizations. |
+| `eco_organization_members` | 9 | **YES** | YES | **APPLIED_LIVE** | Enhanced in `20260912000000` & `20260913000000` (3 MICA + 6 Demo). |
+| `eco_membership_operational_unit_scopes` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260913000000`. Clean baseline (0 fixture rows). |
+| `eco_capabilities` | 95 | **YES** | YES | **APPLIED_LIVE** | Registered 95 canonical capabilities including 6 human gates. |
+| `eco_role_templates` | 13 | **YES** | YES | **APPLIED_LIVE** | Exactly 13 canonical role templates registered & legacy roles retired. |
+| `eco_role_template_capabilities` | 287 | **YES** | YES | **APPLIED_LIVE** | Re-bundled across all 13 canonical role templates. |
+| `eco_member_capability_overrides` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000`. Clean baseline (0 fixture rows). |
+| `eco_auth_bootstrap_allowlist` | 3 | **YES** | YES | **APPLIED_LIVE** | Created in `20260903000000_supabase_auth_rls.sql`. |
+| `empleados` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260903000000_supabase_auth_rls.sql`. |
+| `fichajes` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260903000000_supabase_auth_rls.sql`. |
+| `incidencias` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260903000000_supabase_auth_rls.sql`. |
+| `produccion_registros` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260903000000_supabase_auth_rls.sql`. |
+| `eco_organizations` | 4 | **NO** | YES | **APPLIED_LIVE** | Enhanced with `holding_id`, `legal_name`, `tax_id`, etc. (1 MICA + 3 Demo). |
+| `eco_user_profiles` | 6 | **NO** | YES | **APPLIED_LIVE** | Pre-existed in DB (5 MICA + 1 global); referenced by FK in repo migrations. |
 | `eco_financial_movements` | 0 | **NO** | YES | **TARGET REMAINING** | Business module under WP-003+ migration scope. |
 | `eco_source_imports` | 5 | **NO** | YES | **TARGET REMAINING** | Business module under WP-003+ migration scope. |
 | `eco_source_files` | 5 | **NO** | YES | **TARGET REMAINING** | Business module under WP-003+ migration scope. |
@@ -51,7 +52,7 @@ This report details the exact schema, RLS policy, and migration drift between re
 | `eco_tax_categories` | 55 | **NO** | NO | **UNTRACKED_DRIFT** | Tax category master list. |
 | `eco_user_active_context` | 0 | **NO** | NO | **UNTRACKED_DRIFT** | Session active context. |
 | `eco_user_platform_capability_overrides` | 0 | **NO** | NO | **UNTRACKED_DRIFT** | User capability overrides. |
-| `eco_user_platform_role` | 0 | **NO** | NO | **UNTRACKED_DRIFT** | User platform roles. |
+| `eco_user_platform_role` | 2 | **NO** | NO | **UNTRACKED_DRIFT** | User platform roles. |
 
 ---
 

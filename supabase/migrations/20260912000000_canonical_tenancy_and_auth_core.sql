@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS public.eco_holdings (
 -- Ensure eco_organizations has holding_id and canonical fields
 ALTER TABLE public.eco_organizations 
     ADD COLUMN IF NOT EXISTS holding_id UUID REFERENCES public.eco_holdings(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS legal_name TEXT,
+    ADD COLUMN IF NOT EXISTS tax_id TEXT,
     ADD COLUMN IF NOT EXISTS trade_name TEXT,
     ADD COLUMN IF NOT EXISTS tax_id_type TEXT DEFAULT 'CIF',
     ADD COLUMN IF NOT EXISTS country_code VARCHAR(2) DEFAULT 'ES',
@@ -62,22 +64,41 @@ CREATE TABLE IF NOT EXISTS public.eco_holding_members (
 CREATE TABLE IF NOT EXISTS public.eco_capabilities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code TEXT NOT NULL UNIQUE,
-    scope TEXT NOT NULL CHECK (scope IN ('PLATFORM', 'HOLDING', 'ORGANIZATION', 'OPERATIONAL_UNIT')),
+    scope TEXT NOT NULL,
     description TEXT,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
+
+DO $$
+BEGIN
+    ALTER TABLE public.eco_capabilities DROP CONSTRAINT IF EXISTS eco_capabilities_scope_check;
+    ALTER TABLE public.eco_capabilities ADD CONSTRAINT eco_capabilities_scope_check CHECK (scope IN ('PLATFORM', 'HOLDING', 'ORGANIZATION', 'OPERATIONAL_UNIT'));
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.eco_role_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     description TEXT,
-    tier TEXT NOT NULL CHECK (tier IN ('PLATFORM', 'HOLDING', 'ORGANIZATION')),
+    tier TEXT,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
+
+ALTER TABLE public.eco_role_templates ADD COLUMN IF NOT EXISTS tier TEXT;
+DO $$
+BEGIN
+    ALTER TABLE public.eco_role_templates DROP CONSTRAINT IF EXISTS eco_role_templates_tier_check;
+    ALTER TABLE public.eco_role_templates ADD CONSTRAINT eco_role_templates_tier_check CHECK (tier IN ('PLATFORM', 'HOLDING', 'ORGANIZATION'));
+    ALTER TABLE public.eco_role_templates DROP CONSTRAINT IF EXISTS eco_role_templates_scope_check;
+    ALTER TABLE public.eco_role_templates ALTER COLUMN scope DROP NOT NULL;
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.eco_role_template_capabilities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -113,7 +134,12 @@ CREATE TABLE IF NOT EXISTS public.eco_organization_module_entitlements (
 ALTER TABLE public.eco_organization_members
     ADD COLUMN IF NOT EXISTS role_template_id UUID REFERENCES public.eco_role_templates(id) ON DELETE SET NULL,
     ADD COLUMN IF NOT EXISTS operational_unit_id UUID REFERENCES public.eco_operational_units(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES public.eco_user_profiles(id) ON DELETE CASCADE,
     ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now());
+
+UPDATE public.eco_organization_members
+SET user_id = user_profile_id
+WHERE user_id IS NULL AND user_profile_id IS NOT NULL;
 
 -- 3. REGISTER 42 ATOMIC CAPABILITIES
 -- ------------------------------------------------------------------------------
@@ -342,7 +368,7 @@ AS $$
     SELECT EXISTS (
         SELECT 1
         FROM public.eco_organization_members m
-        JOIN public.eco_user_profiles p ON p.id = m.user_id
+        JOIN public.eco_user_profiles p ON (p.id = m.user_id OR p.id = m.user_profile_id)
         WHERE p.auth_user_id = auth.uid()
           AND m.organization_id = target_org_id
           AND m.is_active = true
@@ -375,7 +401,7 @@ SET search_path = public
 AS $$
     SELECT m.organization_id
     FROM public.eco_organization_members m
-    JOIN public.eco_user_profiles p ON p.id = m.user_id
+    JOIN public.eco_user_profiles p ON (p.id = m.user_id OR p.id = m.user_profile_id)
     WHERE p.auth_user_id = auth.uid()
       AND m.is_active = true;
 $$;
