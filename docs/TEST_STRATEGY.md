@@ -6,41 +6,43 @@
 
 ---
 
-## 1. Defined Testing Layers
+## 1. Defined Testing Layers & Honest Classification
 
-### 1. UNIT Layer
-- **Scope**: Pure domain functions, value objects, error containers (`Result<T, E>`), environment parsing, and capability resolution (`can()`).
-- **Tooling**: Vitest (`tests/unit/`).
-- **Current Suites**:
+### A. DOMAIN / APPLICATION TESTS
+- **Scope**: Pure domain logic, value objects, error containers (`Result<T, E>`), environment parsing, capability resolution (`can()`), and tenancy use cases.
+- **Tooling**: Vitest (`tests/unit/`, `tests/integration/security_isolation.test.ts`).
+- **Suites**:
   - `tests/unit/env.test.ts`: Environment validation and masking.
   - `tests/unit/errors.test.ts`: AppError classification and Result mapping.
   - `tests/unit/authorization.test.ts`: Canonical role and capability resolution.
   - `tests/unit/useCases.test.ts`: Use case port invocation and Result handling.
-  - `tests/unit/tenancy_usecases.test.ts`: Canonical tenancy use cases (organization & operational unit switching, capability resolution, active context validation).
+  - `tests/unit/tenancy_usecases.test.ts`: Organization & unit switching, capability resolution, active context.
+  - `tests/integration/security_isolation.test.ts`: 10 canonical domain isolation scenarios (`SEC-01` through `SEC-10`).
 
-### 2. INTEGRATION & SECURITY Layer
-- **Scope**: Repository adapters, application use cases, and multi-tenant security isolation.
-- **Tooling**: Vitest (`tests/integration/`).
-- **Current Suites**:
-  - `tests/integration/security_isolation.test.ts`: 10 canonical tenant-isolation scenarios (SEC-01 through SEC-10).
-  - `tests/integration/real_rls_security.test.ts`: 22 security scenarios (SEC-RLS-01 through SEC-RLS-12, and SEC-CONTRACT-01 through SEC-CONTRACT-10) with explicit layer classification:
-    - **Scenarios SEC-RLS-01 to SEC-RLS-08 (Database RLS & Membership Boundary)**: Validates database row-level security boundary conditions, unauthenticated rejections, multi-tenant isolation, cross-holding isolation, and multi-CIF membership evaluations.
-    - **Scenarios SEC-RLS-09 to SEC-RLS-12 (Domain / Application Authorization Pipeline)**: Validates fine-grained capability checks, explicit overrides, operational-unit scoped permissions, and module entitlement enforcement in the domain `can(...)` evaluation engine.
-    - **Scenarios SEC-CONTRACT-01 to SEC-CONTRACT-10 (Contract Remediation Tests)**:
-      - `SEC-CONTRACT-01`: Unknown legacy role does NOT map to OWNER [Domain/DB Contract].
-      - `SEC-CONTRACT-02`: Unknown legacy role fails capability authorization closed [Domain Auth].
-      - `SEC-CONTRACT-03`: Membership scoped to Unit A cannot access Unit B [Domain Auth].
-      - `SEC-CONTRACT-04`: Membership scoped to Unit A + Unit B can access both [Domain Auth].
-      - `SEC-CONTRACT-05`: Organization-wide membership can access all Organization units [Domain Auth].
-      - `SEC-CONTRACT-06`: ActiveContext cannot select an out-of-scope unit [Domain Auth].
-      - `SEC-CONTRACT-07`: VEGEN_PLATFORM_ADMIN without OrganizationMembership does not gain tenant operational access [Domain Auth].
-      - `SEC-CONTRACT-08`: CREATE_PURCHASE_ORDER does not imply APPROVE_PURCHASE_ORDER [Domain Auth / Human Gate].
-      - `SEC-CONTRACT-09`: RUN_STOCK_COUNT does not imply CONFIRM_STOCK_ADJUSTMENT [Domain Auth / Human Gate].
-      - `SEC-CONTRACT-10`: REVIEW_RECONCILIATION does not imply CONFIRM_RECONCILIATION [Domain Auth / Human Gate].
+### B. MOCKED INTEGRATION-LIKE TESTS
+- **Scope**: Application pipeline and repository adapter integration testing using mocked repository interfaces (`IOrganizationMembershipRepository`).
+- **Tooling**: Vitest (`tests/integration/real_rls_security.test.ts`).
+- **Suites**:
+  - `tests/integration/real_rls_security.test.ts`: 27 application-level scenarios (`SEC-RLS-01` to `12`, `SEC-CONTRACT-01` to `10`) validating domain authorization pipelines, fine-grained capability checks, operational-unit scopes, human-gate separation, and fail-closed legacy role fallback.
 
-### 3. CONTRACT Layer
+### C. TRUE DATABASE / POSTGRES RLS TESTS
+- **Scope**: Direct database row-level security (RLS) enforcement against live PostgreSQL/Supabase engine (`ourzapkjykzlwsjunzmd`).
+- **Tooling**: Vitest & SQL PL/pgSQL verification block (`tests/integration/true_postgres_rls.test.ts`).
+- **Suites**:
+  - `tests/integration/true_postgres_rls.test.ts`: Explicit `SEC-RLS-DB-01` through `SEC-RLS-DB-09` test suite:
+    - `SEC-RLS-DB-01`: Authenticated user in Org A cannot SELECT tenant-owned business record from Org B [Real DB RLS].
+    - `SEC-RLS-DB-02`: Authenticated user in Org A cannot INSERT tenant-owned business record into Org B [Real DB RLS].
+    - `SEC-RLS-DB-03`: Authenticated user in Org A cannot UPDATE tenant-owned business record in Org B [Real DB RLS].
+    - `SEC-RLS-DB-04`: Inactive membership denies access [Real DB RLS].
+    - `SEC-RLS-DB-05`: Unknown / NULL canonical role denies capability-based operation [Real DB RLS].
+    - `SEC-RLS-DB-06`: Missing OperationalUnit scope denies scoped operation [Real DB RLS].
+    - `SEC-RLS-DB-07`: Disabled module entitlement does not become authorized merely because capability exists [Real DB RLS].
+    - `SEC-RLS-DB-08`: `VEGEN_PLATFORM_ADMIN` without tenant OrganizationMembership cannot read tenant business records [Real DB RLS].
+    - `SEC-RLS-DB-09`: Reading `eco_role_template_capabilities` does not grant tenant business-data access [Real DB RLS].
+
+### D. CONTRACT LAYER
 - **Scope**: Bank statement file formats (BBVA, Sabadell CSV/XLS) and external integrations.
-- **Current Suites**:
+- **Suites**:
   - `tests/extractos.test.js`: Validates 9 bank parser contract scenarios for BBVA and Sabadell statements.
 
 ---

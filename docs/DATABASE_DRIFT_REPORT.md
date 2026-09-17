@@ -25,7 +25,7 @@ This report details the exact schema, RLS policy, and migration drift between re
 | `eco_membership_operational_unit_scopes` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260913000000`. Clean baseline (0 fixture rows). |
 | `eco_capabilities` | 95 | **YES** | YES | **APPLIED_LIVE** | Registered 95 canonical capabilities including 6 human gates. |
 | `eco_role_templates` | 21 | **YES** | YES | **APPLIED_LIVE** | 13 Active Canonical role templates + 8 Inactive Legacy templates. |
-| `eco_role_template_capabilities` | 396 | **YES** | YES | **APPLIED_LIVE** | Re-bundled across all canonical role templates. |
+| `eco_role_template_capabilities` | 287 | **YES** | YES | **APPLIED_LIVE** | 287 Canonical bindings active (0 legacy bindings remaining after non-destructive targeted deletion). |
 | `eco_member_capability_overrides` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000`. Clean baseline (0 fixture rows). |
 | `eco_auth_bootstrap_allowlist` | 3 | **YES** | YES | **APPLIED_LIVE** | Created in `20260903000000_supabase_auth_rls.sql`. |
 | `empleados` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260903000000_supabase_auth_rls.sql`. |
