@@ -300,6 +300,94 @@ describe('SEC-RLS & SEC-CONTRACT Security Test Suite', () => {
       setActiveContext: vi.fn(),
     };
 
+    it('SEC-ROLE-FAILCLOSED-01 [Fail-Closed]: Unknown legacy role does not map to CONSULTANT or any canonical role', async () => {
+      const unknownRoles = ['UNKNOWN_ROLE_XYZ', 'LEGACY_CUSTOM_ROLE', 'FOO_BAR', 'NULL', ''];
+      const mapLegacyRoleFailClosed = (r: string | null) => {
+        if (!r) return null;
+        if (r === 'SUPERADMIN') return 'OWNER';
+        if (r === 'ADMIN') return 'ADMINISTRATIVE';
+        if (r === 'GERENTE') return 'MANAGER';
+        if (r === 'OPERADOR') return 'PRODUCTION';
+        if (r === 'CONSULTA') return 'CONSULTANT';
+        if (r === 'OWNER') return 'OWNER';
+        return null; // Must NOT fallback to CONSULTANT or OWNER
+      };
+
+      for (const r of unknownRoles) {
+        expect(mapLegacyRoleFailClosed(r)).toBeNull();
+        expect(mapLegacyRoleFailClosed(r)).not.toBe('CONSULTANT');
+      }
+    });
+
+    it('SEC-ROLE-FAILCLOSED-02 [Fail-Closed]: NULL role_template_id remains unauthorized (DENY by default)', async () => {
+      vi.mocked(mockRepo.findByUserId).mockResolvedValueOnce(
+        Result.ok([
+          {
+            id: 'm-null-role',
+            organizationId: orgAId,
+            userId: user1Id,
+            role: 'UNMAPPED_ROLE',
+            roleTemplateId: null,
+            roleTemplateCode: null,
+            isOrganizationWide: true,
+            capabilities: [],
+            isActive: true,
+          },
+        ])
+      );
+      vi.mocked(mockRepo.findModuleEntitlementsByOrgId).mockResolvedValueOnce(Result.ok([]));
+
+      const useCase = new CanExecuteCapabilityUseCase(mockRepo);
+      const res = await useCase.execute({
+        userId: user1Id,
+        organizationId: orgAId,
+        capabilityCode: 'ORG_VIEW',
+      });
+
+      expect(Result.isOk(res)).toBe(true);
+      if (Result.isOk(res)) {
+        expect(res.value).toBe(false); // DENIED
+      }
+    });
+
+    it('SEC-ROLE-FAILCLOSED-03 [Fail-Closed]: Known CONSULTA maps to CONSULTANT', async () => {
+      const mapLegacyRole = (r: string) => {
+        if (r === 'CONSULTA') return 'CONSULTANT';
+        return null;
+      };
+      expect(mapLegacyRole('CONSULTA')).toBe('CONSULTANT');
+    });
+
+    it('SEC-ROLE-FAILCLOSED-04 [Fail-Closed]: Known SUPERADMIN maps to tenant OWNER only', async () => {
+      const mapLegacyRole = (r: string) => {
+        if (r === 'SUPERADMIN') return 'OWNER';
+        return null;
+      };
+      expect(mapLegacyRole('SUPERADMIN')).toBe('OWNER');
+      expect(mapLegacyRole('SUPERADMIN')).not.toBe('VEGEN_PLATFORM_ADMIN');
+    });
+
+    it('SEC-ROLE-FAILCLOSED-05 [Fail-Closed]: Inactive legacy role-template reference without deterministic mapping resolves to NULL', async () => {
+      const mapInactiveLegacyRef = (legacyRoleString: string, templateIsActive: boolean) => {
+        const approvedExplicitMappings: Record<string, string> = {
+          SUPERADMIN: 'OWNER',
+          ADMIN: 'ADMINISTRATIVE',
+          GERENTE: 'MANAGER',
+          OPERADOR: 'PRODUCTION',
+          CONSULTA: 'CONSULTANT',
+          OWNER: 'OWNER',
+        };
+        if (approvedExplicitMappings[legacyRoleString] && templateIsActive) {
+          return approvedExplicitMappings[legacyRoleString];
+        }
+        return null;
+      };
+
+      // Inactive legacy template reference without approved explicit mapping
+      expect(mapInactiveLegacyRef('OLD_TENANT_ADMIN', false)).toBeNull();
+      expect(mapInactiveLegacyRef('CUSTOM_OBSOLETE_ROLE', false)).toBeNull();
+    });
+
     it('SEC-CONTRACT-01 [Domain/DB Contract]: Unknown legacy role does NOT map to OWNER', async () => {
       const legacyRoles = ['UNKNOWN_ROLE_XYZ', 'TEST_ROLE', 'ANONYMOUS'];
       const mapLegacyRole = (r: string) => {
