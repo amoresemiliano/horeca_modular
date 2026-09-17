@@ -27,18 +27,19 @@
 
 ### C. TRUE DATABASE / POSTGRES RLS TESTS
 - **Scope**: Direct database row-level security (RLS) enforcement against live PostgreSQL/Supabase engine (`ourzapkjykzlwsjunzmd`).
-- **Tooling**: Vitest & SQL PL/pgSQL verification block (`tests/integration/true_postgres_rls.test.ts`).
+- **Tooling**: Vitest & PostgreSQL security test runner (`tests/integration/true_postgres_rls.test.ts`).
+- **Environment Execution Policy**: Requires valid environment configuration (`VITE_SUPABASE_URL` & `VITE_SUPABASE_ANON_KEY` or `SUPABASE_URL` & `SUPABASE_ANON_KEY`). Without live database credentials (e.g. standard PR CI runner), `describe.runIf(isConfigured)` gracefully skips live DB tests to prevent false positive PASS results.
 - **Suites**:
-  - `tests/integration/true_postgres_rls.test.ts`: Explicit `SEC-RLS-DB-01` through `SEC-RLS-DB-09` test suite:
-    - `SEC-RLS-DB-01`: Authenticated user in Org A cannot SELECT tenant-owned business record from Org B [Real DB RLS].
-    - `SEC-RLS-DB-02`: Authenticated user in Org A cannot INSERT tenant-owned business record into Org B [Real DB RLS].
-    - `SEC-RLS-DB-03`: Authenticated user in Org A cannot UPDATE tenant-owned business record in Org B [Real DB RLS].
-    - `SEC-RLS-DB-04`: Inactive membership denies access [Real DB RLS].
-    - `SEC-RLS-DB-05`: Unknown / NULL canonical role denies capability-based operation [Real DB RLS].
-    - `SEC-RLS-DB-06`: Missing OperationalUnit scope denies scoped operation [Real DB RLS].
-    - `SEC-RLS-DB-07`: Disabled module entitlement does not become authorized merely because capability exists [Real DB RLS].
-    - `SEC-RLS-DB-08`: `VEGEN_PLATFORM_ADMIN` without tenant OrganizationMembership cannot read tenant business records [Real DB RLS].
-    - `SEC-RLS-DB-09`: Reading `eco_role_template_capabilities` does not grant tenant business-data access [Real DB RLS].
+  - `tests/integration/true_postgres_rls.test.ts`: Authentic `SEC-RLS-DB-01` through `SEC-RLS-DB-09` test suite with positive controls and negative denials:
+    - `SEC-RLS-DB-01`: Authenticated user in Org A cannot SELECT tenant-owned business record from Org B [Positive Control + Negative Denial].
+    - `SEC-RLS-DB-02`: Authenticated user in Org A cannot INSERT tenant-owned business record into Org B [Positive Control + Negative Denial].
+    - `SEC-RLS-DB-03`: Authenticated user in Org A cannot UPDATE tenant-owned business record in Org B [Positive Control + Negative Denial].
+    - `SEC-RLS-DB-04`: Inactive membership denies access [Admin Control + Negative Denial].
+    - `SEC-RLS-DB-05`: Unknown / NULL canonical role denies capability-based operation [Membership Control + Negative Denial].
+    - `SEC-RLS-DB-06`: Missing OperationalUnit scope denies scoped operation [Unit A1 Scope Control + Unit A2 Denial].
+    - `SEC-RLS-DB-07`: Disabled module entitlement does not become authorized merely because capability exists [Capability Control + Entitlement Guard].
+    - `SEC-RLS-DB-08`: `VEGEN_PLATFORM_ADMIN` without tenant OrganizationMembership cannot read tenant business records [Platform Role Control + Tenant Data Denial].
+    - `SEC-RLS-DB-09`: Reading `eco_role_template_capabilities` does not grant tenant business-data access [Metadata Control + Tenant Isolation].
 
 ### D. CONTRACT LAYER
 - **Scope**: Bank statement file formats (BBVA, Sabadell CSV/XLS) and external integrations.
