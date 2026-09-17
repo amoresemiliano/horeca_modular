@@ -3,12 +3,14 @@
 ## 1. Audit Overview
 This report details the exact schema, RLS policy, and migration drift between repository migration SQL files (`supabase/migrations/*.sql`) and the live canonical database `ourzapkjykzlwsjunzmd`.
 
-- **Repository Migration Files**: 5 files:
+- **Repository Migration Files**: 7 files:
   1. `supabase/migrations/20260903000000_supabase_auth_rls.sql` (WP-001 Auth foundation)
   2. `supabase/migrations/20260912000000_canonical_tenancy_and_auth_core.sql` (WP-002 Canonical Tenancy, 13 Role Templates & Auth Core)
   3. `supabase/migrations/20260913000000_wp002_contract_remediation.sql` (WP-002 Security, OpUnit taxonomy & scopes)
   4. `supabase/migrations/20260917000000_wp002_role_templates_reconciliation.sql` (WP-002 Final Role Templates & Membership Reference Reconciliation)
   5. `supabase/migrations/20260917010000_wp002_fail_closed_unknown_role_fix.sql` (WP-002 Fail-Closed Authorization Remediation for Unknown & Obsolete Roles)
+  6. `supabase/migrations/20260917020000_wp002_jules_findings_remediation.sql` (WP-002 Targeted Legacy Capability Binding Remediation & Role Template RLS Hardening)
+  7. `supabase/migrations/20260918000000_wp002_test_harness_decommissioning.sql` (WP-002 Public RPC Test Harness Decommissioning & Zero Backdoor Gate)
 - **Live Database Schemas**: 34 public tables, 8 storage tables in `ourzapkjykzlwsjunzmd`.
 
 ---
