@@ -3,9 +3,11 @@
 ## 1. Audit Overview
 This report details the exact schema, RLS policy, and migration drift between repository migration SQL files (`supabase/migrations/*.sql`) and the live canonical database `ourzapkjykzlwsjunzmd`.
 
-- **Repository Migration Files**: 2 files:
+- **Repository Migration Files**: 4 files:
   1. `supabase/migrations/20260903000000_supabase_auth_rls.sql` (WP-001 Auth foundation)
   2. `supabase/migrations/20260912000000_canonical_tenancy_and_auth_core.sql` (WP-002 Canonical Tenancy, 13 Role Templates & Auth Core)
+  3. `supabase/migrations/20260913000000_wp002_contract_remediation.sql` (WP-002 Security, OpUnit taxonomy & scopes)
+  4. `supabase/migrations/20260917000000_wp002_role_templates_reconciliation.sql` (WP-002 Final Role Templates & Membership Reference Reconciliation)
 - **Live Database Schemas**: 34 public tables, 8 storage tables in `ourzapkjykzlwsjunzmd`.
 
 ---
@@ -18,11 +20,11 @@ This report details the exact schema, RLS policy, and migration drift between re
 | `eco_holding_members` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000`. Clean baseline (0 fixture rows). |
 | `eco_operational_units` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000` & remediated in `20260913000000`. |
 | `eco_organization_module_entitlements` | 44 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000`. 11 modules provisioned across 4 organizations. |
-| `eco_organization_members` | 9 | **YES** | YES | **APPLIED_LIVE** | Enhanced in `20260912000000` & `20260913000000` (3 MICA + 6 Demo). |
+| `eco_organization_members` | 7 | **YES** | YES | **APPLIED_LIVE** | Enhanced in `20260912000000`, `20260913000000` & `20260917000000` (1 OWNER + 6 CONSULTANT). |
 | `eco_membership_operational_unit_scopes` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260913000000`. Clean baseline (0 fixture rows). |
 | `eco_capabilities` | 95 | **YES** | YES | **APPLIED_LIVE** | Registered 95 canonical capabilities including 6 human gates. |
-| `eco_role_templates` | 13 | **YES** | YES | **APPLIED_LIVE** | Exactly 13 canonical role templates registered & legacy roles retired. |
-| `eco_role_template_capabilities` | 287 | **YES** | YES | **APPLIED_LIVE** | Re-bundled across all 13 canonical role templates. |
+| `eco_role_templates` | 21 | **YES** | YES | **APPLIED_LIVE** | 13 Active Canonical role templates + 8 Inactive Legacy templates. |
+| `eco_role_template_capabilities` | 396 | **YES** | YES | **APPLIED_LIVE** | Re-bundled across all canonical role templates. |
 | `eco_member_capability_overrides` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260912000000`. Clean baseline (0 fixture rows). |
 | `eco_auth_bootstrap_allowlist` | 3 | **YES** | YES | **APPLIED_LIVE** | Created in `20260903000000_supabase_auth_rls.sql`. |
 | `empleados` | 0 | **YES** | YES | **APPLIED_LIVE** | Created in `20260903000000_supabase_auth_rls.sql`. |
