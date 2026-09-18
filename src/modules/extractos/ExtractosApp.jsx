@@ -4,6 +4,7 @@
  * motor de reglas determinísticas, splits balanceados, reconciliación y PyG dinámico.
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import {
   getExtractosCatalogs,
   fetchConsolidatedMovements,
@@ -21,6 +22,7 @@ import ExtractosResumen from './ExtractosResumen';
 import ExtractosGraficas from './ExtractosGraficas';
 
 const ExtractosApp = ({ tabActiva }) => {
+  const { organizationId } = useAuth();
   const [movements, setMovements] = useState([]);
   const [catalogs, setCatalogs] = useState({ accounts: [], categories: [], subcategories: [], counterparties: [], rules: [] });
   const [loading, setLoading] = useState(true);
@@ -49,11 +51,17 @@ const ExtractosApp = ({ tabActiva }) => {
 
   // Carga inicial desde Supabase
   const loadData = useCallback(async () => {
+    if (!organizationId) {
+      setCatalogs({ accounts: [], categories: [], subcategories: [], counterparties: [], rules: [] });
+      setMovements([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [catsData, movsData] = await Promise.all([
-        getExtractosCatalogs(),
-        fetchConsolidatedMovements()
+        getExtractosCatalogs(organizationId),
+        fetchConsolidatedMovements(organizationId)
       ]);
       setCatalogs(catsData);
       setMovements(movsData);
@@ -62,7 +70,7 @@ const ExtractosApp = ({ tabActiva }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [organizationId]);
 
   useEffect(() => {
     loadData();
@@ -79,7 +87,7 @@ const ExtractosApp = ({ tabActiva }) => {
     try {
       let counterpartyId = undefined;
       if (counterpartyName) {
-        counterpartyId = await findOrCreateCounterparty(counterpartyName);
+        counterpartyId = await findOrCreateCounterparty(counterpartyName, 'PROVEEDOR', organizationId);
       }
 
       await updateAllocationClassification({
@@ -105,7 +113,7 @@ const ExtractosApp = ({ tabActiva }) => {
 
   // Crear Regla
   const handleCreateRule = async (rulePayload) => {
-    await createClassificationRule(rulePayload);
+    await createClassificationRule({ ...rulePayload, orgId: organizationId });
     showToast('Regla determinística creada correctamente');
     loadData();
   };
@@ -118,7 +126,7 @@ const ExtractosApp = ({ tabActiva }) => {
 
   // Confirmar Split
   const handleConfirmSplit = async (movementId, origAmount, allocations) => {
-    await splitMovementAllocations(movementId, origAmount, allocations);
+    await splitMovementAllocations(movementId, origAmount, allocations, organizationId);
     showToast('Split registrado e integrado correctamente');
     loadData();
   };

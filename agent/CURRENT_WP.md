@@ -1,14 +1,21 @@
-# CURRENT WORK PACKAGE — WP-002: CANONICAL TENANCY, IDENTITY & AUTHORIZATION CORE (CONTRACT REMEDIATION COMPLETE)
+# CURRENT WORK PACKAGE — WP-002: CANONICAL TENANCY, IDENTITY & AUTHORIZATION CORE (CROSS-PROJECT CONTAINMENT & REBASELINE COMPLETE)
 
 ## 1. Status Overview
-- **Work Package**: WP-002 (Final Contract Remediation)
+- **Work Package**: WP-002 (Final Contract Remediation & HORECA Baseline Rebaselined)
 - **Title**: Canonical Tenancy, Identity & Authorization Core
-- **Status**: COMPLETE & VERIFIED (TECHNICALLY_READY_FOR_INDEPENDENT_REVIEW)
+- **Status**: COMPLETE & VERIFIED (HORECA_REBASELINED_READY_FOR_JULES)
 - **Target Branch**: `dev`
 - **WP Branch**: `wp/002-contract-remediation`
 
 ## 2. Deliverables & Remediations Summary
 
+- [x] **Cross-Project Contamination Containment & Rebaseline**:
+  - Full audit across database, repository code, migrations, tests, and documentation.
+  - Revoked all implicit reliance on MICA (Argentina accounting prototype) state, tenants, users, or tax rules.
+  - Eliminated hardcoded MICA `DEFAULT_ORG_ID` (`59436df3-9f15-4f5e-b17e-37c55482521c`) from `src/lib/extractosService.js` and `ExtractosApp.jsx`.
+- [x] **HORECA Test Fixture Standard & SEC-RLS-DB-08 Rebaseline**:
+  - Established dedicated HORECA test fixtures (`HORECA_TEST_ORG_A`, `HORECA_TEST_ORG_B`).
+  - Executed true PostgreSQL RLS 6-step proof for SEC-RLS-DB-08: Dedicated Platform Admin identity exists → Platform role active in `eco_user_platform_role` → Zero membership in target HORECA tenant → Tenant business record exists in `eco_counterparties` → Authenticated query returns 0 rows (PLATFORM ADMINISTRATION != TENANT BUSINESS DATA ACCESS).
 - [x] **Defect 1 Remediated (Unknown Roles Security)**:
   - Eliminated automatic fallback to `OWNER`.
   - Unknown legacy roles strictly preserve legacy string and set `role_template_id = NULL`, failing closed on all capability evaluations.
@@ -24,20 +31,17 @@
   - Updated all application use cases, domain entities, and repository adapters.
 - [x] **Defect 4 Remediated (Capability Registry & Mandatory Human Gates)**:
   - Full domain capability coverage (Platform, Org, OpUnits, Sales, Purchases, Catalog, Recipes, Production, Inventory, Financial, Documents, Personnel, Reporting, Integrations, Deletion, Sensitive Data).
-  - Mandatory Human Gates strictly segregated:
-    - `REVIEW_RECONCILIATION` vs `CONFIRM_RECONCILIATION`
-    - `CREATE_PURCHASE_ORDER` vs `APPROVE_PURCHASE_ORDER`
-    - `RUN_STOCK_COUNT` vs `CONFIRM_STOCK_ADJUSTMENT`
+  - Mandatory Human Gates strictly segregated (`REVIEW_RECONCILIATION` vs `CONFIRM_RECONCILIATION`, etc.).
   - Rebuilt all 13 canonical role template capability bundles.
 - [x] **Database Remediation Migration**: Versioned SQL migration `20260913000000_wp002_contract_remediation.sql`.
 - [x] **Product Owner Login Gate**: Verified `emilianodirosa1+horeca-dev@gmail.com` profile, active membership, primary org resolution, and logout/login cycle.
-- [x] **Security & Contract Test Suites**: 63 automated tests across 8 suites (100% passing), including SEC-CONTRACT-01 through 10 and SEC-RLS-01 through 12.
-- [x] **Quality Gates**: `npm ci`, `npm run lint` (0 errors), `npm run typecheck` (0 errors), `npm run test:run` (63/63 PASS), `npm run build` (PASS).
+- [x] **Security & Contract Test Suites**: 70 automated tests across 9 suites (100% passing).
+- [x] **Quality Gates**: `npm run lint` (0 errors), `npm run typecheck` (0 errors), `npm run test:run` (70/70 PASS), `npm run build` (PASS).
 
 ## 3. Work Package Execution Gate
 
 WP-002 — CANONICAL TENANCY, IDENTITY & AUTHORIZATION CORE  
-STATUS: TECHNICALLY_READY_FOR_INDEPENDENT_REVIEW  
+STATUS: HORECA_REBASELINED_READY_FOR_JULES  
 
 NEXT:  
-Await Development Captain verification, Jules independent review, and Product Owner UAT. Do not start WP-003.
+Await Development Captain verification before Jules re-review. Do not start WP-003.

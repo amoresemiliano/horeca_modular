@@ -10,17 +10,23 @@
  */
 import { supabase } from './supabase.js';
 
-const DEFAULT_ORG_ID = '59436df3-9f15-4f5e-b17e-37c55482521c';
+function requireOrgId(orgId) {
+  if (!orgId) {
+    throw new Error('FAIL-CLOSED: Active organization ID is required for extractos service operations.');
+  }
+  return orgId;
+}
 
 // ─── Carga catálogos iniciales ────────────────────────────────────────────────
-export async function getExtractosCatalogs(orgId = DEFAULT_ORG_ID) {
+export async function getExtractosCatalogs(orgId) {
+  const activeOrgId = requireOrgId(orgId);
   try {
     const [accountsRes, categoriesRes, subcategoriesRes, counterpartiesRes, rulesRes] = await Promise.all([
-      supabase.from('eco_financial_accounts').select('*').eq('organization_id', orgId),
+      supabase.from('eco_financial_accounts').select('*').eq('organization_id', activeOrgId),
       supabase.from('eco_tax_categories').select('*').order('name'),
-      supabase.from('eco_tax_subcategories').select('*').eq('organization_id', orgId).order('name'),
-      supabase.from('eco_counterparties').select('*').eq('organization_id', orgId).order('name'),
-      supabase.from('eco_classification_rules').select('*').eq('organization_id', orgId).eq('is_active', true)
+      supabase.from('eco_tax_subcategories').select('*').eq('organization_id', activeOrgId).order('name'),
+      supabase.from('eco_counterparties').select('*').eq('organization_id', activeOrgId).order('name'),
+      supabase.from('eco_classification_rules').select('*').eq('organization_id', activeOrgId).eq('is_active', true)
     ]);
 
     return {
@@ -37,12 +43,13 @@ export async function getExtractosCatalogs(orgId = DEFAULT_ORG_ID) {
 }
 
 // ─── Verificación de Duplicado Nivel A (File Binary SHA256) ───────────────────
-export async function checkFileDuplicate(fileHash, orgId = DEFAULT_ORG_ID) {
+export async function checkFileDuplicate(fileHash, orgId) {
+  const activeOrgId = requireOrgId(orgId);
   try {
     const { data, error } = await supabase
       .from('eco_source_files')
       .select('id, import_id, original_name, created_at')
-      .eq('organization_id', orgId)
+      .eq('organization_id', activeOrgId)
       .eq('sha256_hash', fileHash)
       .maybeSingle();
 
@@ -54,14 +61,15 @@ export async function checkFileDuplicate(fileHash, orgId = DEFAULT_ORG_ID) {
 }
 
 // ─── Importación completa con Persistencia en Supabase ─────────────────────────
-export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_ID) {
+export async function importBankStatementData(parsedResult, orgId) {
+  const activeOrgId = requireOrgId(orgId);
   const { file_name, file_hash, account_code, accountCode = account_code, movements } = parsedResult;
 
   // 1. Resolve source_account_id
   const { data: accData } = await supabase
     .from('eco_financial_accounts')
     .select('id')
-    .eq('organization_id', orgId)
+    .eq('organization_id', activeOrgId)
     .eq('code', accountCode)
     .maybeSingle();
 
@@ -71,7 +79,7 @@ export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_
   const { data: importEntry, error: importErr } = await supabase
     .from('eco_source_imports')
     .insert({
-      organization_id: orgId,
+      organization_id: activeOrgId,
       source_type: 'BANCO',
       operation_type: 'BANCO',
       status: 'PROCESSING',
@@ -89,7 +97,7 @@ export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_
     .from('eco_source_files')
     .insert({
       import_id: importEntry.id,
-      organization_id: orgId,
+      organization_id: activeOrgId,
       original_name: file_name,
       storage_path: `bank_statements/${importEntry.id}_${file_name}`,
       size_bytes: 0,
@@ -104,7 +112,7 @@ export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_
   const { data: existingMovements } = await supabase
     .from('eco_financial_movements')
     .select('financial_fingerprint')
-    .eq('organization_id', orgId)
+    .eq('organization_id', activeOrgId)
     .in('financial_fingerprint', overlapHashes);
 
   const existingHashSet = new Set((existingMovements || []).map(m => m.financial_fingerprint));
@@ -113,7 +121,7 @@ export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_
   const { data: rules } = await supabase
     .from('eco_classification_rules')
     .select('*')
-    .eq('organization_id', orgId)
+    .eq('organization_id', activeOrgId)
     .eq('is_active', true);
 
   let insertedCount = 0;
@@ -125,7 +133,7 @@ export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_
       .from('eco_import_rows')
       .insert({
         file_id: fileEntry?.id,
-        organization_id: orgId,
+        organization_id: activeOrgId,
         source_row_number: m.source_row_number,
         raw_payload: m.raw_payload,
         parse_status: 'ACCEPTED',
@@ -142,7 +150,7 @@ export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_
     const { data: movEntry, error: movErr } = await supabase
       .from('eco_financial_movements')
       .insert({
-        organization_id: orgId,
+        organization_id: activeOrgId,
         import_id: importEntry.id,
         row_id: rowEntry?.id,
         source_account_id: sourceAccountId,
@@ -181,7 +189,7 @@ export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_
 
     // Insert Editable Economic Allocation (eco_movement_allocations)
     await supabase.from('eco_movement_allocations').insert({
-      organization_id: orgId,
+      organization_id: activeOrgId,
       movement_id: movEntry.id,
       monto: m.monto,
       counterparty_id: matchedRule?.target_counterparty_id || null,
@@ -213,7 +221,8 @@ export async function importBankStatementData(parsedResult, orgId = DEFAULT_ORG_
 }
 
 // ─── Fetch All Financial Movements & Allocations ─────────────────────────────
-export async function fetchConsolidatedMovements(orgId = DEFAULT_ORG_ID) {
+export async function fetchConsolidatedMovements(orgId) {
+  const activeOrgId = requireOrgId(orgId);
   try {
     const { data: movements, error } = await supabase
       .from('eco_financial_movements')
@@ -227,7 +236,7 @@ export async function fetchConsolidatedMovements(orgId = DEFAULT_ORG_ID) {
           subcategory:eco_tax_subcategories(*)
         )
       `)
-      .eq('organization_id', orgId)
+      .eq('organization_id', activeOrgId)
       .eq('status', 'ACTIVE')
       .order('fecha', { ascending: false });
 
@@ -277,12 +286,13 @@ export async function createClassificationRule({
   categoryId,
   subcategoryId,
   matchSign = 'ALL',
-  orgId = DEFAULT_ORG_ID,
+  orgId,
 }) {
+  const activeOrgId = requireOrgId(orgId);
   const { data, error } = await supabase
     .from('eco_classification_rules')
     .insert({
-      organization_id: orgId,
+      organization_id: activeOrgId,
       name: `Regla: ${pattern}`,
       pattern: pattern.trim().toUpperCase(),
       match_sign: matchSign,
@@ -299,7 +309,8 @@ export async function createClassificationRule({
 }
 
 // ─── Splits: División de movimiento en N asignaciones ─────────────────────────
-export async function splitMovementAllocations(movementId, originalAmount, allocationsList, orgId = DEFAULT_ORG_ID) {
+export async function splitMovementAllocations(movementId, originalAmount, allocationsList, orgId) {
+  const activeOrgId = requireOrgId(orgId);
   const sum = allocationsList.reduce((acc, curr) => acc + (parseFloat(curr.monto) || 0), 0);
   if (Math.abs(sum - originalAmount) > 0.01) {
     throw new Error(`La suma de las divisiones (${sum.toFixed(2)} €) no coincide con el movimiento original (${originalAmount.toFixed(2)} €)`);
@@ -311,7 +322,7 @@ export async function splitMovementAllocations(movementId, originalAmount, alloc
     .eq('movement_id', movementId);
 
   const toInsert = allocationsList.map(a => ({
-    organization_id: orgId,
+    organization_id: activeOrgId,
     movement_id: movementId,
     monto: parseFloat(a.monto),
     counterparty_id: a.counterparty_id || null,
@@ -377,14 +388,15 @@ export async function softDeleteMovement(movementId) {
 }
 
 // ─── Counterparty Manager (Crear / Buscar Contraparte) ─────────────────────────
-export async function findOrCreateCounterparty(name, type = 'PROVEEDOR', orgId = DEFAULT_ORG_ID) {
+export async function findOrCreateCounterparty(name, type = 'PROVEEDOR', orgId) {
   if (!name || !name.trim()) return null;
+  const activeOrgId = requireOrgId(orgId);
   const cleanName = name.trim();
 
   const { data: existing } = await supabase
     .from('eco_counterparties')
     .select('id')
-    .eq('organization_id', orgId)
+    .eq('organization_id', activeOrgId)
     .ilike('name', cleanName)
     .maybeSingle();
 
@@ -393,7 +405,7 @@ export async function findOrCreateCounterparty(name, type = 'PROVEEDOR', orgId =
   const { data: created, error } = await supabase
     .from('eco_counterparties')
     .insert({
-      organization_id: orgId,
+      organization_id: activeOrgId,
       name: cleanName,
       type: type,
     })

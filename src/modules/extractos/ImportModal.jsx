@@ -4,10 +4,12 @@
  * Detecta automáticamente origen, nivel A duplicados (SHA256), nivel C solapamientos económicos.
  */
 import React, { useRef, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { parseBankStatementFile, ACCOUNTS_CONFIG } from '../../lib/bankParsers';
 import { checkFileDuplicate, importBankStatementData } from '../../lib/extractosService';
 
 const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
+  const { organizationId } = useAuth();
   const fileRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [parseResult, setParseResult] = useState(null);
@@ -36,9 +38,11 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
       }
 
       // Level A — File Duplicate Check
-      const fileDup = await checkFileDuplicate(result.file_hash);
-      if (fileDup.isDuplicate) {
-        setDuplicateWarning(`Este archivo exacto ya fue importado anteriormente (${new Date(fileDup.file.created_at).toLocaleDateString('es-ES')}). Re-importar solo registrará los movimientos sin duplicar datos.`);
+      if (organizationId) {
+        const fileDup = await checkFileDuplicate(result.file_hash, organizationId);
+        if (fileDup.isDuplicate) {
+          setDuplicateWarning(`Este archivo exacto ya fue importado anteriormente (${new Date(fileDup.file.created_at).toLocaleDateString('es-ES')}). Re-importar solo registrará los movimientos sin duplicar datos.`);
+        }
       }
 
       setParseResult(result);
@@ -58,10 +62,14 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
 
   const handleConfirmImport = async () => {
     if (!parseResult) return;
+    if (!organizationId) {
+      setError('No hay una organización activa seleccionada para realizar la importación.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
-      const summary = await importBankStatementData(parseResult);
+      const summary = await importBankStatementData(parseResult, organizationId);
       onImportCompleted(summary);
       handleReset();
       onClose();
