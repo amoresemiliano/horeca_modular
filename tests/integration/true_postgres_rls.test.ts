@@ -34,6 +34,11 @@ describe('SEC-RLS-DB Authentic Database Security Harness Integrity & Exposure Po
     expect(content).toContain('SEC-RLS-DB-07');
     expect(content).toContain('SEC-RLS-DB-08');
     expect(content).toContain('SEC-RLS-DB-09');
+
+    // Invariant: ZERO direct writes to Supabase Auth internal tables (auth.*)
+    expect(content).not.toMatch(/INSERT\s+INTO\s+auth\./i);
+    expect(content).not.toMatch(/UPDATE\s+auth\./i);
+    expect(content).not.toMatch(/DELETE\s+FROM\s+auth\./i);
   });
 
   describe.runIf(isConfigured)('Live Application Database Surface Cleanliness Gate', () => {

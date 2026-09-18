@@ -8,7 +8,7 @@
 
 ## 1. Defined Testing Layers & Honest Classification
 
-### A. DOMAIN / APPLICATION TESTS
+### A. DOMAIN / APPLICATION
 - **Scope**: Pure domain logic, value objects, error containers (`Result<T, E>`), environment parsing, capability resolution (`can()`), and tenancy use cases.
 - **Tooling**: Vitest (`tests/unit/`, `tests/integration/security_isolation.test.ts`).
 - **Suites**:
@@ -19,32 +19,37 @@
   - `tests/unit/tenancy_usecases.test.ts`: Organization & unit switching, capability resolution, active context.
   - `tests/integration/security_isolation.test.ts`: 10 canonical domain isolation scenarios (`SEC-01` through `SEC-10`).
 
-### B. MOCKED INTEGRATION-LIKE TESTS
+### B. MOCKED INTEGRATION-LIKE
 - **Scope**: Application pipeline and repository adapter integration testing using mocked repository interfaces (`IOrganizationMembershipRepository`).
 - **Tooling**: Vitest (`tests/integration/real_rls_security.test.ts`).
 - **Suites**:
   - `tests/integration/real_rls_security.test.ts`: 27 application-level scenarios (`SEC-RLS-01` to `12`, `SEC-CONTRACT-01` to `10`) validating domain authorization pipelines, fine-grained capability checks, operational-unit scopes, human-gate separation, and fail-closed legacy role fallback.
 
-### C. TRUE DATABASE / POSTGRES RLS TESTS
-- **Scope**: Direct database row-level security (RLS) enforcement against live PostgreSQL/Supabase engine (`ourzapkjykzlwsjunzmd`).
-- **Tooling**: Vitest & PostgreSQL security test runner (`tests/integration/true_postgres_rls.test.ts`).
-- **Environment Execution Policy**: Requires valid environment configuration (`VITE_SUPABASE_URL` & `VITE_SUPABASE_ANON_KEY` or `SUPABASE_URL` & `SUPABASE_ANON_KEY`). Without live database credentials (e.g. standard PR CI runner), `describe.runIf(isConfigured)` gracefully skips live DB tests to prevent false positive PASS results.
+### C. LIVE CONNECTIVITY
+- **Scope**: HTTP and PostgREST endpoint accessibility, project credentials validation, live Supabase project ping, and application surface exposure checks.
+- **Tooling**: Vitest & Supabase JS client (`tests/integration/true_postgres_rls.test.ts`).
 - **Suites**:
-  - `tests/integration/true_postgres_rls.test.ts`: Authentic `SEC-RLS-DB-01` through `SEC-RLS-DB-09` test suite with positive controls and negative denials:
-    - `SEC-RLS-DB-01`: Authenticated user in Org A cannot SELECT tenant-owned business record from Org B [Positive Control + Negative Denial].
-    - `SEC-RLS-DB-02`: Authenticated user in Org A cannot INSERT tenant-owned business record into Org B [Positive Control + Negative Denial].
-    - `SEC-RLS-DB-03`: Authenticated user in Org A cannot UPDATE tenant-owned business record in Org B [Positive Control + Negative Denial].
-    - `SEC-RLS-DB-04`: Inactive membership denies access [Admin Control + Negative Denial].
-    - `SEC-RLS-DB-05`: Unknown / NULL canonical role denies capability-based operation [Membership Control + Negative Denial].
-    - `SEC-RLS-DB-06`: Missing OperationalUnit scope denies scoped operation [Unit A1 Scope Control + Unit A2 Denial].
-    - `SEC-RLS-DB-07`: Disabled module entitlement does not become authorized merely because capability exists [Capability Control + Entitlement Guard].
-    - `SEC-RLS-DB-08`: `VEGEN_PLATFORM_ADMIN` without tenant OrganizationMembership cannot read tenant business records [Platform Role Control + Tenant Data Denial].
-    - `SEC-RLS-DB-09`: Reading `eco_role_template_capabilities` does not grant tenant business-data access [Metadata Control + Tenant Isolation].
+  - `tests/integration/true_postgres_rls.test.ts` (Live Application Database Surface Cleanliness Gate): Confirms 0 public RPC backdoor exposure over HTTP/PostgREST.
 
-### D. CONTRACT LAYER
-- **Scope**: Bank statement file formats (BBVA, Sabadell CSV/XLS) and external integrations.
+### D. TRUE POSTGRES RLS
+- **Scope**: Direct PostgreSQL engine Row-Level Security policy enforcement (`USING` / `WITH CHECK`) against live PostgreSQL database.
+- **Tooling**: Version-controlled SQL security test harness (`supabase/tests/00_verify_authenticated_rls.sql`).
+- **Invariants**: ZERO direct writes to Supabase Auth internal tables (`auth.*`), zero public RPC endpoint exposure, isolated temporary test fixtures.
+- **Executed Scenarios**:
+  - `SEC-RLS-DB-01`: Cross-Tenant SELECT Boundary (`eco_counterparties`) [Positive Control + Negative Denial] -> **EXECUTED PASS**
+  - `SEC-RLS-DB-02`: Cross-Tenant INSERT Denial into foreign tenant (`eco_counterparties`) [Insert Exception] -> **EXECUTED PASS**
+  - `SEC-RLS-DB-03`: Cross-Tenant UPDATE Denial on foreign tenant (`eco_counterparties`) [Update Row Count = 0] -> **EXECUTED PASS**
+  - `SEC-RLS-DB-04`: Inactive Member Access Denial (`eco_counterparties`) [Inactive User Query = 0 rows] -> **EXECUTED PASS**
+  - `SEC-RLS-DB-05`: Unknown / NULL Role Template Capability Denial [Schema & Policy] -> **EXECUTED PASS**
+  - `SEC-RLS-DB-08`: `VEGEN_PLATFORM_ADMIN` Without Tenant Membership Denial [Tenant Data Isolation] -> **EXECUTED PASS**
+  - `SEC-RLS-DB-09`: Global Capability Metadata Read Does NOT Grant Tenant Access [Metadata vs Business Data] -> **EXECUTED PASS**
+
+### E. AUTHORIZATION CONTRACT / APPLICATION ENFORCEMENT
+- **Scope**: Scopes and module entitlements whose enforcement layer is schema contracts or application auth engine rather than direct PostgreSQL table RLS policies.
 - **Suites**:
-  - `tests/extractos.test.js`: Validates 9 bank parser contract scenarios for BBVA and Sabadell statements.
+  - `SEC-RLS-DB-06`: Operational Unit Scope Access Boundary -> **AUTHORIZATION CONTRACT TEST / NOT YET DB-ENFORCEABLE** (OperationalUnit-scoped business resource tables in WP-003+ such as inventory/orders will close DB-level proof).
+  - `SEC-RLS-DB-07`: Disabled Module Entitlement Guard -> **APPLICATION AUTHORIZATION / ENTITLEMENT TEST** (Enforced by application authorization engine, not Postgres table RLS).
+  - `tests/extractos.test.js`: Bank statement file formats contract validation (BBVA, Sabadell).
 
 ---
 
