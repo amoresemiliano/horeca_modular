@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.sales_imports (
     export_type TEXT NOT NULL,
     filename TEXT NOT NULL,
     file_hash TEXT,
-    status TEXT NOT NULL CHECK (status IN ('COMPLETED', 'FAILED', 'PARTIAL', 'REJECTED')),
+    status TEXT NOT NULL CHECK (status IN ('PROCESSING', 'COMPLETED', 'FAILED', 'PARTIAL', 'REJECTED')),
     rows_attempted INTEGER NOT NULL DEFAULT 0,
     rows_accepted INTEGER NOT NULL DEFAULT 0,
     rows_duplicate INTEGER NOT NULL DEFAULT 0,

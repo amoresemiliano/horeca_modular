@@ -1,37 +1,63 @@
 import { ISaleRepository, SaleWithLines, SaleQueryFilters } from '../../../domain/sales/repositories/ISaleRepository';
+import { ISalesImportRepository } from '../../../domain/sales/repositories/ISalesImportRepository';
 import { Sale } from '../../../domain/sales/models/Sale';
 import { SaleLine } from '../../../domain/sales/models/SaleLine';
 
 export class InMemorySaleRepository implements ISaleRepository {
   private sales: Map<string, Sale> = new Map(); // key = sale.id
   private lines: Map<string, SaleLine[]> = new Map(); // key = sale.id -> SaleLine[]
+  private importRepo?: ISalesImportRepository;
+
+  constructor(importRepo?: ISalesImportRepository) {
+    this.importRepo = importRepo;
+  }
+
+  public setImportRepository(repo: ISalesImportRepository): void {
+    this.importRepo = repo;
+  }
 
   public async findByExternalIdentityKeys(
     organizationId: string,
     identityKeys: string[]
-  ): Promise<Map<string, Sale>> {
-    const result = new Map<string, Sale>();
+  ): Promise<Map<string, SaleWithLines>> {
+    const result = new Map<string, SaleWithLines>();
     const keySet = new Set(identityKeys);
 
     for (const sale of this.sales.values()) {
       if (sale.organizationId === organizationId && keySet.has(sale.externalIdentityKey)) {
-        result.set(sale.externalIdentityKey, sale);
+        const saleLines = this.lines.get(sale.id) || [];
+        result.set(sale.externalIdentityKey, { sale, lines: saleLines });
       }
     }
     return result;
   }
 
   public async saveBatch(items: Array<{ sale: Sale; lines: SaleLine[] }>): Promise<void> {
+    // Foreign Key constraint verification: if importRepo is wired, verify salesImportId exists!
+    if (this.importRepo) {
+      for (const item of items) {
+        const imp = await this.importRepo.findById(item.sale.organizationId, item.sale.salesImportId);
+        if (!imp) {
+          throw new Error(
+            `FOREIGN KEY VIOLATION: sales.sales_import_id "${item.sale.salesImportId}" does not exist in sales_imports table.`
+          );
+        }
+      }
+    }
+
     for (const item of items) {
       this.sales.set(item.sale.id, item.sale);
       this.lines.set(item.sale.id, [...item.lines]);
     }
   }
 
-  public async updateBatch(sales: Sale[]): Promise<void> {
-    for (const sale of sales) {
-      if (this.sales.has(sale.id)) {
-        this.sales.set(sale.id, sale);
+  public async updateBatch(items: Array<{ sale: Sale; lines?: SaleLine[] }>): Promise<void> {
+    for (const item of items) {
+      if (this.sales.has(item.sale.id)) {
+        this.sales.set(item.sale.id, item.sale);
+        if (item.lines) {
+          this.lines.set(item.sale.id, [...item.lines]);
+        }
       }
     }
   }

@@ -1,4 +1,4 @@
-export type SalesImportStatus = 'COMPLETED' | 'FAILED' | 'PARTIAL' | 'REJECTED';
+export type SalesImportStatus = 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PARTIAL' | 'REJECTED';
 
 export interface SalesImportProps {
   id: string;

@@ -4,9 +4,10 @@ import { defaultSalesContainer } from '../../infrastructure/sales/salesServiceCo
 
 export const VentasApp = ({ tabActiva }) => {
   const { user, activeOrganization } = useAuth();
-  const organizationId = activeOrganization?.id || user?.organizationId || '00000000-0000-0000-0000-000000000001';
+  const organizationId = activeOrganization?.id || user?.organizationId || null;
 
   const [loading, setLoading] = useState(false);
+  const [infraError, setInfraError] = useState(null);
   const [overview, setOverview] = useState({
     totalTickets: 0,
     totalRevenue: 0,
@@ -23,6 +24,7 @@ export const VentasApp = ({ tabActiva }) => {
   const loadData = useCallback(async () => {
     if (!organizationId) return;
     setLoading(true);
+    setInfraError(null);
     try {
       const [ov, prods, imps] = await Promise.all([
         defaultSalesContainer.getSalesOverview.execute({ organizationId, limit: 100 }),
@@ -33,7 +35,8 @@ export const VentasApp = ({ tabActiva }) => {
       setProducts(prods);
       setImports(imps);
     } catch (err) {
-      console.error('Error loading sales data:', err);
+      console.error('Error loading sales data from persistent repository:', err);
+      setInfraError(err.message || 'Error de conexión con la persistencia de ventas.');
     } finally {
       setLoading(false);
     }
@@ -45,7 +48,7 @@ export const VentasApp = ({ tabActiva }) => {
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file || !organizationId) return;
 
     setLoading(true);
     setImportResult(null);
@@ -62,15 +65,15 @@ export const VentasApp = ({ tabActiva }) => {
       setImportResult(res);
       await loadData();
     } catch (err) {
-      setImportError(err.message || 'Error al procesar el archivo CSV de ventas.');
+      setImportError(err.message || 'Error al procesar la ingesta del archivo CSV de ventas.');
     } finally {
       setLoading(false);
-      // Reset input value
       e.target.value = '';
     }
   };
 
   const handleViewTicketDetails = async (saleId) => {
+    if (!organizationId) return;
     try {
       const details = await defaultSalesContainer.getSaleDetails.execute({
         organizationId,
@@ -92,8 +95,35 @@ export const VentasApp = ({ tabActiva }) => {
     }).format(num);
   };
 
+  // 1. Enforce explicit organization context: fail closed if no active organization
+  if (!organizationId) {
+    return (
+      <div className="bg-white p-12 rounded-2xl border border-gray-200 text-center flex flex-col items-center max-w-md mx-auto my-12 shadow-sm font-sans">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-3xl mb-4">
+          🏢
+        </div>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">Organización no seleccionada</h3>
+        <p className="text-sm text-gray-500 leading-relaxed">
+          Debes seleccionar una organización activa en la barra superior para consultar o ingestar datos de ventas de forma segura y canónica.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 font-sans">
+      {/* ── ERROR DE INFRAESTRUCTURA / PERSISTENCIA ── */}
+      {infraError && (
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm flex justify-between items-center">
+          <div>
+            <strong>Error de Persistencia:</strong> {infraError}
+          </div>
+          <button onClick={() => setInfraError(null)} className="text-red-600 font-bold">
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* ── BARRA SUPERIOR DE ACCIONES Y MÉTRICAS RÁPIDAS ── */}
       <div className="flex flex-wrap justify-between items-center bg-white p-5 rounded-2xl border border-gray-200 shadow-sm gap-4">
         <div className="flex items-center gap-6">

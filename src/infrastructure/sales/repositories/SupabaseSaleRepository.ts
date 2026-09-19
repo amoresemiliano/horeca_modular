@@ -9,12 +9,13 @@ export class SupabaseSaleRepository implements ISaleRepository {
   public async findByExternalIdentityKeys(
     organizationId: string,
     identityKeys: string[]
-  ): Promise<Map<string, Sale>> {
-    const result = new Map<string, Sale>();
+  ): Promise<Map<string, SaleWithLines>> {
+    const result = new Map<string, SaleWithLines>();
     if (identityKeys.length === 0) return result;
 
-    // PostgREST in operator handles chunks of keys
     const CHUNK_SIZE = 500;
+    const foundSales: Sale[] = [];
+
     for (let i = 0; i < identityKeys.length; i += CHUNK_SIZE) {
       const chunk = identityKeys.slice(i, i + CHUNK_SIZE);
       const { data, error } = await this.client
@@ -26,9 +27,38 @@ export class SupabaseSaleRepository implements ISaleRepository {
       if (error) throw new Error(`SupabaseSaleRepository.findByExternalIdentityKeys error: ${error.message}`);
 
       for (const row of (data || [])) {
-        const sale = this.mapRowToSale(row);
-        result.set(sale.externalIdentityKey, sale);
+        foundSales.push(this.mapRowToSale(row));
       }
+    }
+
+    if (foundSales.length === 0) return result;
+
+    const saleIds = foundSales.map(s => s.id);
+    const linesBySaleId = new Map<string, SaleLine[]>();
+
+    for (let i = 0; i < saleIds.length; i += CHUNK_SIZE) {
+      const chunk = saleIds.slice(i, i + CHUNK_SIZE);
+      const { data: linesData, error: linesError } = await this.client
+        .from('sale_lines')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .in('sale_id', chunk)
+        .order('line_index', { ascending: true });
+
+      if (linesError) throw new Error(`SupabaseSaleRepository.findByExternalIdentityKeys lines error: ${linesError.message}`);
+
+      for (const row of (linesData || [])) {
+        const line = this.mapRowToSaleLine(row);
+        if (!linesBySaleId.has(line.saleId)) {
+          linesBySaleId.set(line.saleId, []);
+        }
+        linesBySaleId.get(line.saleId)!.push(line);
+      }
+    }
+
+    for (const sale of foundSales) {
+      const lines = linesBySaleId.get(sale.id) || [];
+      result.set(sale.externalIdentityKey, { sale, lines });
     }
 
     return result;
@@ -98,9 +128,10 @@ export class SupabaseSaleRepository implements ISaleRepository {
     }
   }
 
-  public async updateBatch(sales: Sale[]): Promise<void> {
-    for (const sale of sales) {
-      const { error } = await this.client
+  public async updateBatch(items: Array<{ sale: Sale; lines?: SaleLine[] }>): Promise<void> {
+    for (const item of items) {
+      const { sale, lines } = item;
+      const { error: saleErr } = await this.client
         .from('sales')
         .update({
           total: sale.total,
@@ -113,7 +144,37 @@ export class SupabaseSaleRepository implements ISaleRepository {
         .eq('id', sale.id)
         .eq('organization_id', sale.organizationId);
 
-      if (error) throw new Error(`SupabaseSaleRepository.updateBatch error: ${error.message}`);
+      if (saleErr) throw new Error(`SupabaseSaleRepository.updateBatch error: ${saleErr.message}`);
+
+      if (lines && lines.length > 0) {
+        // Replace lines for this sale
+        const { error: delErr } = await this.client
+          .from('sale_lines')
+          .delete()
+          .eq('sale_id', sale.id)
+          .eq('organization_id', sale.organizationId);
+
+        if (delErr) throw new Error(`SupabaseSaleRepository.updateBatch (delete lines) error: ${delErr.message}`);
+
+        const lineRows = lines.map(line => ({
+          id: line.id,
+          organization_id: line.organizationId,
+          sale_id: line.saleId,
+          line_index: line.lineIndex,
+          depth: line.depth,
+          parent_line_id: line.parentLineId || null,
+          raw_text: line.rawText,
+          display_text: line.displayText,
+          quantity: line.quantity,
+          item_type: line.itemType,
+          notes: line.notes || null,
+          catalog_product_id: line.catalogProductId || null,
+          created_at: line.createdAt.toISOString(),
+        }));
+
+        const { error: insErr } = await this.client.from('sale_lines').insert(lineRows);
+        if (insErr) throw new Error(`SupabaseSaleRepository.updateBatch (insert lines) error: ${insErr.message}`);
+      }
     }
   }
 
@@ -225,7 +286,6 @@ export class SupabaseSaleRepository implements ISaleRepository {
       itemType: string;
     }>
   > {
-    // Read through sales & lines
     let salesQuery = this.client
       .from('sales')
       .select('id')

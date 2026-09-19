@@ -18,23 +18,23 @@ export interface SaleQueryFilters {
 
 export interface ISaleRepository {
   /**
-   * Finds existing sales by their external identity keys for a given organization.
-   * Used for efficient batch deduplication.
+   * Finds existing sales and lines by their external identity keys for a given organization.
+   * Used for efficient batch deduplication and correction reconciliation.
    */
   findByExternalIdentityKeys(
     organizationId: string,
     identityKeys: string[]
-  ): Promise<Map<string, Sale>>;
+  ): Promise<Map<string, SaleWithLines>>;
 
   /**
-   * Persists a batch of new sales and their associated lines atomically or in batches.
+   * Persists a batch of new sales and their associated lines.
    */
   saveBatch(items: Array<{ sale: Sale; lines: SaleLine[] }>): Promise<void>;
 
   /**
-   * Updates existing sales (e.g. on re-import with corrected source attributes).
+   * Updates existing sales and optionally replaces/updates their associated lines.
    */
-  updateBatch(sales: Sale[]): Promise<void>;
+  updateBatch(items: Array<{ sale: Sale; lines?: SaleLine[] }>): Promise<void>;
 
   /**
    * Finds a single sale by internal ID with all its lines.
