@@ -42,9 +42,8 @@ describe('SEC-RLS-DB Authentic Database Security Harness Integrity & Exposure Po
   });
 
   describe.runIf(isConfigured)('Live Application Database Surface Cleanliness Gate', () => {
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
-
     it('Confirms verify_authenticated_rls_security_suite RPC is NOT exposed to public anon/authenticated clients', async () => {
+      const supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
       // Attempting to invoke decommissioned RPC must fail / return 404 function not found error
       const { data, error } = await supabase.rpc('verify_authenticated_rls_security_suite');
 

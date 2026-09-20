@@ -5,5 +5,6 @@ description: Transient active Work Package status for HORECA Modular. Resets upo
 
 # horeca-current-wp (Transient)
 
-- **Status**: WP-002 Complete & Remote Verified (`eae9522df1db366aea2d5f5acfe2b080af511b8d`).
-- **Next Phase**: WP-003 Pending Master Activation.
+- **Active Stream**: Purchases & Suppliers (`01_horeca_modular_purchases`)
+- **Status**: WP-PUR-001 Complete & Verified (Audit Evidence & Integration Foundation).
+- **Next Phase**: WP-PUR-002 Supplier & Purchasing Catalog Integration.
