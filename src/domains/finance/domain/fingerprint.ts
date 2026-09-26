@@ -1,3 +1,4 @@
+import { moneyToDecimal } from './money';
 /**
  * HORECA Modular — Deterministic Cryptographic Hashes & Fingerprints (WP-FIN-001)
  * Multi-layer Idempotency:
@@ -21,20 +22,7 @@ export async function computeSha256(data: ArrayBuffer | string): Promise<string>
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // Fallback for older Node runtimes if needed
-  try {
-    const cryptoModule = await import('crypto');
-    return cryptoModule.createHash('sha256').update(Buffer.from(buffer)).digest('hex');
-  } catch {
-    // Basic deterministic string hash fallback
-    const view = new Uint8Array(buffer);
-    let hash = 0;
-    for (let i = 0; i < view.length; i++) {
-      hash = ((hash << 5) - hash) + view[i];
-      hash |= 0;
-    }
-    return 'fallback_hash_' + Math.abs(hash).toString(16);
-  }
+  throw new Error('SHA-256 is unavailable in this environment.');
 }
 
 export interface MovementFingerprintInput {
@@ -50,9 +38,9 @@ export interface MovementFingerprintInput {
 
 export function generateMovementFingerprintString(input: MovementFingerprintInput): string {
   const normDesc = input.normalizedDescription.trim().toUpperCase().replace(/\s+/g, ' ');
-  const amountStr = input.amount.toFixed(2);
-  const balanceStr = input.runningBalance !== null && input.runningBalance !== undefined 
-    ? input.runningBalance.toFixed(2) 
+  const amountStr = moneyToDecimal(input.amount);
+  const balanceStr = input.runningBalance !== null && input.runningBalance !== undefined
+    ? moneyToDecimal(input.runningBalance)
     : '';
   const valDateStr = input.valueDate || '';
   const nativeIdStr = input.bankNativeId || '';
@@ -67,7 +55,7 @@ export function generateMovementFingerprintString(input: MovementFingerprintInpu
     balanceStr,
     nativeIdStr,
     extRefStr
-  ].join('|');
+  ].map(value => JSON.stringify(value)).join('|');
 }
 
 export async function generateMovementFingerprint(input: MovementFingerprintInput): Promise<string> {

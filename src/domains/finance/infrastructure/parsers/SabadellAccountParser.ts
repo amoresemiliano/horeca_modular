@@ -1,3 +1,4 @@
+import { hasCell, isStructuralRow, rejectRow } from './rowValidation';
 /**
  * HORECA Modular — Banco Sabadell Current Account Parser (WP-FIN-001)
  * Parses Sabadell current account extracts, mapping operative date, value date,
@@ -43,29 +44,47 @@ export function parseSabadellAccount(
   const ref2Idx = headers.indexOf('REFERENCIA 2') >= 0 ? headers.indexOf('REFERENCIA 2') : 6;
 
   const movements: ParsedBankFileResult['movements'] = [];
+  const rejectedRows: ParsedBankFileResult['rejectedRows'] = [];
 
   for (let rIdx = headerRowIndex + 1; rIdx < rows.length; rIdx++) {
     const row = rows[rIdx];
     if (!row || row.length === 0) continue;
 
-    const nonNullCells = row.filter(c => c !== null && c !== undefined && String(c).trim() !== '');
-    if (nonNullCells.length < 2) continue;
+    if (isStructuralRow(row, opDateIdx)) continue;
 
     const rawOpDate = row[opDateIdx];
     const bookingDate = parseSpanishDate(rawOpDate, context);
-    if (!bookingDate) continue;
+    if (!bookingDate) {
+      rejectRow(rejectedRows, rIdx + 1, 'SABADELL_ACCOUNT', 'INVALID_DATE');
+      continue;
+    }
 
     const rawValDate = row[valDateIdx];
-    const valueDate = parseSpanishDate(rawValDate, context) || bookingDate;
+    const valueDate = hasCell(rawValDate) ? parseSpanishDate(rawValDate, context) : null;
+    if (hasCell(rawValDate) && !valueDate) {
+      rejectRow(rejectedRows, rIdx + 1, 'SABADELL_ACCOUNT', 'INVALID_VALUE_DATE');
+      continue;
+    }
 
     const rawAmount = row[amountIdx];
-    const amount = parseSpanishMoney(rawAmount);
-    if (amount === 0 && rawAmount === undefined) continue;
+    let amount: number;
+    try {
+      amount = parseSpanishMoney(rawAmount);
+    } catch {
+      rejectRow(rejectedRows, rIdx + 1, 'SABADELL_ACCOUNT', 'INVALID_AMOUNT');
+      continue;
+    }
 
     const rawBalance = row[balanceIdx];
-    const runningBalance = rawBalance !== undefined && rawBalance !== null && String(rawBalance).trim() !== ''
-      ? parseSpanishMoney(rawBalance)
-      : null;
+    let runningBalance: number | null = null;
+    if (rawBalance !== undefined && rawBalance !== null && String(rawBalance).trim() !== '') {
+      try {
+        runningBalance = parseSpanishMoney(rawBalance);
+      } catch {
+        rejectRow(rejectedRows, rIdx + 1, 'SABADELL_ACCOUNT', 'INVALID_BALANCE');
+        continue;
+      }
+    }
 
     const concept = String(row[conceptIdx] || '').trim() || 'Movimiento Bancario';
     const ref1 = String(row[ref1Idx] || '').trim();
@@ -73,8 +92,8 @@ export function parseSabadellAccount(
 
     // Combine stable bank native references
     const bankNativeRefs = [ref1, ref2].filter(r => r && r !== 'null' && r !== 'undefined');
-    const bankNativeId = bankNativeRefs.length > 0 ? bankNativeRefs.join('-') : null;
-    const externalReference = bankNativeId;
+    const bankNativeId = null; // References are not proven unique transaction identifiers.
+    const externalReference = bankNativeRefs.length > 0 ? bankNativeRefs.join('-') : null;
 
     const direction: MovementDirection = amount >= 0 ? 'CREDIT' : 'DEBIT';
 
@@ -107,6 +126,7 @@ export function parseSabadellAccount(
     periodStart: context.periodStart || null,
     periodEnd: context.periodEnd || null,
     totalRawRows: rows.length,
-    movements
+    movements,
+    rejectedRows
   };
 }

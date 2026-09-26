@@ -7,14 +7,16 @@
 import React, { useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { BankStatementImportService } from '../../domains/finance/application/BankStatementImportService';
+import { SupabaseFinanceRepository } from '../../domains/finance/infrastructure/repositories/SupabaseFinanceRepository';
 import { formatEuro } from '../../domains/finance/domain/money';
 
-const importService = new BankStatementImportService();
+const importService = new BankStatementImportService(new SupabaseFinanceRepository());
 
 const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
   const { organizationId, can } = useAuth();
   const fileRef = useRef(null);
   const [preview, setPreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,20 +41,29 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
       const buffer = await file.arrayBuffer();
       const previewResult = await importService.generateImportPreview(buffer, file.name, organizationId);
 
-      if (previewResult.movements.length === 0) {
-        setError('No se encontraron movimientos válidos en el extracto bancario.');
-        setLoading(false);
-        return;
-      }
-
       setPreview(previewResult);
       if (previewResult.resolvedAccountId) {
         setSelectedAccountId(previewResult.resolvedAccountId);
-      } else if (previewResult.compatibleAccounts.length > 0) {
-        setSelectedAccountId(previewResult.compatibleAccounts[0].id);
       }
     } catch (err) {
       setError(err.message || 'Error al procesar el archivo bancario.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAccountChange = async (accountId) => {
+    setSelectedAccountId('');
+    if (!selectedFile || !accountId) return;
+    setLoading(true);
+    setError('');
+    try {
+      const next = await importService.generateImportPreview(await selectedFile.arrayBuffer(), selectedFile.name, organizationId, accountId);
+      setPreview(next);
+      setSelectedAccountId(accountId);
+    } catch (err) {
+      setPreview(null);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -66,7 +77,11 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
   };
 
   const handleConfirmImport = async () => {
-    if (!preview) return;
+    if (!preview || loading) return;
+    if (!can('CONFIRM_BANK_STATEMENT_IMPORT')) {
+      setError('No tienes permiso para confirmar importaciones bancarias.');
+      return;
+    }
     if (!organizationId) {
       setError('No hay una organización activa seleccionada para realizar la importación.');
       return;
@@ -114,13 +129,14 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
   const expenseCount = preview ? preview.movements.filter(m => m.amount < 0).length : 0;
   const overlapCount = preview ? preview.movements.filter(m => m.duplicateStatus === 'POTENTIAL_OVERLAP').length : 0;
 
-  // Authorization check for import confirmation
-  const hasImportCapability = can('CONFIRM_BANK_STATEMENT_IMPORT') || can('BANK_IMPORT') || true; // Transitional default
+  // Authorization check for import confirmation:
+  // CONFIRM_BANK_STATEMENT_IMPORT is the canonical human gate.
+  const hasImportCapability = can('CONFIRM_BANK_STATEMENT_IMPORT');
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div>
@@ -207,10 +223,19 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
             </div>
           )}
 
+          {preview?.rejectedRows?.length > 0 && (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-xs" role="status">
+              <p className="font-bold">Filas rechazadas: {preview.rejectedRows.length}</p>
+              <ul>{preview.rejectedRows.map(row => (
+                <li key={row.sourceRowNumber}>Fila {row.sourceRowNumber}: {row.code}</li>
+              ))}</ul>
+            </div>
+          )}
+
           {/* Preview Analysis Summary */}
           {preview && (
             <div className="space-y-4">
-              
+
               {/* Account & Source Detection Banner */}
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -234,8 +259,10 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
                     <select
                       className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs bg-white text-gray-800 font-medium focus:ring-1 focus:ring-emerald-500"
                       value={selectedAccountId}
-                      onChange={e => setSelectedAccountId(e.target.value)}
+                      disabled={loading}
+                      onChange={e => handleAccountChange(e.target.value)}
                     >
+                      <option value="">Selecciona una cuenta</option>
                       {preview.compatibleAccounts.map(acc => (
                         <option key={acc.id} value={acc.id}>
                           {acc.displayName} ({acc.maskedIdentifier})
@@ -244,7 +271,7 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
                     </select>
                   ) : (
                     <span className="text-xs text-gray-700 font-semibold block bg-white px-3 py-1.5 rounded-lg border border-gray-200">
-                      {preview.resolvedAccountName || 'Cuenta por defecto'}
+                      {preview.resolvedAccountName || 'No hay cuentas compatibles'}
                     </span>
                   )}
                 </div>
@@ -328,10 +355,10 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
           >
             {preview ? 'Cambiar archivo' : 'Cancelar'}
           </button>
-          
+
           <button
             onClick={handleConfirmImport}
-            disabled={!preview || loading || !hasImportCapability}
+            disabled={!preview || loading || !hasImportCapability || !selectedAccountId || preview.organizationId !== organizationId || preview.totalMovements === 0}
             className="px-6 py-2.5 text-xs font-bold text-white rounded-xl shadow-sm disabled:opacity-40 transition-opacity"
             style={{ backgroundColor: '#006847' }}
           >

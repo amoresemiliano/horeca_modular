@@ -25,8 +25,8 @@ export function parseSpanishAmount(val) {
   return parseSpanishMoney(val);
 }
 
-export function parseSpanishDate(val, fallbackYear = 2026) {
-  return canonicalParseDate(val, { contextYear: fallbackYear });
+export function parseSpanishDate(val, contextYear) {
+  return canonicalParseDate(val, { contextYear });
 }
 
 export function detectBankFormat(jsonRows, fileName = '') {
@@ -56,7 +56,7 @@ export function detectBankFormat(jsonRows, fileName = '') {
 
 export async function parseBankStatementFile(arrayBuffer, fileName) {
   const { parsedResult, detection } = await parseBankStatementBuffer(arrayBuffer, fileName);
-  
+
   let legacyAccountCode = 'cta_mc';
   if (detection.formatFamily === 'BBVA_ACCOUNT') {
     legacyAccountCode = fileName.toUpperCase().includes('MT') ? 'cta_mt' : 'cta_mc';
@@ -75,7 +75,7 @@ export async function parseBankStatementFile(arrayBuffer, fileName) {
     row_identity_key: `${m.sourceRowNumber}_${m.bookingDate}_${m.amount}`,
     overlap_hash: `${legacyAccountCode}_${m.bookingDate}_${m.amount.toFixed(2)}_${m.description.substring(0, 40)}`,
     fecha: m.bookingDate,
-    fecha_valor: m.valueDate || m.bookingDate,
+    fecha_valor: m.valueDate,
     monto: m.amount,
     original_description: m.description,
     normalized_description: m.description.toUpperCase(),

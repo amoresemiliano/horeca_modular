@@ -6,15 +6,15 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { parseSpanishMoney } from '../../src/domains/finance/domain/money';
-import { 
-  parseSpanishDate, 
-  extractStatementContextFromHeaders 
+import { parseSpanishMoney, MalformedMoneyError } from '../../src/domains/finance/domain/money';
+import {
+  parseSpanishDate,
+  extractStatementContextFromHeaders
 } from '../../src/domains/finance/domain/dates';
 import { generateMovementFingerprint } from '../../src/domains/finance/domain/fingerprint';
-import { 
-  detectBankSourceFormat, 
-  FormatDetectionError 
+import {
+  detectBankSourceFormat,
+  FormatDetectionError
 } from '../../src/domains/finance/infrastructure/parsers/BankFormatDetector';
 import { parseBankStatementBuffer } from '../../src/domains/finance/infrastructure/parsers';
 
@@ -41,11 +41,21 @@ describe('Finance Domain — Spanish / European Monetary Parsing', () => {
     expect(parseSpanishMoney('1.303,55-')).toBe(-1303.55);
   });
 
-  it('handles null, undefined, blank and malformed values safely without crashing', () => {
-    expect(parseSpanishMoney(null)).toBe(0);
-    expect(parseSpanishMoney(undefined)).toBe(0);
-    expect(parseSpanishMoney('')).toBe(0);
-    expect(parseSpanishMoney('invalid_amount')).toBe(0);
+  it('distinguishes legitimate 0,00 from malformed money, which must throw MalformedMoneyError', () => {
+    expect(parseSpanishMoney('0,00')).toBe(0);
+    expect(parseSpanishMoney('0')).toBe(0);
+
+    // Malformed inputs MUST throw MalformedMoneyError, not become 0
+    expect(() => parseSpanishMoney('invalid_amount')).toThrow(MalformedMoneyError);
+    expect(() => parseSpanishMoney('12.34.56,78')).toThrow(MalformedMoneyError);
+    expect(() => parseSpanishMoney('abc')).toThrow(MalformedMoneyError);
+    expect(() => parseSpanishMoney(NaN)).toThrow(MalformedMoneyError);
+
+    // Empty inputs throw by default unless explicitly allowed
+    expect(() => parseSpanishMoney(null)).toThrow(MalformedMoneyError);
+    expect(() => parseSpanishMoney(undefined)).toThrow(MalformedMoneyError);
+    expect(() => parseSpanishMoney('')).toThrow(MalformedMoneyError);
+    expect(() => parseSpanishMoney('   ')).toThrow(MalformedMoneyError);
   });
 });
 
@@ -60,6 +70,11 @@ describe('Finance Domain — Date Normalization & Year-Boundary Resolution', () 
     const context = { contextYear: 2026, statementMonth: 8 };
     expect(parseSpanishDate('23/07', context)).toBe('2026-07-23');
     expect(parseSpanishDate('02/08', context)).toBe('2026-08-02');
+  });
+
+  it('rejects / returns null for short dates (DD/MM) when no statement context is provided (no runtime year fallback)', () => {
+    expect(parseSpanishDate('23/07')).toBeNull();
+    expect(parseSpanishDate('02/08', {})).toBeNull();
   });
 
   it('correctly resolves year-boundary cases (e.g. December transaction in January statement)', () => {
@@ -137,7 +152,7 @@ describe('Finance Infrastructure — Source Format Detection & 5 Fixtures', () =
   // 1. BBVA Account A Fixture
   it('parses BBVA Account A sanitized fixture correctly', async () => {
     const fileBuf = fs.readFileSync(path.join(fixturesDir, 'bbva_account_a_sanitized.xls'));
-    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer, 'bbva_account_a_sanitized.xls');
+    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer.slice(fileBuf.byteOffset, fileBuf.byteOffset + fileBuf.byteLength), 'bbva_account_a_sanitized.xls');
 
     expect(detection.formatFamily).toBe('BBVA_ACCOUNT');
     expect(parsedResult.detectedFormat).toBe('BBVA_ACCOUNT');
@@ -154,7 +169,7 @@ describe('Finance Infrastructure — Source Format Detection & 5 Fixtures', () =
   // 2. BBVA Account B Fixture
   it('parses BBVA Account B sanitized fixture correctly with distinct account metadata', async () => {
     const fileBuf = fs.readFileSync(path.join(fixturesDir, 'bbva_account_b_sanitized.xls'));
-    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer, 'bbva_account_b_sanitized.xls');
+    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer.slice(fileBuf.byteOffset, fileBuf.byteOffset + fileBuf.byteLength), 'bbva_account_b_sanitized.xls');
 
     expect(detection.formatFamily).toBe('BBVA_ACCOUNT');
     expect(parsedResult.detectedFormat).toBe('BBVA_ACCOUNT');
@@ -169,7 +184,7 @@ describe('Finance Infrastructure — Source Format Detection & 5 Fixtures', () =
   // 3. BBVA Card Fixture
   it('parses BBVA Card sanitized fixture and preserves signed settlement amounts', async () => {
     const fileBuf = fs.readFileSync(path.join(fixturesDir, 'bbva_card_sanitized.xls'));
-    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer, 'bbva_card_sanitized.xls');
+    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer.slice(fileBuf.byteOffset, fileBuf.byteOffset + fileBuf.byteLength), 'bbva_card_sanitized.xls');
 
     expect(detection.formatFamily).toBe('BBVA_CARD');
     expect(parsedResult.detectedFormat).toBe('BBVA_CARD');
@@ -186,7 +201,7 @@ describe('Finance Infrastructure — Source Format Detection & 5 Fixtures', () =
   // 4. Sabadell Account Fixture
   it('parses Sabadell Account sanitized fixture with bank native references', async () => {
     const fileBuf = fs.readFileSync(path.join(fixturesDir, 'sabadell_account_sanitized.xls'));
-    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer, 'sabadell_account_sanitized.xls');
+    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer.slice(fileBuf.byteOffset, fileBuf.byteOffset + fileBuf.byteLength), 'sabadell_account_sanitized.xls');
 
     expect(detection.formatFamily).toBe('SABADELL_ACCOUNT');
     expect(parsedResult.detectedFormat).toBe('SABADELL_ACCOUNT');
@@ -196,13 +211,14 @@ describe('Finance Infrastructure — Source Format Detection & 5 Fixtures', () =
     expect(cardSettlement.bookingDate).toBe('2026-07-16');
     expect(cardSettlement.amount).toBe(-240.56);
     expect(cardSettlement.direction).toBe('DEBIT');
-    expect(cardSettlement.bankNativeId).toBe('281102975493-5566711029754014');
+    expect(cardSettlement.bankNativeId).toBeNull();
+    expect(cardSettlement.externalReference).toBeTruthy();
   });
 
   // 5. Sabadell Card Fixture
   it('parses Sabadell Card sanitized fixture with short date and year reconstruction', async () => {
     const fileBuf = fs.readFileSync(path.join(fixturesDir, 'sabadell_card_sanitized.xls'));
-    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer, 'sabadell_card_sanitized.xls');
+    const { parsedResult, detection } = await parseBankStatementBuffer(fileBuf.buffer.slice(fileBuf.byteOffset, fileBuf.byteOffset + fileBuf.byteLength), 'sabadell_card_sanitized.xls');
 
     expect(detection.formatFamily).toBe('SABADELL_CARD');
     expect(parsedResult.detectedFormat).toBe('SABADELL_CARD');

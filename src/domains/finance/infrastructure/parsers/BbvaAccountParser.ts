@@ -1,3 +1,4 @@
+import { hasCell, isStructuralRow, rejectRow } from './rowValidation';
 /**
  * HORECA Modular — BBVA Current Account Parser (WP-FIN-001)
  * Parses BBVA current account extracts (Accounts A & B), extracting booking date,
@@ -46,29 +47,47 @@ export function parseBbvaAccount(
   const remesaIdx = headers.indexOf('REMESA') >= 0 ? headers.indexOf('REMESA') : 12;
 
   const movements: ParsedBankFileResult['movements'] = [];
+  const rejectedRows: ParsedBankFileResult['rejectedRows'] = [];
 
   for (let rIdx = headerRowIndex + 1; rIdx < rows.length; rIdx++) {
     const row = rows[rIdx];
     if (!row || row.length === 0) continue;
 
-    const nonNullCells = row.filter(c => c !== null && c !== undefined && String(c).trim() !== '');
-    if (nonNullCells.length < 2) continue;
+    if (isStructuralRow(row, dateIdx)) continue;
 
     const rawDate = row[dateIdx];
     const bookingDate = parseSpanishDate(rawDate, context);
-    if (!bookingDate) continue;
+    if (!bookingDate) {
+      rejectRow(rejectedRows, rIdx + 1, 'BBVA_ACCOUNT', 'INVALID_DATE');
+      continue;
+    }
 
     const rawValueDate = row[valueDateIdx];
-    const valueDate = parseSpanishDate(rawValueDate, context) || bookingDate;
+    const valueDate = hasCell(rawValueDate) ? parseSpanishDate(rawValueDate, context) : null;
+    if (hasCell(rawValueDate) && !valueDate) {
+      rejectRow(rejectedRows, rIdx + 1, 'BBVA_ACCOUNT', 'INVALID_VALUE_DATE');
+      continue;
+    }
 
     const rawAmount = row[amountIdx];
-    const amount = parseSpanishMoney(rawAmount);
-    if (amount === 0 && rawAmount === undefined) continue;
+    let amount: number;
+    try {
+      amount = parseSpanishMoney(rawAmount);
+    } catch {
+      rejectRow(rejectedRows, rIdx + 1, 'BBVA_ACCOUNT', 'INVALID_AMOUNT');
+      continue;
+    }
 
     const rawBalance = row[balanceIdx];
-    const runningBalance = rawBalance !== undefined && rawBalance !== null && String(rawBalance).trim() !== ''
-      ? parseSpanishMoney(rawBalance)
-      : null;
+    let runningBalance: number | null = null;
+    if (rawBalance !== undefined && rawBalance !== null && String(rawBalance).trim() !== '') {
+      try {
+        runningBalance = parseSpanishMoney(rawBalance);
+      } catch {
+        rejectRow(rejectedRows, rIdx + 1, 'BBVA_ACCOUNT', 'INVALID_BALANCE');
+        continue;
+      }
+    }
 
     const concept = String(row[conceptIdx] || '').trim();
     const beneficiary = String(row[benIdx] || '').trim();
@@ -80,7 +99,7 @@ export function parseBbvaAccount(
     const direction: MovementDirection = amount >= 0 ? 'CREDIT' : 'DEBIT';
 
     // Bank native ID from remesa if available and not just "-"
-    const bankNativeId = remesa && remesa !== '-' && remesa.length > 5 ? remesa : null;
+    const bankNativeId = null; // Remittance references are not proven transaction identities.
 
     movements.push({
       sourceRowNumber: rIdx + 1,
@@ -92,7 +111,7 @@ export function parseBbvaAccount(
       direction,
       runningBalance,
       bankNativeId,
-      externalReference: remesa !== '-' ? remesa : null,
+      externalReference: remesa && remesa !== '-' ? remesa : null,
       minimizedProvenance: {
         sourceRowNumber: rIdx + 1,
         rawConcept: concept || undefined,
@@ -111,6 +130,7 @@ export function parseBbvaAccount(
     periodStart: context.periodStart || null,
     periodEnd: context.periodEnd || null,
     totalRawRows: rows.length,
-    movements
+    movements,
+    rejectedRows
   };
 }

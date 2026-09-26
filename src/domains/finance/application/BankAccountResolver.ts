@@ -37,7 +37,7 @@ export function resolveBankAccount(
   }
 
   // Filter accounts belonging to this institution and product type
-  const compatible = availableAccounts.filter(acc => 
+  const compatible = availableAccounts.filter(acc =>
     acc.isActive &&
     acc.institution.toUpperCase() === expectedInstitution.toUpperCase() &&
     acc.productType === expectedProductType
@@ -47,7 +47,7 @@ export function resolveBankAccount(
     return {
       resolvedAccount: null,
       requiresSelection: true,
-      compatibleAccounts: availableAccounts.filter(a => a.isActive),
+      compatibleAccounts: [],
       resolutionReason: `No hay cuentas bancarias activas registradas para ${expectedInstitution} (${expectedProductType}).`
     };
   }
@@ -55,7 +55,7 @@ export function resolveBankAccount(
   // 1. Try matching by IBAN
   if (metadata.iban) {
     const cleanIban = metadata.iban.replace(/\s+/g, '').toUpperCase();
-    const matchedByIban = compatible.find(a => 
+    const matchedByIban = compatible.find(a =>
       a.externalReference && a.externalReference.replace(/\s+/g, '').toUpperCase() === cleanIban
     );
     if (matchedByIban) {
@@ -71,8 +71,8 @@ export function resolveBankAccount(
   // 2. Try matching by contract or card reference
   if (metadata.contractNumber || metadata.cardIdentifier) {
     const ref = (metadata.contractNumber || metadata.cardIdentifier || '').trim();
-    const matchedByRef = compatible.find(a => 
-      a.externalReference && a.externalReference.includes(ref.slice(-8))
+    const matchedByRef = compatible.find(a =>
+      a.externalReference && a.externalReference.replace(/\s/g, '') === ref.replace(/\s/g, '')
     );
     if (matchedByRef) {
       return {
@@ -82,16 +82,6 @@ export function resolveBankAccount(
         resolutionReason: `Identificada automáticamente por referencia de contrato/tarjeta`
       };
     }
-  }
-
-  // 3. If exactly 1 compatible account exists in the organization
-  if (compatible.length === 1) {
-    return {
-      resolvedAccount: compatible[0],
-      requiresSelection: false,
-      compatibleAccounts: compatible,
-      resolutionReason: `Única cuenta compatible (${compatible[0].displayName})`
-    };
   }
 
   // 4. Multiple compatible accounts exist (e.g. BBVA Account MC vs MT) -> Ask user to select

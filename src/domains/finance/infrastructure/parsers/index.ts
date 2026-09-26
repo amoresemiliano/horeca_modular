@@ -25,13 +25,13 @@ export async function parseBankStatementBuffer(
 ): Promise<{ parsedResult: ParsedBankFileResult; detection: DetectionResult }> {
   const fileHash = await computeSha256(arrayBuffer);
   const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-  
+
   if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
     throw new Error('El archivo no contiene ninguna hoja de cálculo válida.');
   }
 
   const primarySheet = workbook.Sheets[workbook.SheetNames[0]];
-  const jsonRows = XLSX.utils.sheet_to_json(primarySheet, { header: 1, raw: false }) as Array<any[]>;
+  const jsonRows = XLSX.utils.sheet_to_json(primarySheet, { header: 1, raw: true }) as Array<any[]>;
 
   const detection = detectBankSourceFormat(jsonRows, workbook.SheetNames);
 

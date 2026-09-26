@@ -5,17 +5,24 @@
 
 export type ProductType = 'BANK_ACCOUNT' | 'CARD';
 
-export type BankFormatFamily = 
-  | 'BBVA_ACCOUNT' 
-  | 'BBVA_CARD' 
-  | 'SABADELL_ACCOUNT' 
+export type BankFormatFamily =
+  | 'BBVA_ACCOUNT'
+  | 'BBVA_CARD'
+  | 'SABADELL_ACCOUNT'
   | 'SABADELL_CARD';
 
 export type MovementDirection = 'DEBIT' | 'CREDIT';
 
 export type DuplicateStatus = 'UNIQUE' | 'POTENTIAL_OVERLAP' | 'DEFINITE_DUPLICATE';
 
-export type ImportStatus = 
+export interface RejectedBankRow {
+  sourceRowNumber: number;
+  code: 'INVALID_AMOUNT' | 'INVALID_DATE' | 'INVALID_VALUE_DATE' | 'INVALID_BALANCE';
+  reason: string;
+  sourceFormat: BankFormatFamily;
+}
+
+export type ImportStatus =
   | 'RECEIVED'
   | 'SOURCE_DETECTED'
   | 'PARSED'
@@ -95,6 +102,7 @@ export interface ParsedBankFileResult {
   periodStart: string | null;
   periodEnd: string | null;
   totalRawRows: number;
+  rejectedRows: RejectedBankRow[];
   movements: Array<{
     sourceRowNumber: number;
     bookingDate: string;
@@ -111,6 +119,7 @@ export interface ParsedBankFileResult {
 }
 
 export interface ImportPreviewDTO {
+  organizationId: string;
   fileName: string;
   fileHash: string;
   formatFamily: BankFormatFamily;
@@ -120,6 +129,7 @@ export interface ImportPreviewDTO {
   requiresAccountSelection: boolean;
   compatibleAccounts: BankAccount[];
   totalMovements: number;
+  rejectedRows: RejectedBankRow[];
   totalIncome: number;
   totalExpense: number;
   netAmount: number;
@@ -138,6 +148,8 @@ export interface ImportPreviewDTO {
     fingerprint: string;
     duplicateStatus: DuplicateStatus;
     duplicateReason?: string;
+    externalReference: string | null;
+    minimizedProvenance: MinimizedSourceProvenance;
   }>;
 }
 

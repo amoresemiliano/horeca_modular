@@ -1,3 +1,4 @@
+import { isStructuralRow, rejectRow } from './rowValidation';
 /**
  * HORECA Modular — BBVA Card Statement Parser (WP-FIN-001)
  * Parses BBVA credit/debit card extracts, preserving signed settlement amounts
@@ -41,28 +42,32 @@ export function parseBbvaCard(
   const currencyIdx = headers.indexOf('DIVISA') >= 0 ? headers.indexOf('DIVISA') : 6;
 
   const movements: ParsedBankFileResult['movements'] = [];
+  const rejectedRows: ParsedBankFileResult['rejectedRows'] = [];
 
   for (let rIdx = headerRowIndex + 1; rIdx < rows.length; rIdx++) {
     const row = rows[rIdx];
     if (!row || row.length === 0) continue;
 
-    const nonNullCells = row.filter(c => c !== null && c !== undefined && String(c).trim() !== '');
-    if (nonNullCells.length < 2) continue;
+    if (isStructuralRow(row, dateIdx)) continue;
 
     const rawDate = row[dateIdx];
     const bookingDate = parseSpanishDate(rawDate, context);
-    if (!bookingDate) continue;
+    if (!bookingDate) {
+      rejectRow(rejectedRows, rIdx + 1, 'BBVA_CARD', 'INVALID_DATE');
+      continue;
+    }
 
     const concept = String(row[conceptIdx] || '').trim();
     const movType = String(row[typeIdx] || '').trim();
     const rawAmount = row[amountIdx];
-    const parsedAmount = parseSpanishMoney(rawAmount);
+    let parsedAmount: number;
+    try {
+      parsedAmount = parseSpanishMoney(rawAmount);
+    } catch {
+      rejectRow(rejectedRows, rIdx + 1, 'BBVA_CARD', 'INVALID_AMOUNT');
+      continue;
+    }
 
-    if (parsedAmount === 0 && rawAmount === undefined) continue;
-
-    // Preserve signed settlement amount:
-    // In BBVA card extracts, purchases are already explicitly signed negative ("-39,95")
-    // and account payments/refunds are positive.
     const amount = parsedAmount;
     const direction: MovementDirection = amount >= 0 ? 'CREDIT' : 'DEBIT';
     const currency = String(row[currencyIdx] || 'EUR').trim().toUpperCase() || 'EUR';
@@ -79,7 +84,7 @@ export function parseBbvaCard(
       direction,
       runningBalance: null,
       bankNativeId: null,
-      externalReference: detection.metadata.contractNumber || null,
+      externalReference: null,
       minimizedProvenance: {
         sourceRowNumber: rIdx + 1,
         rawConcept: concept || undefined,
@@ -96,6 +101,7 @@ export function parseBbvaCard(
     periodStart: context.periodStart || null,
     periodEnd: context.periodEnd || null,
     totalRawRows: rows.length,
-    movements
+    movements,
+    rejectedRows
   };
 }
