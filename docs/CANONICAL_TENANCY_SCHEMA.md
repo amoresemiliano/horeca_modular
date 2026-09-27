@@ -84,6 +84,9 @@ eco_holdings (Holding / Brand Group)
 - `is_active` (BOOLEAN, DEFAULT true)
 
 #### 8. `eco_capabilities` (Canonical Capability Registry)
+- CCR-FIN-001 adds `required_module_key` (nullable TEXT, canonical lowercase module key).
+  `STATEMENTS_IMPORT_CONFIRM` is ORGANIZATION scoped and requires enabled `bancos` entitlement.
+  See [the server authorization and ownership contract](CCR-FIN-001-RESOLUTION.md).
 - `id` (UUID, PK)
 - `code` (TEXT, UNIQUE): Capability code (e.g. `BANK_IMPORT`, `REVIEW_RECONCILIATION`, `CONFIRM_RECONCILIATION`)
 - `scope` (TEXT: `'PLATFORM'`, `'HOLDING'`, `'ORGANIZATION'`, `'OPERATIONAL_UNIT'`)

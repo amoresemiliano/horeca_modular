@@ -24,6 +24,7 @@ export interface AuthorizationEvaluationContext {
     };
     readonly operationalUnitScopes?: readonly string[];
     readonly isActive: boolean;
+    readonly isOrganizationWide?: boolean;
   };
   readonly isPlatformAdmin?: boolean;
 }
@@ -53,6 +54,14 @@ export function can(ctx: AuthorizationEvaluationContext): AuthorizationDecision 
   }
 
   // 2. Module Entitlement Check
+  if (ctx.requiredCapability === Capability.STATEMENTS_IMPORT_CONFIRM && (
+    !ctx.organizationId || ctx.moduleEntitlement?.moduleKey !== 'bancos' ||
+    ctx.moduleEntitlement.isEnabled !== true || ctx.membership?.isOrganizationWide !== true ||
+    ctx.targetScope?.scopeType === ScopeType.OPERATIONAL_UNIT
+  )) {
+    return { allowed: false, reason: 'Bank import confirmation requires explicit Finance entitlement and organization-wide scope', evaluatedAt };
+  }
+
   if (ctx.moduleEntitlement && !ctx.moduleEntitlement.isEnabled) {
     return {
       allowed: false,

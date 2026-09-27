@@ -4,6 +4,7 @@ import { IOrganizationMembershipRepository } from '@/domain/tenancy/repositories
 import { Membership } from '@/domain/tenancy/entities/Membership';
 import { ModuleEntitlement } from '@/domain/tenancy/entities/ModuleEntitlement';
 import { CanExecuteInput, CanExecuteInputSchema } from '../dtos/TenancyDto';
+import { Capability } from '@/domain/tenancy/authorization/capabilities';
 
 export class CanExecuteCapabilityUseCase {
   constructor(private membershipRepo: IOrganizationMembershipRepository) {}
@@ -39,6 +40,19 @@ export class CanExecuteCapabilityUseCase {
 
     // Check module entitlement if applicable
     const entitlementsResult = await this.membershipRepo.findModuleEntitlementsByOrgId(organizationId);
+    // CCR-FIN-001: the new organization-wide gate must never inherit transitional
+    // entitlement defaults, unit grants, or upload/process/reconciliation permissions.
+    if (capabilityCode === Capability.STATEMENTS_IMPORT_CONFIRM) {
+      if (membership.isActive !== true || membership.isOrganizationWide !== true || operationalUnitId ||
+          !entitlementsResult.success || !entitlementsResult.value.some(
+            e => e.moduleKey === 'bancos' && e.isEnabled === true
+          )) return Result.ok(false);
+      const overrides = (membership.overrides || []).filter(o => o.capabilityCode === capabilityCode);
+      if (overrides.some(o => o.effect === 'REVOKE')) return Result.ok(false);
+      return Result.ok(overrides.some(o => o.effect === 'GRANT' && !o.operationalUnitId) ||
+        (membership.capabilities || []).includes(capabilityCode));
+    }
+
     if (entitlementsResult.success) {
       const entitlements = entitlementsResult.value;
       const capabilityPrefix = capabilityCode.split('_')[0].toLowerCase();

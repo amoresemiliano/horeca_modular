@@ -78,3 +78,12 @@ graph TD
     G -- Yes --> ALLOW
     G -- No --> DENY
 ```
+
+## CCR-FIN-001: authoritative Finance writes
+
+ActiveContext selects UI context only. The operation submits organizationId;
+`public.can_execute_capability_for_org(organizationId, 'STATEMENTS_IMPORT_CONFIRM')`
+checks auth.uid(), active identity/membership/organization, effective grants, revoke precedence,
+organization-wide scope and the enabled `bancos` entitlement inside the trusted transaction.
+There is no first-membership fallback. The [Core resolution](CCR-FIN-001-RESOLUTION.md)
+is authoritative for the new gate and its deployment/handoff responsibilities.
