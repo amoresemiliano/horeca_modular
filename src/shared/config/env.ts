@@ -35,11 +35,10 @@ function resolveEnv(): RawEnv {
   const raw = {
     VITE_APP_ENV: import.meta.env.VITE_APP_ENV || 'development',
     VITE_RELEASE_SHA: import.meta.env.VITE_RELEASE_SHA || 'a90724d',
-    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://ourzapkjykzlwsjunzmd.supabase.co',
+    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://vmxjqwlfwnphorthhcwu.supabase.co',
     VITE_SUPABASE_PUBLISHABLE_KEY:
       import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-      import.meta.env.VITE_SUPABASE_ANON_KEY ||
-      'sb_publishable_placeholder_for_verification',
+      import.meta.env.VITE_SUPABASE_ANON_KEY,
     VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
   };
 
@@ -47,6 +46,11 @@ function resolveEnv(): RawEnv {
   if (!parseResult.success) {
     const errorDetails = parseResult.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
     throw AppError.validation(`Invalid application environment configuration: ${errorDetails}`);
+  }
+
+  if (parseResult.data.VITE_APP_ENV === 'development' &&
+      new URL(parseResult.data.VITE_SUPABASE_URL).origin !== 'https://vmxjqwlfwnphorthhcwu.supabase.co') {
+    throw AppError.validation('HORECA DEV must use project vmxjqwlfwnphorthhcwu');
   }
 
   return parseResult.data;

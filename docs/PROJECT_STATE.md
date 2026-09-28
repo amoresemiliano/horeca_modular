@@ -1,10 +1,12 @@
 # PROJECT STATE — HORECA MODULAR
 
+> 2026-09-28 correction: HORECA DEV identity and CLI link are verified, but the Core baseline is missing. Earlier hosted login, RLS, bucket and schema claims below are historical and do not establish verification on HORECA DEV. See [DEV rebaseline](DEV_SUPABASE_REBASELINE.md).
+
 ## 1. Current Verified Environments Matrix
 
 | Environment | Git Branch | Git SHA | Vercel URL | Supabase Project Ref | Status | Verification |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **DEV** | `dev` | `98aed82c5153691412d21f9f995e0f295cd5386a` (canonical baseline) | `https://horecamodular-git-dev-vegen-s-projects.vercel.app/` | `ourzapkjykzlwsjunzmd` | **ACTIVE** | `VERIFIED_BY_LOCAL_AGENT` |
+| **DEV** | `dev` | `20d41e17266f4085d520909159d736977e791d9b` (approved Core; not deployed) | `https://horecamodular-git-dev-vegen-s-projects.vercel.app/` | `vmxjqwlfwnphorthhcwu` | **CORE BASELINE MISSING** | `IDENTITY/LINK VERIFIED; CCR BLOCKED` |
 | **UAT** | *None* | *None* | *None* | *None* | **NOT PROVISIONED** | `NOT PROVISIONED` |
 | **PROD** | `main` | `8a1fcb1a502a291165aff53dcd3005048c01cd65` | `https://horecamodular.vercel.app/` | *Unproven* | **ACTIVE (FRONTEND ONLY)** | `NOT VERIFIED (BACKEND)` |
 
@@ -15,14 +17,13 @@
 - **Default Branch**: `main`
 - **Active Development Branch**: `dev`
 - **Active Working Package Branch**: `wp/002-canonical-tenancy-auth`
-- **Staging Database Project**: `ourzapkjykzlwsjunzmd` (`https://ourzapkjykzlwsjunzmd.supabase.co`)
-- **Key Fingerprint (Publishable)**: `sb_publishable_...Smhggsu`
-- **Storage Bucket**: `eco-imports-private-staging` (1 private bucket in staging)
-- **Active Database Tables**: 34 public tables in staging
+- **Staging Database Project**: `vmxjqwlfwnphorthhcwu` (`https://vmxjqwlfwnphorthhcwu.supabase.co`)
+- **Storage Bucket**: Not verified on the corrected HORECA DEV target.
+- **Active Database Tables**: Nine public tables; no `eco_*` Core relations (2026-09-28 catalog audit).
 
 ---
 
-## 3. Work Package Status
+## 3. Historical Work Package Status (hosted claims require revalidation)
 
 - **WP-000**: CLOSED & APPROVED (SHA: `a90724d47b2a6aea2248187b1806bfd13bb8d9fa`)
 - **WP-001 (Engineering Foundation & Canonical Core Preparation)**: CLOSED & APPROVED (SHA: `98aed82`)

@@ -18,8 +18,10 @@
 ## 3. Core Repository & Infrastructure Map
 - **Repository**: `https://github.com/amoresemiliano/horeca_modular`
 - **Active Branch**: `dev`
-- **Canonical Supabase Staging Project**: `ourzapkjykzlwsjunzmd` (`https://ourzapkjykzlwsjunzmd.supabase.co`)
+- **Canonical Supabase Staging Project**: `vmxjqwlfwnphorthhcwu` (`https://vmxjqwlfwnphorthhcwu.supabase.co`)
 - **Deployed DEV Preview**: `https://horecamodular-git-dev-vegen-s-projects.vercel.app/`
+
+- **Core DEV deployment state (2026-09-28)**: CLI link and project identity verified; ten required `eco_*` Core relations and migration history are absent. CCR-FIN-001 is blocked pending an approved Core baseline. See `docs/DEV_SUPABASE_REBASELINE.md`.
 
 ## 4. Strict Operating Rules
 1. **Language**: All documentation, commit messages, and reports must be in **ENGLISH**.

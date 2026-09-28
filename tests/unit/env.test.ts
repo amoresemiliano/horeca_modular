@@ -1,5 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { getAppConfig, getSafeDiagnosticConfig, AppEnvironment } from '../../src/shared/config/env';
+
+beforeAll(() => {
+  vi.stubEnv('VITE_APP_ENV', 'development');
+  vi.stubEnv('VITE_SUPABASE_URL', 'https://vmxjqwlfwnphorthhcwu.supabase.co');
+  vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test_fixture_only');
+});
+afterAll(() => vi.unstubAllEnvs());
 
 describe('Environment Configuration & Contract (Scope H)', () => {
   it('loads valid default application configuration', () => {
