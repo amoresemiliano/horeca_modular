@@ -1,5 +1,7 @@
 # CANONICAL AUTHORIZATION & ROLE CAPABILITY MATRIX — HORECA MODULAR
 
+> Deployed HORECA DEV baseline (2026-09-28): see [Core restoration](CORE_DEV_BASELINE_RESTORATION.md) for the exact eleven deployed relations and current wire-code registry. The wider hierarchy below is a target design; holdings and real-tenant bootstrap are not deployed by this baseline. Platform roles never substitute for tenant membership. Historical SQL migrations are archived under `supabase/history/pre_rebaseline/`.
+
 ## 1. Canonical Authorization Model
 
 Authorization in HORECA Modular follows the approved VEGEN target 6-element evaluation chain:

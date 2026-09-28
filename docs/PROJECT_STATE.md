@@ -1,12 +1,12 @@
 # PROJECT STATE — HORECA MODULAR
 
-> 2026-09-28 correction: HORECA DEV identity and CLI link are verified, but the Core baseline is missing. Earlier hosted login, RLS, bucket and schema claims below are historical and do not establish verification on HORECA DEV. See [DEV rebaseline](DEV_SUPABASE_REBASELINE.md).
+> 2026-09-28 restoration: HORECA DEV Core baseline and CCR-FIN-001 are deployed and hosted-verified. Legacy operational data is preserved. No real tenants/users were seeded. Earlier product/login claims below remain historical. See [Core restoration](CORE_DEV_BASELINE_RESTORATION.md).
 
 ## 1. Current Verified Environments Matrix
 
 | Environment | Git Branch | Git SHA | Vercel URL | Supabase Project Ref | Status | Verification |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **DEV** | `dev` | `20d41e17266f4085d520909159d736977e791d9b` (approved Core; not deployed) | `https://horecamodular-git-dev-vegen-s-projects.vercel.app/` | `vmxjqwlfwnphorthhcwu` | **CORE BASELINE MISSING** | `IDENTITY/LINK VERIFIED; CCR BLOCKED` |
+| **DEV** | `dev` | `20d41e17266f4085d520909159d736977e791d9b` (approved CCR; deployed with consolidated baseline) | `https://horecamodular-git-dev-vegen-s-projects.vercel.app/` | `vmxjqwlfwnphorthhcwu` | **CORE + CCR VERIFIED** | `HOSTED SCHEMA/AUTHORIZATION VERIFIED` |
 | **UAT** | *None* | *None* | *None* | *None* | **NOT PROVISIONED** | `NOT PROVISIONED` |
 | **PROD** | `main` | `8a1fcb1a502a291165aff53dcd3005048c01cd65` | `https://horecamodular.vercel.app/` | *Unproven* | **ACTIVE (FRONTEND ONLY)** | `NOT VERIFIED (BACKEND)` |
 
@@ -19,7 +19,7 @@
 - **Active Working Package Branch**: `wp/002-canonical-tenancy-auth`
 - **Staging Database Project**: `vmxjqwlfwnphorthhcwu` (`https://vmxjqwlfwnphorthhcwu.supabase.co`)
 - **Storage Bucket**: Not verified on the corrected HORECA DEV target.
-- **Active Database Tables**: Nine public tables; no `eco_*` Core relations (2026-09-28 catalog audit).
+- **Active Database Tables**: Nine preserved legacy operational tables plus eleven Core relations. Migration history records only the two executed canonical migrations.
 
 ---
 

@@ -1,11 +1,11 @@
 # CCR-FIN-001 — Core contract for Finance confirmation
 
 Core implementation: `supabase/migrations/20260927000000_ccr_fin_001_core_authorization.sql`.
-Status: Core contract resolved in the versioned implementation; controlled deployment remains separate.
+Status (2026-09-28): deployed and hosted-verified on `vmxjqwlfwnphorthhcwu` after consolidated Core baseline restoration. See [deployment evidence](CORE_DEV_BASELINE_RESTORATION.md).
 This contract supersedes the proposed literal `CONFIRM_BANK_STATEMENT_IMPORT` in the Finance
 recovery document. The latter remains the semantic human gate, not a second registry code.
-Implementation is versioned; shared DEV deployment is a separate Master-controlled action.
-Neither a Core nor a Finance migration was executed against shared DEV during this task.
+The original implementation task did not deploy either migration. Master subsequently deployed
+the clean Core baseline and this exact CCR migration to canonical HORECA DEV; Finance migrations remain separate.
 
 ## Capability and scope
 
@@ -138,9 +138,16 @@ RPC, parser, reconciliation, accounting, P&L, Sales or production deployment bel
 - The fixture supplies only the consumed Core schema and an auth.uid() JWT-setting stub. It
   neither reconstructs the unversioned production schema nor verifies hosted Supabase Auth,
   PostgREST, hosted Finance RLS or Finance transaction behavior. There are no auth-table writes
-  or shared-database mutations. Hosted behavior must be validated at controlled deployment.
+  or shared-database mutations. Hosted behavior was subsequently exercised during the controlled baseline deployment; see the linked restoration evidence.
 
 Validation performed: `npm run test:run` — 138 passed across 11 files, including 41 embedded
 PostgreSQL checks; `npm run typecheck` — passed; `npm run lint` — 0 errors and 14 pre-existing
 warnings outside changed code; `npm run build` — passed with existing bundle-size/Browserslist
 warnings. `git diff --check` passed. The Finance worktree remained clean at its blocked SHA.
+
+
+Hosted deployment update (2026-09-28): canonical HORECA DEV now exposes the primitive.
+The consolidated baseline and unchanged CCR were deployed with truthful CLI history;
+transaction-scoped hosted SQL scenarios and authenticated/anonymous PostgREST execution
+were checked. Finance must use current canonical capability wire codes from TypeScript,
+not historical SQL aliases, and still owns its separate business schema/RPC deployment.

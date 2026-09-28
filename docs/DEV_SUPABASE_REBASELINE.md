@@ -1,5 +1,8 @@
 # HORECA DEV Supabase rebaseline — 2026-09-28
 
+> Historical pre-restoration audit. The missing-Core blocker below was resolved by
+> [Core DEV baseline restoration](CORE_DEV_BASELINE_RESTORATION.md). Retained as incident evidence.
+
 ## Authoritative project boundary
 
 HORECA != MICA. The Product Owner corrected the previous infrastructure mapping:

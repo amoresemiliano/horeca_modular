@@ -21,7 +21,7 @@
 - **Canonical Supabase Staging Project**: `vmxjqwlfwnphorthhcwu` (`https://vmxjqwlfwnphorthhcwu.supabase.co`)
 - **Deployed DEV Preview**: `https://horecamodular-git-dev-vegen-s-projects.vercel.app/`
 
-- **Core DEV deployment state (2026-09-28)**: CLI link and project identity verified; ten required `eco_*` Core relations and migration history are absent. CCR-FIN-001 is blocked pending an approved Core baseline. See `docs/DEV_SUPABASE_REBASELINE.md`.
+- **Core DEV deployment state (2026-09-28)**: Core baseline and CCR-FIN-001 deployed to the canonical HORECA DEV target. Hosted grants, RLS and authorization scenarios verified. Active migration chain: `20260926000000` then `20260927000000`; historical migrations are archived, not marked applied. Tenant bootstrap is intentionally empty. See `docs/CORE_DEV_BASELINE_RESTORATION.md`.
 
 ## 4. Strict Operating Rules
 1. **Language**: All documentation, commit messages, and reports must be in **ENGLISH**.
