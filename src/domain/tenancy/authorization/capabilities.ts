@@ -50,6 +50,8 @@ export const Capability = {
   // 10. Financial & Statements
   STATEMENTS_IMPORT_UPLOAD: 'statements.import.upload',
   STATEMENTS_IMPORT_PROCESS: 'statements.import.process',
+  // Canonical SQL/wire code. Semantic gate: CONFIRM_BANK_STATEMENT_IMPORT.
+  STATEMENTS_IMPORT_CONFIRM: 'STATEMENTS_IMPORT_CONFIRM',
   FINANCIAL_RECONCILIATION_REVIEW: 'financial.reconciliation.review',
   FINANCIAL_RECONCILIATION_CONFIRM: 'financial.reconciliation.confirm',
   FINANCIAL_ALLOCATION_EDIT: 'financial.allocation.edit',

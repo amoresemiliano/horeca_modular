@@ -1,5 +1,7 @@
 # CANONICAL TENANCY & AUTHORIZATION SCHEMA — HORECA MODULAR
 
+> Deployed HORECA DEV baseline (2026-09-28): see [Core restoration](CORE_DEV_BASELINE_RESTORATION.md) for the exact eleven deployed relations and current wire-code registry. The wider hierarchy below is a target design; holdings and real-tenant bootstrap are not deployed by this baseline. Platform roles never substitute for tenant membership. Historical SQL migrations are archived under `supabase/history/pre_rebaseline/`.
+
 ## 1. 3-Tier Multi-Tenant & Multi-CIF Hierarchy
 HORECA Modular models hospitality enterprise groups using a canonical three-tier hierarchy:
 
@@ -84,6 +86,9 @@ eco_holdings (Holding / Brand Group)
 - `is_active` (BOOLEAN, DEFAULT true)
 
 #### 8. `eco_capabilities` (Canonical Capability Registry)
+- CCR-FIN-001 adds `required_module_key` (nullable TEXT, canonical lowercase module key).
+  `STATEMENTS_IMPORT_CONFIRM` is ORGANIZATION scoped and requires enabled `bancos` entitlement.
+  See [the server authorization and ownership contract](CCR-FIN-001-RESOLUTION.md).
 - `id` (UUID, PK)
 - `code` (TEXT, UNIQUE): Capability code (e.g. `BANK_IMPORT`, `REVIEW_RECONCILIATION`, `CONFIRM_RECONCILIATION`)
 - `scope` (TEXT: `'PLATFORM'`, `'HOLDING'`, `'ORGANIZATION'`, `'OPERATIONAL_UNIT'`)

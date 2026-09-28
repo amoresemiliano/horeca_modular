@@ -1,5 +1,7 @@
 # CANONICAL AUTHORIZATION & ROLE CAPABILITY MATRIX — HORECA MODULAR
 
+> Deployed HORECA DEV baseline (2026-09-28): see [Core restoration](CORE_DEV_BASELINE_RESTORATION.md) for the exact eleven deployed relations and current wire-code registry. The wider hierarchy below is a target design; holdings and real-tenant bootstrap are not deployed by this baseline. Platform roles never substitute for tenant membership. Historical SQL migrations are archived under `supabase/history/pre_rebaseline/`.
+
 ## 1. Canonical Authorization Model
 
 Authorization in HORECA Modular follows the approved VEGEN target 6-element evaluation chain:
@@ -218,3 +220,14 @@ In multi-tenant, multi-CIF operations (such as group franchise operations):
    - The user possesses the requisite capability in `eco_capabilities` / `eco_membership_capability_overrides`.
    - The requested record falls within the member's assigned `OperationalUnit` scope.
 4. **Fail-Closed Principle**: If any element in the authorization chain is missing, unverified, or mismatched, the database query immediately returns zero rows or raises an access violation error.
+
+## CCR-FIN-001: bank import confirmation
+
+`STATEMENTS_IMPORT_CONFIRM` (semantic gate `CONFIRM_BANK_STATEMENT_IMPORT`) is granted by
+default only to OWNER, MANAGER and ADMINISTRATIVE. All other templates, including
+EXTERNAL_ACCOUNTANT and VEGEN_PLATFORM_ADMIN, are excluded by default. Upload, processing
+and reconciliation permissions do not imply it. An applicable explicit REVOKE wins.
+Organization-wide membership and enabled `bancos` entitlement are required.
+
+The [Core server contract](CCR-FIN-001-RESOLUTION.md) defines authoritative requested-org
+evaluation; browser capability lists and this matrix are not persistence authorization.

@@ -29,3 +29,6 @@ scratch/
 staging/
 labs/
 app/
+
+# Supabase CLI local project state
+supabase/.temp/

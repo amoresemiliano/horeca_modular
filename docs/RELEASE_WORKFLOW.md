@@ -18,12 +18,12 @@ gitGraph
     merge dev id: "Production Release Gate"
 ```
 
-- **`dev` branch**: Target branch for all active Work Packages. Pushes automatically build to Vercel Preview environment (`https://horecamodular-git-dev-vegen-s-projects.vercel.app/`). Connected to Supabase Staging (`ourzapkjykzlwsjunzmd`).
+- **`dev` branch**: Target branch for all active Work Packages. Pushes automatically build to Vercel Preview environment (`https://horecamodular-git-dev-vegen-s-projects.vercel.app/`). Required Supabase target: `vmxjqwlfwnphorthhcwu` (`horeca_modular_staging`). Local configuration is verified; hosted Preview environment variables require separate verification. See [DEV rebaseline](DEV_SUPABASE_REBASELINE.md).
 - **`main` branch**: Production release branch. Pushes deploy to Vercel Production domain (`https://horecamodular.vercel.app/`). Connected to Supabase Production instance.
 
 ## 2. Work Package Execution Protocol
 1. **Dedicated Feature Branch**: Created from `dev` for every Work Package (e.g. `feature/wp-001-auth-hardening`).
-2. **Implementation & Local Test**: Complete code modifications, run `npm run build`, and execute local test scripts in `scratch/`.
+2. **Implementation & Local Test**: Complete code modifications, run `npm run build`, and execute reviewed local test scripts only; never execute `scratch/quarantine-mica/` evidence.
 3. **Validation & PR Merge to `dev`**: Validate on Vercel Preview. Merge PR to `dev`.
 4. **Product Owner Gate**: PO performs functional UX validation on DEV Preview.
 5. **Production Promotion**: Upon formal PO signoff at WP completion milestones, `dev` is merged into `main`.

@@ -7,7 +7,7 @@ import * as path from 'node:path';
 // TRUE POSTGRESQL / SUPABASE AUTHENTICATED DATABASE RLS SECURITY VALIDATION SUITE
 // ==============================================================================
 // Classification: D. TRUE DATABASE / POSTGRES RLS TESTS
-// Target Environment: DEV (ourzapkjykzlwsjunzmd) & Version-Controlled Test Harness
+// Target Environment: DEV (vmxjqwlfwnphorthhcwu) & Version-Controlled Test Harness
 // Source File: supabase/tests/00_verify_authenticated_rls.sql
 // Security Architecture:
 // - Standalone version-controlled SQL test harness (supabase/tests/00_verify_authenticated_rls.sql)
@@ -15,9 +15,13 @@ import * as path from 'node:path';
 // ==============================================================================
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
-const isConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+const runHosted = process.env.HORECA_RUN_HOSTED_TESTS === 'true';
+if (runHosted && (SUPABASE_URL !== 'https://vmxjqwlfwnphorthhcwu.supabase.co' || !SUPABASE_ANON_KEY)) {
+  throw new Error('Hosted tests require the canonical HORECA DEV URL and its browser key');
+}
 
 describe('SEC-RLS-DB Authentic Database Security Harness Integrity & Exposure Policy', () => {
   it('Verifies version-controlled SQL security harness exists at supabase/tests/00_verify_authenticated_rls.sql', () => {
@@ -41,10 +45,9 @@ describe('SEC-RLS-DB Authentic Database Security Harness Integrity & Exposure Po
     expect(content).not.toMatch(/DELETE\s+FROM\s+auth\./i);
   });
 
-  describe.runIf(isConfigured)('Live Application Database Surface Cleanliness Gate', () => {
+  describe.runIf(runHosted)('Live Application Database Surface Cleanliness Gate', () => {
     it('Confirms verify_authenticated_rls_security_suite RPC is NOT exposed to public anon/authenticated clients', async () => {
       const supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
-      // Attempting to invoke decommissioned RPC must fail / return 404 function not found error
       // Attempting to invoke decommissioned RPC must fail / return 404 function not found error
       const { data, error } = await supabase.rpc('verify_authenticated_rls_security_suite');
 
