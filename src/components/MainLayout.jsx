@@ -180,6 +180,7 @@ const MainLayout = ({ user: propsUser }) => {
                   outline: 'none',
                 }}
               >
+                <option value="" disabled>Seleccionar organización</option>
                 {availableOrganizations.map((org) => (
                   <option key={org.id} value={org.id}>
                     {org.name || org.legalName || org.taxId || 'Organización'} ({org.role || 'MEMBER'})
