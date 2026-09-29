@@ -12,20 +12,15 @@ import {
 } from '../../domain/types';
 
 import { FinanceRepository, FileDuplicate, PersistImportInput } from '../../application/FinanceRepository';
-import { moneyToMinorUnits } from '../../domain/money';
-
-export class FinanceCoreContractUnavailableError extends Error {
-  constructor() {
-    super('Bank import confirmation is unavailable pending CCR-FIN-001: server authorization and an atomic persistence contract.');
-    this.name = 'FinanceCoreContractUnavailableError';
-  }
-}
+import { moneyToMinorUnits, moneyToDecimal } from '../../domain/money';
 
 export class SupabaseFinanceRepository implements FinanceRepository {
   async requireConfirmationAuthorization(orgId: string): Promise<void> {
     this.requireOrg(orgId);
-    // No Core server capability evaluator exists in this branch. Never substitute BANK_IMPORT.
-    throw new FinanceCoreContractUnavailableError();
+    const { data, error } = await supabase.rpc('can_execute_capability_for_org', {
+      requested_organization_id: orgId, required_capability_code: 'STATEMENTS_IMPORT_CONFIRM',
+    });
+    if (error || data !== true) throw new Error('Bank import confirmation denied or authorization unavailable.');
   }
 
   private requireOrg(orgId: string): string {
@@ -68,7 +63,7 @@ export class SupabaseFinanceRepository implements FinanceRepository {
         displayName: row.name || row.display_name || `${institution} ${productType}`,
         productType,
         maskedIdentifier: masked,
-        externalReference: row.iban || row.external_reference || row.code,
+        externalReference: row.external_reference || null,
         currency: row.currency || 'EUR',
         isActive: row.is_active === true,
         createdAt: row.created_at || new Date().toISOString(),
@@ -128,15 +123,32 @@ export class SupabaseFinanceRepository implements FinanceRepository {
   }
 
   /**
-   * Blocks confirmation until the approved Core and atomic persistence contracts exist.
+   * Confirms via the single server-authorized atomic persistence boundary.
    */
   async persistConfirmedImport(input: PersistImportInput): Promise<ImportConfirmationResult> {
     const activeOrgId = this.requireOrg(input.organizationId);
 
-    // Independent defense: do not leave partially committed imports through the old
-    // multi-request implementation. See docs/CCR-FIN-001.md for the required contract.
-    await this.requireConfirmationAuthorization(activeOrgId);
-    throw new FinanceCoreContractUnavailableError();
+    // This RPC repeats authorization and account validation inside the transaction.
+    // Preview fingerprints, overlap flags and raw banking rows are not trusted inputs.
+    const { data, error } = await supabase.rpc('rpc_confirm_bank_statement_import', {
+      requested_organization_id: activeOrgId,
+      bank_account_id: input.bankAccountId,
+      file_hash: input.fileHash,
+      source_format: input.sourceFormat,
+      movements: input.movements.map(m => ({
+        bookingDate: m.bookingDate, valueDate: m.valueDate, description: m.description,
+        amount: moneyToDecimal(m.amount), currency: m.currency, direction: m.direction,
+        runningBalance: m.runningBalance === null ? null : moneyToDecimal(m.runningBalance),
+        sourceRowNumber: m.sourceRowNumber, bankNativeId: m.bankNativeId, externalReference: m.externalReference,
+      })),
+      rejected_rows: input.rejectedRows.map(r => ({ sourceRowNumber: r.sourceRowNumber, code: r.code })),
+    });
+    if (error) throw new Error(`Import confirmation failed: ${error.message}`);
+    if (!data || data.status !== 'COMPLETED' || !data.importId || !data.bankAccountId ||
+        !Number.isSafeInteger(data.persistedCount) || data.persistedCount < 0) {
+      throw new Error('Invalid confirmation response. Reload import state before retrying.');
+    }
+    return data as ImportConfirmationResult;
   }
 
   /**

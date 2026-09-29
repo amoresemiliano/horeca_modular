@@ -1,3 +1,9 @@
+# Current checkpoint — 2026-09-29
+
+Core dependency resolved and integrated. Finance containment replaced with server-authorized atomic confirmation; classification/allocation paths retained. Hosted deployment requires Master action; WP remains PARTIAL. See [implementation, validation and deployment request](WP-FIN-001-ATOMIC-DEPLOYMENT.md). The earlier recovery checkpoint below remains historical evidence.
+
+---
+
 # WP-FIN-001 recovery checkpoint
 
 Initial branch: `module/finance`. Initial HEAD and Draft PR #2 head:

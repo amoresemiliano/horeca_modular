@@ -5,6 +5,9 @@
  */
 import React, { useState, useEffect } from 'react';
 
+const cents = value => /^-?\d+(\.\d{1,2})?$/.test(String(value))
+  && Math.abs(Number(value)) <= 999999999999.99 ? Math.round(Number(value) * 100) : NaN;
+
 const SplitModal = ({ isOpen, onClose, movement, categories, subcategories, counterparties, onConfirmSplit }) => {
   const [allocations, setAllocations] = useState([]);
   const [error, setError] = useState('');
@@ -12,7 +15,8 @@ const SplitModal = ({ isOpen, onClose, movement, categories, subcategories, coun
 
   useEffect(() => {
     if (movement) {
-      const origAmount = movement.monto || 0;
+      const originalCents = cents(movement.monto);
+      const firstCents = Math.round(originalCents * 0.8);
       const initialSplits = (movement.allocations && movement.allocations.length > 0)
         ? movement.allocations.map(a => ({
             id: a.id,
@@ -23,8 +27,8 @@ const SplitModal = ({ isOpen, onClose, movement, categories, subcategories, coun
             notes: a.notes || ''
           }))
         : [
-            { monto: (origAmount * 0.8).toFixed(2), category_id: '', subcategory_id: '', counterparty_id: '', notes: 'Línea 1' },
-            { monto: (origAmount * 0.2).toFixed(2), category_id: '', subcategory_id: '', counterparty_id: '', notes: 'Línea 2' },
+            { monto: (firstCents / 100).toFixed(2), category_id: '', subcategory_id: '', counterparty_id: '', notes: 'Línea 1' },
+            { monto: ((originalCents - firstCents) / 100).toFixed(2), category_id: '', subcategory_id: '', counterparty_id: '', notes: 'Línea 2' },
           ];
       setAllocations(initialSplits);
       setError('');
@@ -33,10 +37,12 @@ const SplitModal = ({ isOpen, onClose, movement, categories, subcategories, coun
 
   if (!isOpen || !movement) return null;
 
-  const originalAmount = movement.monto || 0;
-  const currentSum = allocations.reduce((acc, a) => acc + (parseFloat(a.monto) || 0), 0);
-  const diff = originalAmount - currentSum;
-  const isBalanced = Math.abs(diff) < 0.01;
+  const originalCents = cents(movement.monto);
+  const sumCents = allocations.reduce((acc, a) => acc + cents(a.monto), 0);
+  const originalAmount = originalCents / 100;
+  const currentSum = sumCents / 100;
+  const diff = (originalCents - sumCents) / 100;
+  const isBalanced = Number.isSafeInteger(sumCents) && sumCents === originalCents;
 
   const handleAddLine = () => {
     setAllocations(prev => [
@@ -54,6 +60,7 @@ const SplitModal = ({ isOpen, onClose, movement, categories, subcategories, coun
     setAllocations(prev => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
+      if (field === 'category_id') copy[index].subcategory_id = '';
       return copy;
     });
   };

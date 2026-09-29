@@ -1,3 +1,9 @@
+# Current status — 2026-09-29
+
+CCR-FIN-001 is RESOLVED and hosted-verified by Core. Finance now consumes the approved server authorization primitive. The historical blocked report below is retained for audit; its containment code has been replaced by the atomic RPC. Finance deployment and UAT prerequisites are tracked in [WP-FIN-001-ATOMIC-DEPLOYMENT.md](WP-FIN-001-ATOMIC-DEPLOYMENT.md).
+
+---
+
 # CCR-FIN-001 — Bank import authorization and database contract
 
 Status: BLOCKED. Owner: Core / Development Captain. Work package: WP-FIN-001.

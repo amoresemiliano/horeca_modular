@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { from, query } = vi.hoisted(() => {
+const { from, query, rpc } = vi.hoisted(() => {
   const query = { select: vi.fn(), eq: vi.fn(), in: vi.fn(), maybeSingle: vi.fn(), order: vi.fn() };
-  return { from: vi.fn(), query };
+  return { from: vi.fn(), query, rpc: vi.fn() };
 });
-vi.mock('../../src/lib/supabase.js', () => ({ supabase: { from } }));
+vi.mock('../../src/lib/supabase.js', () => ({ supabase: { from, rpc } }));
 import { SupabaseFinanceRepository } from '../../src/domains/finance/infrastructure/repositories/SupabaseFinanceRepository';
 
 describe('Finance repository boundary (mocked database; no RLS proof)', () => {
@@ -12,6 +12,7 @@ describe('Finance repository boundary (mocked database; no RLS proof)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     from.mockReturnValue(query);
+    rpc.mockResolvedValue({ data: true, error: null });
     query.select.mockReturnValue(query);
     query.eq.mockReturnValue(query);
     query.in.mockResolvedValue({ data: [], error: null });
@@ -30,9 +31,28 @@ describe('Finance repository boundary (mocked database; no RLS proof)', () => {
     query.maybeSingle.mockResolvedValue({ data: { import_id: 'partial', eco_source_imports: { bank_account_id: 'a', status: 'FAILED' } }, error: null });
     await expect(repo.checkFileDuplicate('hash', 'HORECA_TEST_ORG_A')).rejects.toThrow('recovery');
   });
-  it('direct persistence is blocked without making partial database writes pending Core contract', async () => {
-    await expect(repo.persistConfirmedImport({ organizationId: 'HORECA_TEST_ORG_A', bankAccountId: 'a', fileName: 'test.xls', fileHash: 'hash', sourceFormat: 'BBVA_ACCOUNT', movements: [], rejectedRows: [] })).rejects.toThrow('CCR-FIN-001');
-    expect(from).not.toHaveBeenCalled();
+  it('preflight uses the exact Core capability and fails closed', async () => {
+    await repo.requireConfirmationAuthorization('HORECA_TEST_ORG_A');
+    expect(rpc).toHaveBeenCalledWith('can_execute_capability_for_org', { requested_organization_id: 'HORECA_TEST_ORG_A', required_capability_code: 'STATEMENTS_IMPORT_CONFIRM' });
+    rpc.mockResolvedValue({ data: false, error: null });
+    await expect(repo.requireConfirmationAuthorization('HORECA_TEST_ORG_A')).rejects.toThrow('denied');
+  });
+  it('persists through one atomic RPC and omits untrusted fingerprints and raw provenance', async () => {
+    rpc.mockResolvedValue({ data: { status: 'COMPLETED', importId: 'i', bankAccountId: 'a', persistedCount: 1 }, error: null });
+    await repo.persistConfirmedImport({ organizationId: 'HORECA_TEST_ORG_A', bankAccountId: 'a', fileName: 'private-name.xls', fileHash: 'a'.repeat(64), sourceFormat: 'BBVA_ACCOUNT', rejectedRows: [], movements: [{
+      organizationId: 'HORECA_TEST_ORG_A', bankAccountId: 'a', bookingDate: '2026-01-01', valueDate: null, description: 'TEST', amount: -10.25,
+      currency: 'EUR', direction: 'DEBIT', runningBalance: null, externalReference: null, sourceRowNumber: 4, bankNativeId: null,
+      fingerprint: 'untrusted', duplicateStatus: 'UNIQUE', status: 'ACTIVE', minimizedProvenance: {sourceRowNumber:4,beneficiary:'PRIVATE'},
+    }] });
+    expect(from).not.toHaveBeenCalled(); expect(rpc).toHaveBeenCalledTimes(1);
+    const payload = rpc.mock.calls[0][1];
+    expect(payload.movements[0]).toMatchObject({ amount: '-10.25', valueDate: null });
+    expect(JSON.stringify(payload)).not.toMatch(/PRIVATE|untrusted|private-name/);
+    expect(rpc.mock.calls[0][0]).toBe('rpc_confirm_bank_statement_import');
+  });
+  it('never reports success when the RPC fails', async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: 'rollback' } });
+    await expect(repo.persistConfirmedImport({ organizationId: 'HORECA_TEST_ORG_A', bankAccountId: 'a', fileName: 'test.xls', fileHash: 'hash', sourceFormat: 'BBVA_ACCOUNT', movements: [], rejectedRows: [] })).rejects.toThrow('rollback');
   });
   it('reloads all canonical fields, including a null value date, without manufacturing facts', async () => {
     query.order.mockResolvedValue({ error: null, data: [{

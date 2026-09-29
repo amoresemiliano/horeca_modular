@@ -78,7 +78,7 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
 
   const handleConfirmImport = async () => {
     if (!preview || loading) return;
-    if (!can('CONFIRM_BANK_STATEMENT_IMPORT')) {
+    if (!can('STATEMENTS_IMPORT_CONFIRM')) {
       setError('No tienes permiso para confirmar importaciones bancarias.');
       return;
     }
@@ -130,8 +130,8 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
   const overlapCount = preview ? preview.movements.filter(m => m.duplicateStatus === 'POTENTIAL_OVERLAP').length : 0;
 
   // Authorization check for import confirmation:
-  // CONFIRM_BANK_STATEMENT_IMPORT is the canonical human gate.
-  const hasImportCapability = can('CONFIRM_BANK_STATEMENT_IMPORT');
+  // STATEMENTS_IMPORT_CONFIRM is the canonical human gate.
+  const hasImportCapability = can('STATEMENTS_IMPORT_CONFIRM');
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
