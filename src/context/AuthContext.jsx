@@ -57,6 +57,8 @@ export function AuthProvider({ children }) {
   const resolveFullContext = useCallback(async (authUser, targetOrgId = null, targetUnitId = null) => {
     const request = ++contextRequest.current;
     // Clear authority before resolving another identity, organization or scope.
+    setProfile(null);
+    setAvailableOrganizations([]);
     setMembership(null);
     setRole(null);
     setOrganizationId(null);
@@ -240,6 +242,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
+    const requestCounter = contextRequest;
     const safetyTimer = setTimeout(() => {
       if (mounted) setLoading(false);
     }, 4000);
@@ -296,7 +299,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       mounted = false;
-      ++contextRequest.current;
+      ++requestCounter.current;
       clearTimeout(safetyTimer);
       subscription?.unsubscribe();
     };
