@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase.js';
+import { moduleEnabled, resolveAuthorizedCapabilities, selectOrganization } from './tenantContext.js';
 
 const AuthContext = createContext({
   user: null,
@@ -16,7 +17,7 @@ const AuthContext = createContext({
   switchOrganization: async (_orgId) => {},
   switchOperationalUnit: async (_unitId) => {},
   can: (_capabilityCode, _unitId) => false,
-  isModuleEnabled: (_moduleKey) => true,
+  isModuleEnabled: (_moduleKey) => false,
   loginWithProvider: async (_provider) => {},
   loginWithGoogle: async () => {},
   loginWithGithub: async () => {},
@@ -39,6 +40,8 @@ export function AuthProvider({ children }) {
   const [entitlements, setEntitlements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const selectedContext = useRef({ userId: null, organizationId: null, unitId: null });
+  const contextRequest = useRef(0);
 
   function cleanUrlAuthParams() {
     if (typeof window === 'undefined') return;
@@ -51,7 +54,18 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const resolveFullContext = useCallback(async (authUser, targetOrgId = null) => {
+  const resolveFullContext = useCallback(async (authUser, targetOrgId = null, targetUnitId = null) => {
+    const request = ++contextRequest.current;
+    // Clear authority before resolving another identity, organization or scope.
+    setProfile(null);
+    setAvailableOrganizations([]);
+    setMembership(null);
+    setRole(null);
+    setOrganizationId(null);
+    setActiveOrganization(null);
+    setActiveOperationalUnit(null);
+    setEffectiveCapabilities([]);
+    setEntitlements([]);
     if (!authUser) {
       setProfile(null);
       setMembership(null);
@@ -73,6 +87,7 @@ export function AuthProvider({ children }) {
         .eq('auth_user_id', authUser.id)
         .eq('is_active', true)
         .maybeSingle();
+      if (request !== contextRequest.current) return;
 
       if (profErr || !profData) {
         console.warn('FAIL-CLOSED: No active user profile found for auth_user_id:', authUser.id);
@@ -107,7 +122,6 @@ export function AuthProvider({ children }) {
             tax_id,
             tax_id_type,
             trade_name,
-            holding_id,
             is_active
           )
         `)
@@ -117,6 +131,7 @@ export function AuthProvider({ children }) {
       query = query.or(`user_id.eq.${profData.id},user_profile_id.eq.${profData.id}`);
 
       const { data: memList, error: memErr } = await query;
+      if (request !== contextRequest.current) return;
 
       if (memErr || !memList || memList.length === 0) {
         console.warn('FAIL-CLOSED: No active organization membership found for profile:', profData.id);
@@ -133,7 +148,7 @@ export function AuthProvider({ children }) {
       const orgs = [];
       for (const m of memList) {
         const o = m.eco_organizations;
-        if (o && o.is_active !== false) {
+        if (o && o.is_active === true) {
           if (!orgs.some((existing) => existing.id === o.id)) {
             orgs.push({
               id: o.id,
@@ -141,7 +156,6 @@ export function AuthProvider({ children }) {
               legalName: o.legal_name,
               taxId: o.tax_id,
               tradeName: o.trade_name,
-              holdingId: o.holding_id,
               membershipId: m.id,
               role: m.role,
               roleTemplateId: m.role_template_id,
@@ -152,41 +166,33 @@ export function AuthProvider({ children }) {
       setAvailableOrganizations(orgs);
 
       // Select active organization
-      let activeMem = null;
-      if (targetOrgId) {
-        activeMem = memList.find((m) => m.organization_id === targetOrgId);
-      }
-      if (!activeMem) {
-        activeMem = memList.find((m) => m.role === 'SUPERADMIN' || m.role === 'OWNER') || memList[0];
-      }
+      const previous = selectedContext.current.userId === authUser.id ? selectedContext.current : {};
+      const selectedOrg = selectOrganization(orgs, targetOrgId, previous.organizationId);
+      const activeMem = selectedOrg ? memList.find((m) => m.organization_id === selectedOrg.id) : null;
+      const unitId = targetOrgId ? targetUnitId : previous.unitId || null;
 
       if (activeMem) {
-        setMembership(activeMem);
-        setRole(activeMem.role || null);
-        setOrganizationId(activeMem.organization_id);
         const orgInfo = orgs.find((o) => o.id === activeMem.organization_id);
-        setActiveOrganization(orgInfo || null);
 
         // Fetch capabilities for active membership
         let caps = [];
         if (activeMem.role_template_id) {
-          const { data: capData } = await supabase
+          const { data: capData, error: capError } = await supabase
             .from('eco_role_template_capabilities')
             .select('eco_capabilities(code)')
             .eq('role_template_id', activeMem.role_template_id);
+          if (capError) throw capError;
           if (capData) {
             caps = capData.map((c) => c.eco_capabilities?.code).filter(Boolean);
           }
-        } else if (activeMem.role === 'SUPERADMIN') {
-          const { data: allCaps } = await supabase.from('eco_capabilities').select('code');
-          if (allCaps) caps = allCaps.map((c) => c.code);
         }
 
         // Fetch overrides
-        const { data: overrides } = await supabase
+        const { data: overrides, error: overrideError } = await supabase
           .from('eco_member_capability_overrides')
           .select('capability_id, effect, operational_unit_id, eco_capabilities(code)')
           .eq('membership_id', activeMem.id);
+        if (overrideError) throw overrideError;
 
         if (overrides && overrides.length > 0) {
           const capSet = new Set(caps);
@@ -194,23 +200,34 @@ export function AuthProvider({ children }) {
             const code = ov.eco_capabilities?.code;
             if (code) {
               if (ov.effect === 'GRANT') capSet.add(code);
-              if (ov.effect === 'REVOKE') capSet.delete(code);
             }
           }
           caps = Array.from(capSet);
         }
 
-        setEffectiveCapabilities(caps);
-
         // Fetch entitlements
-        const { data: entData } = await supabase
+        const { data: entData, error: entitlementError } = await supabase
           .from('eco_organization_module_entitlements')
           .select('*')
           .eq('organization_id', activeMem.organization_id);
+        if (entitlementError) throw entitlementError;
+
+        // The canonical gate resolves role activity, scope, revoke precedence and
+        // required entitlements. Candidate codes alone never confer authority.
+        const decisions = await resolveAuthorizedCapabilities(supabase, activeMem.organization_id, caps, unitId);
+        if (request !== contextRequest.current) return;
+        selectedContext.current = { userId: authUser.id, organizationId: activeMem.organization_id, unitId };
+        setMembership(activeMem);
+        setRole(activeMem.role || null);
+        setOrganizationId(activeMem.organization_id);
+        setActiveOrganization(orgInfo);
+        setActiveOperationalUnit(unitId ? { id: unitId } : null);
+        setEffectiveCapabilities(decisions);
 
         setEntitlements(entData || []);
       }
     } catch (err) {
+      if (request !== contextRequest.current) return;
       console.error('FAIL-CLOSED: Exception resolving user context:', err);
       setProfile(null);
       setMembership(null);
@@ -219,11 +236,13 @@ export function AuthProvider({ children }) {
       setAvailableOrganizations([]);
       setActiveOrganization(null);
       setEffectiveCapabilities([]);
+      setEntitlements([]);
     }
   }, []);
 
   useEffect(() => {
     let mounted = true;
+    const requestCounter = contextRequest;
     const safetyTimer = setTimeout(() => {
       if (mounted) setLoading(false);
     }, 4000);
@@ -247,16 +266,22 @@ export function AuthProvider({ children }) {
 
     initAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Resolve outside the Auth callback: network requests need the session lock
+    // released by Supabase before they can obtain their access token.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       if (event === 'PASSWORD_RECOVERY') {
         setIsPasswordRecovery(true);
       }
+      setTimeout(async () => {
+      if (!mounted) return;
       if (session?.user) {
         setUser(session.user);
         await resolveFullContext(session.user);
         cleanUrlAuthParams();
       } else {
+        ++contextRequest.current;
+        selectedContext.current = { userId: null, organizationId: null, unitId: null };
         setUser(null);
         setProfile(null);
         setMembership(null);
@@ -266,12 +291,15 @@ export function AuthProvider({ children }) {
         setActiveOrganization(null);
         setActiveOperationalUnit(null);
         setEffectiveCapabilities([]);
+        setEntitlements([]);
       }
       setLoading(false);
+      }, 0);
     });
 
     return () => {
       mounted = false;
+      ++requestCounter.current;
       clearTimeout(safetyTimer);
       subscription?.unsubscribe();
     };
@@ -288,18 +316,23 @@ export function AuthProvider({ children }) {
   };
 
   const switchOperationalUnit = async (targetUnitId) => {
-    setActiveOperationalUnit(targetUnitId ? { id: targetUnitId } : null);
+    if (!user || !organizationId) return;
+    setLoading(true);
+    try {
+      await resolveFullContext(user, organizationId, targetUnitId);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const can = (capabilityCode, _unitId = null) => {
+  const can = (capabilityCode, unitId = null) => {
+    if (!organizationId || unitId !== (activeOperationalUnit?.id || null)) return false;
     if (!effectiveCapabilities || effectiveCapabilities.length === 0) return false;
     return effectiveCapabilities.includes(capabilityCode);
   };
 
   const isModuleEnabled = (moduleKey) => {
-    if (!entitlements || entitlements.length === 0) return true; // Transitional default
-    const matched = entitlements.find((e) => e.module_key.toLowerCase() === moduleKey.toLowerCase());
-    return matched ? matched.is_enabled : true;
+    return moduleEnabled(organizationId, entitlements, moduleKey);
   };
 
   const loginWithPassword = async (email, password) => {
@@ -355,6 +388,8 @@ export function AuthProvider({ children }) {
     try {
       await supabase.auth.signOut();
     } finally {
+      ++contextRequest.current;
+      selectedContext.current = { userId: null, organizationId: null, unitId: null };
       setUser(null);
       setProfile(null);
       setMembership(null);
@@ -364,6 +399,7 @@ export function AuthProvider({ children }) {
       setActiveOrganization(null);
       setActiveOperationalUnit(null);
       setEffectiveCapabilities([]);
+      setEntitlements([]);
       setLoading(false);
     }
   };

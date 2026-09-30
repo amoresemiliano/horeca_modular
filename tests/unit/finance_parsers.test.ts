@@ -5,6 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
+import * as XLSX from 'xlsx';
 import path from 'path';
 import { parseSpanishMoney, MalformedMoneyError } from '../../src/domains/finance/domain/money';
 import {
@@ -230,4 +231,27 @@ describe('Finance Infrastructure — Source Format Detection & 5 Fixtures', () =
     expect(firstCardMov.direction).toBe('DEBIT');
     expect(firstCardMov.valueDate).toBeNull();
   });
+});
+
+describe('Excel containers preserve all four canonical parser families', () => {
+  const families = [
+    ['bbva_account_a_sanitized.xls', 'BBVA_ACCOUNT'],
+    ['bbva_card_sanitized.xls', 'BBVA_CARD'],
+    ['sabadell_account_sanitized.xls', 'SABADELL_ACCOUNT'],
+    ['sabadell_card_sanitized.xls', 'SABADELL_CARD'],
+  ] as const;
+  for (const [fixture, family] of families) {
+    it.each(['xls', 'xlsx'] as const)(family + ' parses an actual .%s workbook', async extension => {
+      const original = fs.readFileSync(path.join(fixturesDir, fixture));
+      const originalBuffer = original.buffer.slice(original.byteOffset, original.byteOffset + original.byteLength);
+      const baseline = await parseBankStatementBuffer(originalBuffer, fixture);
+      const workbook = XLSX.read(original, { type: 'buffer' });
+      const bytes = XLSX.write(workbook, { type: 'array', bookType: extension === 'xls' ? 'biff8' : 'xlsx' }) as ArrayBuffer;
+      const result = await parseBankStatementBuffer(bytes, 'statement.' + extension);
+      expect(result.detection.formatFamily).toBe(family);
+      expect(result.parsedResult.movements.length).toBeGreaterThan(0);
+      expect(result.parsedResult.movements).toEqual(baseline.parsedResult.movements);
+      expect(result.parsedResult.rejectedRows).toEqual(baseline.parsedResult.rejectedRows);
+    });
+  }
 });

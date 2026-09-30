@@ -46,6 +46,8 @@ describe('Finance repository boundary (mocked database; no RLS proof)', () => {
     }] });
     expect(from).not.toHaveBeenCalled(); expect(rpc).toHaveBeenCalledTimes(1);
     const payload = rpc.mock.calls[0][1];
+    expect(JSON.stringify(payload)).not.toContain('operation_type');
+    expect(Object.keys(payload).sort()).toEqual(['bank_account_id', 'file_hash', 'movements', 'rejected_rows', 'requested_organization_id', 'source_format']);
     expect(payload.movements[0]).toMatchObject({ amount: '-10.25', valueDate: null });
     expect(JSON.stringify(payload)).not.toMatch(/PRIVATE|untrusted|private-name/);
     expect(rpc.mock.calls[0][0]).toBe('rpc_confirm_bank_statement_import');
