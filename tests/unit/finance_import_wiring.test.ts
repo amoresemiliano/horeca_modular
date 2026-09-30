@@ -37,7 +37,7 @@ describe('Finance active UI wiring after Core integration', () => {
     expect(app).toMatch(/<FinanceCatalogModal[^\r\n]*onSaved=\{loadData\}/);
     expect(app).toMatch(/<SplitModal[\s\S]*?onConfirmSplit=\{handleConfirmSplit\}/);
     expect(app).toContain('splitMovementAllocations(movementId, origAmount, allocations, organizationId)');
-    expect(app).toContain('applyClassificationRules(organizationId)');
-    expect(app).toContain('updateAllocationClassification({');
+    expect(read('modules/extractos/RuleModal.jsx')).toContain('applyClassificationRules(orgId)');
+    expect(read('modules/extractos/ClassificationModal.jsx')).toContain('updateAllocationClassification({');
   });
 });
