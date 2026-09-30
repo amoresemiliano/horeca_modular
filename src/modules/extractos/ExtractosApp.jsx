@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   getExtractosCatalogs,
+  applyClassificationRules,
   fetchConsolidatedMovements,
   updateAllocationClassification,
   createClassificationRule,
@@ -16,6 +17,8 @@ import {
   findOrCreateCounterparty
 } from '../../lib/extractosService';
 import ImportModal from './ImportModal';
+import FinanceCatalogModal from './FinanceCatalogModal';
+import ClassificationModal from './ClassificationModal';
 import SplitModal from './SplitModal';
 import RuleModal from './RuleModal';
 import ExtractosResumen from './ExtractosResumen';
@@ -23,6 +26,9 @@ import ExtractosGraficas from './ExtractosGraficas';
 
 const ExtractosApp = ({ tabActiva }) => {
   const { organizationId } = useAuth();
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [classificationMovement, setClassificationMovement] = useState(null);
+  const [loadError, setLoadError] = useState('');
   const [movements, setMovements] = useState([]);
   const [catalogs, setCatalogs] = useState({ accounts: [], categories: [], subcategories: [], counterparties: [], rules: [] });
   const [loading, setLoading] = useState(true);
@@ -58,6 +64,7 @@ const ExtractosApp = ({ tabActiva }) => {
       return;
     }
     setLoading(true);
+    setLoadError('');
     try {
       const [catsData, movsData] = await Promise.all([
         getExtractosCatalogs(organizationId),
@@ -66,7 +73,8 @@ const ExtractosApp = ({ tabActiva }) => {
       setCatalogs(catsData);
       setMovements(movsData);
     } catch (err) {
-      showToast('Error al cargar datos de Supabase: ' + err.message, 'error');
+      setLoadError(err.message);
+      setMovements([]);
     } finally {
       setLoading(false);
     }
@@ -78,7 +86,7 @@ const ExtractosApp = ({ tabActiva }) => {
 
   // Handler tras importación exitosa
   const handleImportCompleted = (summary) => {
-    showToast(`✅ ${summary.imported} movimientos importados${summary.overlaps > 0 ? ` · ${summary.overlaps} posibles solapamientos detectados` : ''}`);
+    showToast(`✅ ${summary.imported} movimientos importados (${summary.suppressed || 0} duplicados exactos omitidos)${summary.overlaps > 0 ? ` · ${summary.overlaps} posibles solapamientos detectados` : ''}`);
     loadData();
   };
 
@@ -91,6 +99,7 @@ const ExtractosApp = ({ tabActiva }) => {
       }
 
       await updateAllocationClassification({
+        orgId: organizationId,
         allocationId,
         categoryId,
         subcategoryId,
@@ -136,6 +145,7 @@ const ExtractosApp = ({ tabActiva }) => {
     try {
       const newStatus = !allocation.is_internal_transfer;
       await reconcileMovements({
+        orgId: organizationId,
         allocationId: allocation.id,
         targetMovementId: null,
         reconciliationType: newStatus ? 'INTERNAL_TRANSFER' : null,
@@ -151,7 +161,7 @@ const ExtractosApp = ({ tabActiva }) => {
   const handleDeleteMovement = async (movementId) => {
     if (!window.confirm('¿Seguro que deseas eliminar este movimiento bancario? (Soft delete)')) return;
     try {
-      await softDeleteMovement(movementId);
+      await softDeleteMovement(movementId, organizationId);
       showToast('Movimiento eliminado correctamente');
       loadData();
     } catch (err) {
@@ -238,16 +248,20 @@ const ExtractosApp = ({ tabActiva }) => {
           </div>
         </div>
 
+        {loadError && <p role="alert" className="p-4 bg-red-50 text-red-800 rounded-xl">No se pudieron cargar los datos: {loadError}<button className="ml-3 underline" onClick={loadData}>Reintentar</button></p>}
+        {!organizationId && <p className="p-4 bg-amber-50 rounded-xl">Necesitas una organizaci?n activa y acceso a Bancos. Solicita su activaci?n al administrador.</p>}
         {/* Toolbar & Actions */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3">
             <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              🟢 Supabase Staging Activo
+              🟢 HORECA DEV
             </span>
             {loading && <span className="text-xs text-gray-400">Cargando...</span>}
           </div>
 
           <div className="flex items-center gap-2">
+            <button disabled={!organizationId} onClick={() => setCatalogOpen(true)} className="px-4 py-2 rounded-xl text-xs bg-gray-100">Cuentas y categor?as</button>
+            <button disabled={!organizationId} onClick={async () => { try { const n = await applyClassificationRules(organizationId); showToast(`${n} sugerencias aplicadas`); loadData(); } catch (err) { showToast(err.message, 'error'); } }} className="px-4 py-2 rounded-xl text-xs bg-gray-100">Aplicar reglas a pendientes</button>
             <button
               onClick={() => setIsRuleModalOpen(true)}
               className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
@@ -375,7 +389,7 @@ const ExtractosApp = ({ tabActiva }) => {
                         <select
                           className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white text-gray-800 focus:ring-1 focus:ring-green-500"
                           value={primaryAlloc.category_id || ''}
-                          onChange={e => handleInlineClassification(primaryAlloc.id, e.target.value, primaryAlloc.subcategory_id, primaryAlloc.counterparty?.name)}
+                          onChange={e => handleInlineClassification(primaryAlloc.id, e.target.value, null, undefined)}
                         >
                           <option value="">— Sin categoría —</option>
                           {catalogs.categories.map(c => (
@@ -408,6 +422,7 @@ const ExtractosApp = ({ tabActiva }) => {
 
                     {/* Acciones */}
                     <td className="px-4 py-3 text-right whitespace-nowrap space-x-1">
+                      <button disabled={!primaryAlloc.id} onClick={() => setClassificationMovement(m)} className="px-2 py-1 rounded bg-emerald-50 text-emerald-800">Clasificar</button>
                       <button
                         onClick={() => handleOpenSplit(m)}
                         title="Dividir en N líneas (Split)"
@@ -465,6 +480,8 @@ const ExtractosApp = ({ tabActiva }) => {
         </div>
 
         {/* Modals */}
+        {catalogOpen && <FinanceCatalogModal orgId={organizationId} categories={catalogs.categories} onClose={() => setCatalogOpen(false)} onSaved={loadData} />}
+        {classificationMovement && <ClassificationModal key={classificationMovement.id} movement={classificationMovement} catalogs={catalogs} orgId={organizationId} onClose={() => setClassificationMovement(null)} onSaved={loadData} />}
         <ImportModal
           isOpen={isImportModalOpen}
           onClose={() => setIsImportModalOpen(false)}
@@ -482,6 +499,7 @@ const ExtractosApp = ({ tabActiva }) => {
         />
 
         <RuleModal
+          key={`${isRuleModalOpen}-${ruleInitialPattern}`}
           isOpen={isRuleModalOpen}
           onClose={() => setIsRuleModalOpen(false)}
           initialPattern={ruleInitialPattern}
