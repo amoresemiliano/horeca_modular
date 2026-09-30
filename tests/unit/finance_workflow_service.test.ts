@@ -3,7 +3,7 @@ const { from, rpc, query } = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn(),
   query: { insert: vi.fn(), update: vi.fn(), upsert: vi.fn(), select: vi.fn(), eq: vi.fn(), single: vi.fn() } }));
 vi.mock('../../src/lib/supabase.js', () => ({ supabase: { from, rpc } }));
 import { updateAllocationClassification, createClassificationRule, updateClassificationRule, updateFinanceAccount,
-  confirmFinanceSuggestions, reviewTransferCandidate, createFinanceCatalogEntry, findOrCreateCounterparty } from '../../src/lib/extractosService';
+  splitMovementAllocations, confirmFinanceSuggestions, reviewTransferCandidate, createFinanceCatalogEntry, findOrCreateCounterparty } from '../../src/lib/extractosService';
 
 describe('Finance workflow service boundaries', () => {
   beforeEach(() => {
@@ -40,5 +40,12 @@ describe('Finance workflow service boundaries', () => {
     expect(rpc).toHaveBeenCalledWith('rpc_review_finance_transfer', { requested_organization_id: 'tenant', candidate_id: 'candidate', decision: 'REJECTED' });
     await updateFinanceAccount('tenant', 'account', { name: 'New name', masked_identifier: '1234', is_active: false });
     expect(rpc).toHaveBeenCalledWith('rpc_update_finance_account', { requested_organization_id: 'tenant', account_id: 'account', patch: { name: 'New name', masked_identifier: '1234', is_active: false } });
+  });
+  it('rejects internal transfers at every generic application boundary before network I/O', async () => {
+    await expect(updateAllocationClassification({ orgId: 'tenant', allocationId: 'line', economicType: 'INTERNAL_TRANSFER' })).rejects.toThrow('paired transfer review');
+    await expect(splitMovementAllocations('movement', -2, [{ monto: '-2.00', economic_type: 'INTERNAL_TRANSFER' }], 'tenant')).rejects.toThrow('paired transfer review');
+    await expect(createClassificationRule({ orgId: 'tenant', pattern: 'transfer', economicType: 'INTERNAL_TRANSFER' })).rejects.toThrow('paired transfer review');
+    await expect(updateClassificationRule('tenant', 'rule', { target_economic_type: 'INTERNAL_TRANSFER' })).rejects.toThrow('paired transfer review');
+    expect(from).not.toHaveBeenCalled(); expect(rpc).not.toHaveBeenCalled();
   });
 });

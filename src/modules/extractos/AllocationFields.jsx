@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { economicTypes, economicLabels } from '../../domains/finance/domain/economic';
+import { genericEconomicTypes, economicLabels } from '../../domains/finance/domain/economic';
 import { createFinanceCatalogEntry, findOrCreateCounterparty, getExtractosCatalogs } from '../../lib/extractosService';
 
 export const emptyInterpretation = () => ({ economic_type: 'UNCLASSIFIED', category_id: '', subcategory_id: '', counterparty_id: '', notes: '' });
-export default function AllocationFields({ value, onChange, catalogs, orgId, quickCreate = false, showNotes = true, onBusyChange }) {
+export default function AllocationFields({ value, onChange, catalogs, orgId, quickCreate = false, showNotes = true, onBusyChange, allowedEconomicTypes = genericEconomicTypes }) {
   const [local, setLocal] = useState(catalogs);
   const [quick, setQuick] = useState(''), [name, setName] = useState(''), [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const operating = ['OPERATING_INCOME', 'OPERATING_EXPENSE'].includes(value.economic_type);
@@ -19,7 +19,7 @@ export default function AllocationFields({ value, onChange, catalogs, orgId, qui
     } catch (err) { setError(err.message); } finally { setBusy(false); onBusyChange?.(false); }
   }
   return <div className="space-y-3">
-    <label className="block">Tipo económico<select className="block border rounded p-2 w-full" value={value.economic_type || 'UNCLASSIFIED'} onChange={e => onChange({ ...value, economic_type: e.target.value, category_id: '', subcategory_id: '' })}>{economicTypes.map(type => <option key={type} value={type}>{economicLabels[type]}</option>)}</select></label>
+    <label className="block">Tipo económico<select className="block border rounded p-2 w-full" value={value.economic_type || 'UNCLASSIFIED'} onChange={e => onChange({ ...value, economic_type: e.target.value, category_id: '', subcategory_id: '' })}>{allowedEconomicTypes.filter(type => type !== 'INTERNAL_TRANSFER').map(type => <option key={type} value={type}>{economicLabels[type]}</option>)}</select></label>
     <div className="grid sm:grid-cols-2 gap-3">
       <label>Categoría {operating ? '(opcional)' : '(no obligatoria)'}<select className="block border rounded p-2 w-full" value={value.category_id || ''} onChange={e => field('category_id', e.target.value)}><option value="">Sin categoría</option>{local.categories.filter(c => !operating || c.type === categoryType).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
       <label>Subcategoría<select disabled={!value.category_id} className="block border rounded p-2 w-full" value={value.subcategory_id || ''} onChange={e => field('subcategory_id', e.target.value)}><option value="">Sin subcategoría</option>{local.subcategories.filter(s => s.category_id === value.category_id).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>

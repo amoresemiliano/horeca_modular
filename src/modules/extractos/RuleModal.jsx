@@ -5,7 +5,7 @@ import FinanceDialog from './FinanceDialog';
 import AllocationFields, { emptyInterpretation } from './AllocationFields';
 
 export default function RuleModal({ catalogs, orgId, example, onClose, onSaved }) {
-  const confirmed = example?.allocations?.find(a => a.classification_status === 'CONFIRMED');
+  const confirmed = example?.allocations?.find(a => a.classification_status === 'CONFIRMED' && a.economic_type !== 'INTERNAL_TRANSFER');
   const [rules, setRules] = useState(catalogs.rules), [editing, setEditing] = useState(null);
   const [pattern, setPattern] = useState(example?.descripcion || ''), [account, setAccount] = useState(example?.source_account_id || '');
   const [sign, setSign] = useState(example ? (Number(example.monto) < 0 ? 'NEGATIVE' : 'POSITIVE') : 'ALL');

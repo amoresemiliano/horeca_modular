@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, afterAll, afterEach, describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { financeMetrics, type FinanceMovement } from '../../src/domains/finance/domain/economic';
 import { PGlite } from '@electric-sql/pglite';
 import { generateMovementFingerprint } from '../../src/domains/finance/domain/fingerprint';
 import { parseBankStatementBuffer } from '../../src/domains/finance/infrastructure/parsers';
@@ -162,6 +163,8 @@ describe('WP-FIN-002 upgraded Finance contract on embedded PostgreSQL', () => {
   });
   it('suggests, confirms and links both transfer legs without changing any bank fact',async()=>{
     await pair();const before=(await db.query('SELECT * FROM public.eco_financial_movements ORDER BY id')).rows;
+    // PostgREST exposes dates as strings; PGlite's native date value is a JS Date.
+    const bankingBefore=financeMetrics((await db.query<FinanceMovement>('SELECT id,fecha::text,monto,currency,status FROM public.eco_financial_movements ORDER BY id')).rows).banking;
     expect(await detect()).toBe(1);const c=await candidate();expect(c.status).toBe('SUGGESTED');
     expect((await allocation()).economic_type).toBe('UNCLASSIFIED');
     await review(c.id);await review(c.id);
@@ -171,6 +174,14 @@ describe('WP-FIN-002 upgraded Finance contract on embedded PostgreSQL', () => {
     expect((await db.query('SELECT * FROM public.eco_financial_movements ORDER BY id')).rows).toEqual(before);
     expect(await browser('SELECT * FROM public.eco_financial_movements')).toHaveLength(2);
     expect((await candidate()).status).toBe('CONFIRMED');expect(await detect()).toBe(0);
+    const persisted = (await db.query<FinanceMovement>(`SELECT m.id,m.fecha::text,m.monto,m.currency,m.status,
+      (SELECT jsonb_agg(to_jsonb(a)) FROM public.eco_movement_allocations a WHERE a.movement_id=m.id AND a.organization_id=m.organization_id) allocations
+      FROM public.eco_financial_movements m ORDER BY m.id`)).rows;
+    for (const m of persisted) expect(m.allocations![0].transfer_candidate_id).toBe(c.id);
+    const metrics=financeMetrics(persisted);
+    expect(metrics.operatingIncome).toBe(0);expect(Math.abs(metrics.operatingExpense)).toBe(0);
+    expect(metrics.banking).toEqual(bankingBefore);
+    expect(metrics.economic.INTERNAL_TRANSFER.count).toBe(2);
   });
   it.each([
     ['same account',-17.25,17.25,'2026-01-02',true], ['same sign',-17.25,-17.25,'2026-01-02',false],
@@ -215,16 +226,16 @@ describe('WP-FIN-002 upgraded Finance contract on embedded PostgreSQL', () => {
     expect((await db.query<{n:string}>('SELECT sum(monto) n FROM public.eco_movement_allocations')).rows[0].n).toBe('-10.25');
     expect((await db.query<{monto:string}>('SELECT monto FROM public.eco_financial_movements')).rows[0].monto).toBe('-10.25');
   });
-  it('rules create/edit/disable, honor sign and account, and never confirm even transfer targets',async()=>{
+  it('rules create/edit/disable, honor sign and account, and only suggest generic economic types',async()=>{
     const rule=(await browser("INSERT INTO public.eco_classification_rules(organization_id,name,pattern,source_account_id,match_sign,target_economic_type) VALUES($1,'Synthetic loan','SHOP',$2,'POSITIVE','FINANCING_INFLOW') RETURNING id",[org,account]))[0].id;
     await confirm();expect((await allocation()).classification_status).toBe('PENDING');
-    await browser("UPDATE public.eco_classification_rules SET match_sign='NEGATIVE',target_economic_type='INTERNAL_TRANSFER',is_active=false WHERE id=$1 AND organization_id=$2",[rule,org]);
+    await browser("UPDATE public.eco_classification_rules SET match_sign='NEGATIVE',target_economic_type='FINANCING_OUTFLOW',is_active=false WHERE id=$1 AND organization_id=$2",[rule,org]);
     expect((await browser('SELECT public.rpc_apply_finance_rules($1) n',[org]))[0].n).toBe(0);
     await browser('UPDATE public.eco_classification_rules SET is_active=true WHERE id=$1 AND organization_id=$2',[rule,org]);
     expect((await browser('SELECT public.rpc_apply_finance_rules($1) n',[org]))[0].n).toBe(1);
-    expect(await allocation()).toMatchObject({economic_type:'INTERNAL_TRANSFER',classification_status:'SUGGESTED'});
+    expect(await allocation()).toMatchObject({economic_type:'FINANCING_OUTFLOW',classification_status:'SUGGESTED'});
     await confirm([{...row,amount:'-3.00'}],'d'.repeat(64));
-    expect((await db.query<{economic_type:string;classification_status:string}>('SELECT economic_type,classification_status FROM public.eco_movement_allocations')).rows.every(a=>a.economic_type==='INTERNAL_TRANSFER'&&a.classification_status==='SUGGESTED')).toBe(true);
+    expect((await db.query<{economic_type:string;classification_status:string}>('SELECT economic_type,classification_status FROM public.eco_movement_allocations')).rows.every(a=>a.economic_type==='FINANCING_OUTFLOW'&&a.classification_status==='SUGGESTED')).toBe(true);
   });
   it('bulk confirmation requires explicit fresh suggestions and rolls back a stale selection',async()=>{
     await confirm();const a=await allocation();await browser('SELECT public.rpc_update_bank_allocation($1,$2,$3)',[org,a.id,'{"economic_type":"OPERATING_EXPENSE","classification_status":"SUGGESTED"}']);
@@ -259,12 +270,42 @@ describe('WP-FIN-002 upgraded Finance contract on embedded PostgreSQL', () => {
     await expect(browser('SELECT public.rpc_confirm_finance_suggestions($1,$2)',[org,JSON.stringify([{id:fresh[0].id,updated_at:fresh[0].updated_at},{id:fresh[1].id,updated_at:'2000-01-01'}])])).rejects.toThrow(/changed/);
     expect((await db.query<{classification_status:string}>('SELECT classification_status FROM public.eco_movement_allocations')).rows.every(a=>a.classification_status==='SUGGESTED')).toBe(true);
   });
-  it('never bulk-confirms transfer rules or grants a read-only role transfer edit access',async()=>{
-    await pair();const a=await allocation();
-    await browser('SELECT public.rpc_update_bank_allocation($1,$2,$3)',[org,a.id,'{"economic_type":"INTERNAL_TRANSFER","classification_status":"SUGGESTED"}']);
-    const fresh=await allocation();
-    await expect(browser('SELECT public.rpc_confirm_finance_suggestions($1,$2)',[org,JSON.stringify([{id:fresh.id,updated_at:fresh.updated_at}])])).rejects.toThrow(/individual review/);
-    await detect();const c=await candidate();await role('CONSULTANT');
+  it('denies read-only roles access to paired transfer review',async()=>{
+    await pair();await detect();const c=await candidate();await role('CONSULTANT');
     await expect(detect()).rejects.toThrow(/denied/);await expect(review(c.id)).rejects.toThrow(/denied/);
+  });
+  it.each(['PENDING','SUGGESTED','CONFIRMED'])('rejects generic INTERNAL_TRANSFER with %s without mutation', async status=>{
+    await confirm();const before=await allocation();
+    await expect(browser('SELECT public.rpc_update_bank_allocation($1,$2,$3)',[org,before.id,JSON.stringify({economic_type:'INTERNAL_TRANSFER',classification_status:status})])).rejects.toThrow('Internal transfer requires paired transfer review');
+    expect(await allocation()).toEqual(before);
+  });
+  it('rejects an entire split with a transfer line and preserves original allocation identity',async()=>{
+    await confirm();const before=await allocation();
+    const lines=[{monto:'-4.10',economic_type:'OPERATING_EXPENSE'},{monto:'-6.15',economic_type:'INTERNAL_TRANSFER'}];
+    await expect(browser('SELECT public.rpc_split_bank_movement($1,$2,$3)',[org,before.movement_id,JSON.stringify(lines)])).rejects.toThrow('Internal transfer requires paired transfer review');
+    expect(await allocation()).toEqual(before);expect(await count('eco_movement_allocations')).toBe(1);
+  });
+  it('rejects rule insertion and updates targeting INTERNAL_TRANSFER at the database boundary',async()=>{
+    await expect(browser("INSERT INTO public.eco_classification_rules(organization_id,name,pattern,target_economic_type) VALUES($1,'Synthetic','SHOP','INTERNAL_TRANSFER')",[org])).rejects.toThrow(/finance_rule_no_internal_transfer/);
+    expect(await count('eco_classification_rules')).toBe(0);
+    const r=(await browser("INSERT INTO public.eco_classification_rules(organization_id,name,pattern,target_economic_type) VALUES($1,'Synthetic','SHOP','OPERATING_EXPENSE') RETURNING *",[org]))[0];
+    await expect(browser("UPDATE public.eco_classification_rules SET target_economic_type='INTERNAL_TRANSFER' WHERE id=$1 AND organization_id=$2",[r.id,org])).rejects.toThrow(/finance_rule_no_internal_transfer/);
+    expect((await browser('SELECT * FROM public.eco_classification_rules WHERE id=$1',[r.id]))[0]).toEqual(r);
+  });
+  it('rejects an unpaired confirmed interpretation at the storage boundary',async()=>{
+    await confirm();const a=await allocation();
+    await db.exec('SAVEPOINT invalid_interpretation');
+    try {
+      await expect(db.query("UPDATE public.eco_movement_allocations SET economic_type='INTERNAL_TRANSFER',classification_status='CONFIRMED' WHERE id=$1",[a.id])).rejects.toThrow(/finance_internal_transfer_requires_pair/);
+    } finally { await db.exec('ROLLBACK TO SAVEPOINT invalid_interpretation; RELEASE SAVEPOINT invalid_interpretation'); }
+    expect(await allocation()).toEqual(a);
+  });
+  it('defensively ignores invalid transfer rules in both import and pending application',async()=>{
+    // Simulate corrupted legacy rules locally; this DDL rolls back with the test.
+    await db.exec('ALTER TABLE public.eco_classification_rules DROP CONSTRAINT finance_rule_no_internal_transfer');
+    await db.query("INSERT INTO public.eco_classification_rules(organization_id,name,pattern,target_economic_type) VALUES($1,'Invalid synthetic rule','SHOP','INTERNAL_TRANSFER')",[org]);
+    await confirm();const a=await allocation();expect(a).toMatchObject({economic_type:'UNCLASSIFIED',classification_status:'PENDING'});
+    expect((await browser('SELECT public.rpc_apply_finance_rules($1) n',[org]))[0].n).toBe(0);
+    expect(await allocation()).toEqual(a);
   });
 });

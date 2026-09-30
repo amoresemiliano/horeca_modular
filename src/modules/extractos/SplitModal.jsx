@@ -4,7 +4,7 @@
  * Garantiza integridad matemática: la suma de las divisiones debe ser igual al importe original.
  */
 import React, { useState, useEffect } from 'react';
-import { economicTypes, economicLabels } from '../../domains/finance/domain/economic';
+import { genericEconomicTypes, economicLabels } from '../../domains/finance/domain/economic';
 
 const cents = value => /^-?\d+(\.\d{1,2})?$/.test(String(value))
   && Math.abs(Number(value)) <= 999999999999.99 ? Math.round(Number(value) * 100) : NaN;
@@ -138,7 +138,7 @@ const SplitModal = ({ isOpen, onClose, movement, categories, subcategories, coun
                   )}
                 </div>
 
-                <label className="block text-sm">Tipo económico<select className="block border rounded p-2 w-full" value={alloc.economic_type || 'UNCLASSIFIED'} onChange={e => handleChange(idx, 'economic_type', e.target.value)}>{economicTypes.map(type => <option key={type} value={type}>{economicLabels[type]}</option>)}</select></label>
+                <label className="block text-sm">Tipo económico<select className="block border rounded p-2 w-full" value={alloc.economic_type || 'UNCLASSIFIED'} onChange={e => handleChange(idx, 'economic_type', e.target.value)}>{genericEconomicTypes.map(type => <option key={type} value={type}>{economicLabels[type]}</option>)}</select></label>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   {/* Importe */}
                   <div>

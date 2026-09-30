@@ -3,7 +3,8 @@ import type { EconomicType, FinanceMovement } from '../../../src/domains/finance
 // Entirely synthetic; no real bank statement, account identifier or UAT totals.
 const row = (id: string, amount: number, type: EconomicType, account = 'synthetic-a'): FinanceMovement => ({
   id, monto: amount, fecha: '2026-04-08', status: 'ACTIVE', currency: 'EUR', source_account: { id: account, name: account },
-  allocations: [{ id: id + '-allocation', monto: amount, economic_type: type, classification_status: type === 'UNCLASSIFIED' ? 'PENDING' : 'CONFIRMED' }],
+  allocations: [{ id: id + '-allocation', monto: amount, economic_type: type, classification_status: type === 'UNCLASSIFIED' ? 'PENDING' : 'CONFIRMED',
+    transfer_candidate_id: type === 'INTERNAL_TRANSFER' ? 'synthetic-confirmed-pair' : null }],
 });
 export const workflowMovements: FinanceMovement[] = [
   row('transfer-out', -75, 'INTERNAL_TRANSFER'), row('transfer-in', 75, 'INTERNAL_TRANSFER', 'synthetic-b'),

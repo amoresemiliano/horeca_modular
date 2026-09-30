@@ -4,7 +4,8 @@ CREATE DOMAIN public.finance_economic_type AS text CHECK(VALUE IN (
  'UNCLASSIFIED','OPERATING_INCOME','OPERATING_EXPENSE','INTERNAL_TRANSFER',
  'FINANCING_INFLOW','FINANCING_OUTFLOW','CARD_SETTLEMENT','OTHER_NON_OPERATING'));
 ALTER TABLE public.eco_movement_allocations ADD COLUMN economic_type public.finance_economic_type NOT NULL DEFAULT 'UNCLASSIFIED';
-ALTER TABLE public.eco_classification_rules ADD COLUMN target_economic_type public.finance_economic_type NOT NULL DEFAULT 'UNCLASSIFIED';
+ALTER TABLE public.eco_classification_rules ADD COLUMN target_economic_type public.finance_economic_type NOT NULL DEFAULT 'UNCLASSIFIED',
+ ADD CONSTRAINT finance_rule_no_internal_transfer CHECK(target_economic_type <> 'INTERNAL_TRANSFER');
 -- No sign-based or speculative semantic backfill.
 CREATE TABLE public.eco_finance_match_candidates (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid NOT NULL REFERENCES public.eco_organizations(id),
@@ -20,6 +21,10 @@ CREATE TABLE public.eco_finance_match_candidates (
 );
 ALTER TABLE public.eco_movement_allocations ADD COLUMN transfer_candidate_id uuid,
  ADD FOREIGN KEY(transfer_candidate_id,organization_id) REFERENCES public.eco_finance_match_candidates(id,organization_id);
+-- Only the paired review RPC can populate this protected relationship.
+ALTER TABLE public.eco_movement_allocations ADD CONSTRAINT finance_internal_transfer_requires_pair
+ CHECK ((economic_type <> 'INTERNAL_TRANSFER' AND transfer_candidate_id IS NULL)
+ OR (economic_type = 'INTERNAL_TRANSFER' AND classification_status = 'CONFIRMED' AND transfer_candidate_id IS NOT NULL));
 CREATE INDEX ON public.eco_finance_match_candidates(organization_id,status);
 CREATE INDEX ON public.eco_financial_movements(organization_id,monto,fecha) WHERE status='ACTIVE';
 CREATE INDEX ON public.eco_movement_allocations(organization_id,classification_status);
@@ -181,7 +186,7 @@ BEGIN
    bal,m->>'externalReference',m->>'bankNativeId',(m->>'sourceRowNumber')::integer,fp,CASE WHEN overlap THEN 'POTENTIAL_OVERLAP' ELSE 'UNIQUE' END,
    jsonb_build_object('currency',acc.currency,'direction',CASE WHEN amt<0 THEN 'DEBIT' ELSE 'CREDIT' END,'running_balance',bal,'external_reference',m->>'externalReference'),
    jsonb_build_object('sourceRowNumber',(m->>'sourceRowNumber')::integer)) RETURNING id INTO mid;
-  SELECT * INTO matched FROM public.eco_classification_rules r WHERE r.organization_id=requested_organization_id AND r.is_active
+  SELECT * INTO matched FROM public.eco_classification_rules r WHERE r.organization_id=requested_organization_id AND r.is_active AND r.target_economic_type <> 'INTERNAL_TRANSFER'
    AND (r.source_account_id IS NULL OR r.source_account_id=acc.id)
    AND (r.match_sign='ALL' OR (r.match_sign='POSITIVE' AND amt>0) OR (r.match_sign='NEGATIVE' AND amt<0))
    AND strpos(upper(m->>'description'),upper(btrim(r.pattern)))>0 ORDER BY r.priority,r.created_at,r.id LIMIT 1;
@@ -212,6 +217,8 @@ BEGIN
  PERFORM 1 FROM public.eco_financial_movements WHERE id=mid AND organization_id=requested_organization_id AND status='ACTIVE' FOR UPDATE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Movement unavailable'; END IF;
  IF EXISTS(SELECT 1 FROM public.eco_movement_allocations WHERE id=allocation_id AND organization_id=requested_organization_id AND transfer_candidate_id IS NOT NULL) THEN RAISE EXCEPTION 'Linked transfer interpretation is protected'; END IF;
+ IF patch->>'economic_type' = 'INTERNAL_TRANSFER' OR EXISTS(SELECT 1 FROM public.eco_movement_allocations WHERE id=allocation_id AND organization_id=requested_organization_id AND economic_type='INTERNAL_TRANSFER')
+ THEN RAISE EXCEPTION 'Internal transfer requires paired transfer review' USING ERRCODE='22023'; END IF;
  UPDATE public.eco_movement_allocations a SET
  economic_type=CASE WHEN patch ? 'economic_type' THEN (patch->>'economic_type')::public.finance_economic_type ELSE a.economic_type END,
  is_internal_transfer=CASE WHEN patch ? 'economic_type' THEN patch->>'economic_type'='INTERNAL_TRANSFER' ELSE a.is_internal_transfer END,
@@ -233,6 +240,7 @@ BEGIN
  SELECT monto INTO STRICT original FROM public.eco_financial_movements m WHERE m.id=movement_id AND m.organization_id=requested_organization_id AND m.status='ACTIVE' FOR UPDATE;
  IF jsonb_typeof(allocations) IS DISTINCT FROM 'array' OR jsonb_array_length(allocations) NOT BETWEEN 1 AND 100 THEN RAISE EXCEPTION 'Invalid allocations'; END IF;
  FOR item IN SELECT value FROM jsonb_array_elements(allocations) LOOP
+  IF item->>'economic_type' = 'INTERNAL_TRANSFER' THEN RAISE EXCEPTION 'Internal transfer requires paired transfer review' USING ERRCODE='22023'; END IF;
   amount:=public.finance_money(item->>'monto');
   IF (original<0 AND amount>0) OR (original>0 AND amount<0) OR (original=0 AND amount<>0) THEN RAISE EXCEPTION 'Allocation sign mismatch'; END IF;
   total:=total+amount;
@@ -255,7 +263,7 @@ BEGIN
  FOR a IN SELECT m.id,m.monto,m.descripcion,m.source_account_id FROM public.eco_financial_movements m
   WHERE m.organization_id=requested_organization_id AND m.status='ACTIVE' ORDER BY m.id FOR UPDATE LOOP
   IF (SELECT count(*) FROM public.eco_movement_allocations x WHERE x.movement_id=a.id)<>1 THEN CONTINUE; END IF;
-  SELECT * INTO r FROM public.eco_classification_rules x WHERE x.organization_id=requested_organization_id AND x.is_active
+  SELECT * INTO r FROM public.eco_classification_rules x WHERE x.organization_id=requested_organization_id AND x.is_active AND x.target_economic_type <> 'INTERNAL_TRANSFER'
    AND (x.source_account_id IS NULL OR x.source_account_id=a.source_account_id)
    AND (x.match_sign='ALL' OR (x.match_sign='POSITIVE' AND a.monto>0) OR (x.match_sign='NEGATIVE' AND a.monto<0))
    AND strpos(upper(a.descripcion),upper(btrim(x.pattern)))>0 ORDER BY x.priority,x.created_at,x.id LIMIT 1;

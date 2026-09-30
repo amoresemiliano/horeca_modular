@@ -4,6 +4,9 @@ import { workflowMovements } from '../fixtures/finance/workflow';
 
 describe('Bank truth and allocation interpretation', () => {
   it('keeps raw banking flow independent of confirmed economic meaning', () => {
+    const pair = workflowMovements.filter(m => m.allocations?.some(a => a.economic_type === 'INTERNAL_TRANSFER'));
+    expect(pair).toHaveLength(2);
+    for (const m of pair) expect(m.allocations![0]).toMatchObject({ classification_status: 'CONFIRMED', transfer_candidate_id: 'synthetic-confirmed-pair' });
     const m = financeMetrics(workflowMovements);
     expect(m.banking).toEqual({ inflows: 60700, outflows: 28045, net: 32655, count: 11 });
     expect(m.operatingIncome).toBe(9500);

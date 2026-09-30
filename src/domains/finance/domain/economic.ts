@@ -3,6 +3,11 @@ import { moneyToMinorUnits } from './money';
 export const economicTypes = ['UNCLASSIFIED', 'OPERATING_INCOME', 'OPERATING_EXPENSE', 'INTERNAL_TRANSFER',
   'FINANCING_INFLOW', 'FINANCING_OUTFLOW', 'CARD_SETTLEMENT', 'OTHER_NON_OPERATING'] as const;
 export type EconomicType = typeof economicTypes[number];
+export type GenericEconomicType = Exclude<EconomicType, 'INTERNAL_TRANSFER'>;
+export const genericEconomicTypes = economicTypes.filter((type): type is GenericEconomicType => type !== 'INTERNAL_TRANSFER');
+export function assertGenericEconomicType(type: unknown): void {
+  if (type === 'INTERNAL_TRANSFER') throw new Error('Internal transfer requires paired transfer review');
+}
 export const economicLabels: Record<EconomicType, string> = {
   UNCLASSIFIED: 'Sin clasificar', OPERATING_INCOME: 'Ingreso operativo', OPERATING_EXPENSE: 'Gasto operativo',
   INTERNAL_TRANSFER: 'Transferencia interna', FINANCING_INFLOW: 'Entrada de financiación', FINANCING_OUTFLOW: 'Salida de financiación',
