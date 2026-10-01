@@ -1,12 +1,11 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 vi.mock('../../src/lib/extractosService', () => ({
   createFinanceCatalogEntry: vi.fn(), findOrCreateCounterparty: vi.fn(), getExtractosCatalogs: vi.fn(),
   updateAllocationClassification: vi.fn(), createClassificationRule: vi.fn(), updateClassificationRule: vi.fn(), applyClassificationRules: vi.fn(),
 }));
+import SplitModal from '../../src/modules/extractos/SplitModal';
 import AllocationFields from '../../src/modules/extractos/AllocationFields';
 import ClassificationModal from '../../src/modules/extractos/ClassificationModal';
 import RuleModal from '../../src/modules/extractos/RuleModal';
@@ -40,9 +39,8 @@ describe('Generic economic selectors cannot establish a transfer', () => {
     expect(html).not.toContain('value="OPERATING_INCOME"');
   });
   it('uses the same restricted options in the split selector', () => {
-    // Split lines initialize after mount; static wiring complements the browser check.
-    const source = readFileSync(path.resolve(__dirname, '../../src/modules/extractos/SplitModal.jsx'), 'utf8');
-    expect(source).toContain('genericEconomicTypes.map(type =>');
-    expect(source).not.toMatch(/\beconomicTypes\b|value="INTERNAL_TRANSFER"/);
+    const html = renderToStaticMarkup(createElement(SplitModal, { isOpen:true, movement, categories:[], subcategories:[], counterparties:[], onClose:()=>{}, onConfirmSplit:()=>{} }));
+    expect(html).not.toContain('value="INTERNAL_TRANSFER"');
+    for (const type of genericEconomicTypes) expect(html).toContain(`value="${type}"`);
   });
 });
