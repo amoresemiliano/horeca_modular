@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { createClassificationRule, updateClassificationRule, applyClassificationRules, getExtractosCatalogs } from '../../lib/extractosService';
 import { economicLabels } from '../../domains/finance/domain/economic';
 import FinanceDialog from './FinanceDialog';
-import AllocationFields, { emptyInterpretation } from './AllocationFields';
+import AllocationFields from './AllocationFields';
+import { emptyInterpretation, ruleExample } from './workflow';
 
 export default function RuleModal({ catalogs, orgId, example, onClose, onSaved }) {
-  const confirmed = example?.allocations?.find(a => a.classification_status === 'CONFIRMED' && a.economic_type !== 'INTERNAL_TRANSFER');
+  const confirmed = ruleExample(example);
   const [rules, setRules] = useState(catalogs.rules), [editing, setEditing] = useState(null);
   const [pattern, setPattern] = useState(example?.descripcion || ''), [account, setAccount] = useState(example?.source_account_id || '');
-  const [sign, setSign] = useState(example ? (Number(example.monto) < 0 ? 'NEGATIVE' : 'POSITIVE') : 'ALL');
+  const [sign, setSign] = useState(example ? (Number(example.monto) < 0 ? 'NEGATIVE' : Number(example.monto) > 0 ? 'POSITIVE' : 'ALL') : 'ALL');
   const [value, setValue] = useState({ ...emptyInterpretation(), ...confirmed });
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   async function run(action) {
@@ -31,19 +32,20 @@ export default function RuleModal({ catalogs, orgId, example, onClose, onSaved }
   }
   return <FinanceDialog title="Reglas de clasificación" busy={busy} onClose={onClose}>
     <p className="text-sm">Coincidencia literal, sin distinguir mayúsculas. La primera regla activa por prioridad y antigüedad propone una clasificación; nunca la confirma.</p>
-    <button disabled={busy} className="border rounded px-3 py-2" onClick={() => run(async () => setMessage((await applyClassificationRules(orgId)) + ' sugerencias aplicadas a pendientes'))}>Aplicar reglas a pendientes</button>
+    <button disabled={busy} className="border border-gray-200 rounded px-3 py-2" onClick={() => run(async () => setMessage((await applyClassificationRules(orgId)) + ' sugerencias aplicadas a pendientes'))}>Aplicar reglas a pendientes</button>
     <ul className="divide-y max-h-56 overflow-y-auto">{rules.map(rule => <li key={rule.id} className="py-3 flex items-center justify-between gap-2 text-sm">
       <div><strong>{rule.pattern}</strong><p>{economicLabels[rule.target_economic_type || 'UNCLASSIFIED']} · {rule.is_active ? 'Activa' : 'Inactiva'} · {rule.match_sign}</p></div>
       <div className="flex gap-2"><button disabled={busy} onClick={() => edit(rule)}>Editar</button><button disabled={busy} onClick={() => run(() => updateClassificationRule(orgId, rule.id, { is_active: !rule.is_active }))}>{rule.is_active ? 'Desactivar' : 'Activar'}</button></div>
     </li>)}</ul>
     <form onSubmit={save} className="border-t pt-4 space-y-3"><fieldset disabled={busy} className="space-y-3">
       <h3 className="font-bold">{editing ? 'Editar regla' : 'Crear regla'}</h3>
-      {example && <p className="text-sm">Ejemplo confirmado: {example.descripcion}. Revisa el patrón antes de guardar.</p>}
-      <label className="block">Cuando la descripción contenga<input required maxLength={200} value={pattern} onChange={e => setPattern(e.target.value)} className="block border rounded p-2 w-full" /></label>
-      <div className="grid sm:grid-cols-2 gap-3"><label>Cuenta de origen<select className="block border rounded p-2 w-full" value={account} onChange={e => setAccount(e.target.value)}><option value="">Cualquier cuenta</option>{catalogs.accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
-        <label>Signo bancario<select className="block border rounded p-2 w-full" value={sign} onChange={e => setSign(e.target.value)}><option value="ALL">Cualquiera</option><option value="POSITIVE">Entrada</option><option value="NEGATIVE">Salida</option></select></label></div>
+      {confirmed && <p className="text-sm">Ejemplo confirmado: {example.descripcion}. Revisa el patrón antes de guardar.</p>}
+      {example && !confirmed && <p className="text-amber-900 text-sm">Clasifica primero el movimiento para crear una regla. No se ha propuesto ningún tipo económico.</p>}
+      <label className="block">Cuando la descripción contenga<input aria-label="Cuando la descripción contenga" required maxLength={200} value={pattern} onChange={e => setPattern(e.target.value)} className="block border border-gray-200 rounded p-2 w-full" /></label>
+      <div className="grid sm:grid-cols-2 gap-3"><label>Cuenta de origen<select aria-label="Cuenta de origen" className="block border border-gray-200 rounded p-2 w-full" value={account} onChange={e => setAccount(e.target.value)}><option value="">Cualquier cuenta</option>{catalogs.accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
+        <label>Signo bancario<select aria-label="Signo bancario" className="block border border-gray-200 rounded p-2 w-full" value={sign} onChange={e => setSign(e.target.value)}><option value="ALL">Cualquiera</option><option value="POSITIVE">Entrada</option><option value="NEGATIVE">Salida</option></select></label></div>
       <h4 className="font-semibold">Entonces sugerir</h4><AllocationFields key={editing || 'new'} catalogs={catalogs} value={value} onChange={setValue} orgId={orgId} showNotes={false} />
-      <div className="flex gap-3"><button className="bg-emerald-700 text-white rounded px-4 py-2">Guardar regla</button><button type="button" onClick={reset}>Nueva / limpiar</button></div>
+      <div className="flex gap-3"><button disabled={value.economic_type === 'UNCLASSIFIED'} title={value.economic_type === 'UNCLASSIFIED' ? 'Selecciona el tipo económico que propondrá la regla' : 'Guardar regla como sugerencia'} className="bg-emerald-700 text-white rounded px-4 py-2 disabled:opacity-40">Guardar regla</button><button type="button" onClick={reset}>Nueva / limpiar</button></div>
     </fieldset></form>
     {error && <p role="alert" className="text-red-700">{error}</p>}{message && <p role="status">{message}</p>}
   </FinanceDialog>;

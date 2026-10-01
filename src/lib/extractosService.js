@@ -138,7 +138,7 @@ export async function findOrCreateCounterparty(name, type = 'PROVEEDOR', orgId) 
   return data.id;
 }
 export async function createFinanceCatalogEntry(kind, input, orgId) {
-  const tables = { account: 'eco_financial_accounts', category: 'eco_tax_categories', subcategory: 'eco_tax_subcategories' };
+  const tables = { account: 'eco_financial_accounts', category: 'eco_tax_categories', subcategory: 'eco_tax_subcategories', counterparty: 'eco_counterparties' };
   if (!tables[kind]) throw new Error('Invalid catalog type');
   const { data, error } = await supabase.from(tables[kind]).insert({ ...input, organization_id: requireOrgId(orgId) }).select().single();
   if (error) throw new Error(error.message);
@@ -147,6 +147,15 @@ export async function createFinanceCatalogEntry(kind, input, orgId) {
 
 export async function updateFinanceAccount(orgId, accountId, patch) {
   return rpc('rpc_update_finance_account', { requested_organization_id: requireOrgId(orgId), account_id: accountId, patch });
+}
+// Name-only editing preserves catalog identities and historical relationships.
+export async function renameFinanceCatalogEntry(kind, id, name, orgId) {
+  const activeOrgId = requireOrgId(orgId);
+  const tables = { category: 'eco_tax_categories', subcategory: 'eco_tax_subcategories', counterparty: 'eco_counterparties' };
+  if (!tables[kind] || !id || !name?.trim()) throw new Error('Nombre y elemento de catálogo requeridos');
+  const { data, error } = await supabase.from(tables[kind]).update({ name: name.trim() }).eq('organization_id', activeOrgId).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 export async function updateClassificationRule(orgId, ruleId, patch) {
   assertGenericEconomicType(patch.target_economic_type);
