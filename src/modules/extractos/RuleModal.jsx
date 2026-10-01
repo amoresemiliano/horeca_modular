@@ -1,181 +1,50 @@
-/**
- * RuleModal.jsx — Modal de Gestión de Reglas Determinísticas (Track A)
- * Permite crear y administrar reglas de auto-clasificación por patrón de texto,
- * asignando automáticamente contraparte, categoría y subcategoría.
- */
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { createClassificationRule, updateClassificationRule, applyClassificationRules, getExtractosCatalogs } from '../../lib/extractosService';
+import { economicLabels } from '../../domains/finance/domain/economic';
+import FinanceDialog from './FinanceDialog';
+import AllocationFields, { emptyInterpretation } from './AllocationFields';
 
-const RuleModal = ({ isOpen, onClose, initialPattern = '', categories = [], subcategories = [], counterparties = [], onCreateRule }) => {
-  const [pattern, setPattern] = useState(initialPattern);
-  const [matchSign, setMatchSign] = useState('ALL'); // ALL, POSITIVE, NEGATIVE
-  const [categoryId, setCategoryId] = useState('');
-  const [subcategoryId, setSubcategoryId] = useState('');
-  const [counterpartyId, setCounterpartyId] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  if (!isOpen) return null;
-
-  const availSubcats = subcategories.filter(s => s.category_id === categoryId);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!pattern.trim()) {
-      setError('Por favor ingresa un patrón de texto para coincidencia.');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      await onCreateRule({
-        pattern,
-        matchSign,
-        categoryId: categoryId || null,
-        subcategoryId: subcategoryId || null,
-        counterpartyId: counterpartyId || null,
-      });
-      onClose();
-    } catch (err) {
-      setError(err.message || 'Error al guardar la regla.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">⚙️ Crear Regla de Clasificación</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Asigna automáticamente clasificaciones a movimientos futuros similares</p>
-          </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-full">
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          
-          {/* Patrón de Texto */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Patrón de Texto (Buscar en concepto)
-            </label>
-            <input
-              type="text"
-              placeholder="Ej: MAKRO, UBER, TGSS, NÓMINA..."
-              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm font-semibold text-gray-900"
-              value={pattern}
-              onChange={e => setPattern(e.target.value)}
-              required
-            />
-            <p className="text-[11px] text-gray-400 mt-1">Coincidencia insensible a mayúsculas/minúsculas</p>
-          </div>
-
-          {/* Signo del Movimiento */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Aplica a
-            </label>
-            <select
-              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800"
-              value={matchSign}
-              onChange={e => setMatchSign(e.target.value)}
-            >
-              <option value="ALL">Todos los movimientos (Ingresos y Gastos)</option>
-              <option value="NEGATIVE">Solo Gastos (-)</option>
-              <option value="POSITIVE">Solo Ingresos (+)</option>
-            </select>
-          </div>
-
-          {/* Contraparte a Asignar */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Asignar Contraparte
-            </label>
-            <select
-              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800"
-              value={counterpartyId}
-              onChange={e => setCounterpartyId(e.target.value)}
-            >
-              <option value="">— Ninguna —</option>
-              {counterparties.map(p => (
-                <option key={p.id} value={p.id}>{p.name} ({p.type})</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Categoría a Asignar */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Asignar Categoría Económica
-            </label>
-            <select
-              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800"
-              value={categoryId}
-              onChange={e => {
-                setCategoryId(e.target.value);
-                setSubcategoryId('');
-              }}
-            >
-              <option value="">— Ninguna —</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Subcategoría a Asignar */}
-          {categoryId && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Asignar Subcategoría
-              </label>
-              <select
-                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800"
-                value={subcategoryId}
-                onChange={e => setSubcategoryId(e.target.value)}
-              >
-                <option value="">— Ninguna —</option>
-                {availSubcats.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-xs">
-              ⚠️ {error}
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-gray-600 hover:text-gray-900"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 text-xs font-semibold text-white rounded-xl disabled:opacity-40"
-              style={{ backgroundColor: '#006847' }}
-            >
-              {loading ? 'Guardando...' : 'Crear Regla'}
-            </button>
-          </div>
-        </form>
-
-      </div>
-    </div>
-  );
-};
-
-export default RuleModal;
+export default function RuleModal({ catalogs, orgId, example, onClose, onSaved }) {
+  const confirmed = example?.allocations?.find(a => a.classification_status === 'CONFIRMED' && a.economic_type !== 'INTERNAL_TRANSFER');
+  const [rules, setRules] = useState(catalogs.rules), [editing, setEditing] = useState(null);
+  const [pattern, setPattern] = useState(example?.descripcion || ''), [account, setAccount] = useState(example?.source_account_id || '');
+  const [sign, setSign] = useState(example ? (Number(example.monto) < 0 ? 'NEGATIVE' : 'POSITIVE') : 'ALL');
+  const [value, setValue] = useState({ ...emptyInterpretation(), ...confirmed });
+  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
+  async function run(action) {
+    setBusy(true); setError(''); setMessage('');
+    try { await action(); setRules((await getExtractosCatalogs(orgId)).rules); await onSaved(); }
+    catch (err) { setError(err.message); } finally { setBusy(false); }
+  }
+  function edit(rule) {
+    setEditing(rule.id); setPattern(rule.pattern); setSign(rule.match_sign); setAccount(rule.source_account_id || '');
+    setValue({ ...emptyInterpretation(), economic_type: rule.target_economic_type, category_id: rule.target_category_id || '', subcategory_id: rule.target_subcategory_id || '', counterparty_id: rule.target_counterparty_id || '' });
+  }
+  function reset() { setEditing(null); setPattern(''); setAccount(''); setSign('ALL'); setValue(emptyInterpretation()); }
+  async function save(e) {
+    e.preventDefault(); await run(async () => {
+      if (editing) await updateClassificationRule(orgId, editing, { pattern: pattern.trim(), name: 'Regla: ' + pattern.trim(), match_sign: sign, source_account_id: account || null,
+        target_economic_type: value.economic_type, target_category_id: value.category_id || null, target_subcategory_id: value.subcategory_id || null, target_counterparty_id: value.counterparty_id || null });
+      else await createClassificationRule({ orgId, pattern, matchSign: sign, sourceAccountId: account, economicType: value.economic_type, categoryId: value.category_id, subcategoryId: value.subcategory_id, counterpartyId: value.counterparty_id });
+      reset(); setMessage('Regla guardada. Los resultados siempre requieren revisión.');
+    });
+  }
+  return <FinanceDialog title="Reglas de clasificación" busy={busy} onClose={onClose}>
+    <p className="text-sm">Coincidencia literal, sin distinguir mayúsculas. La primera regla activa por prioridad y antigüedad propone una clasificación; nunca la confirma.</p>
+    <button disabled={busy} className="border rounded px-3 py-2" onClick={() => run(async () => setMessage((await applyClassificationRules(orgId)) + ' sugerencias aplicadas a pendientes'))}>Aplicar reglas a pendientes</button>
+    <ul className="divide-y max-h-56 overflow-y-auto">{rules.map(rule => <li key={rule.id} className="py-3 flex items-center justify-between gap-2 text-sm">
+      <div><strong>{rule.pattern}</strong><p>{economicLabels[rule.target_economic_type || 'UNCLASSIFIED']} · {rule.is_active ? 'Activa' : 'Inactiva'} · {rule.match_sign}</p></div>
+      <div className="flex gap-2"><button disabled={busy} onClick={() => edit(rule)}>Editar</button><button disabled={busy} onClick={() => run(() => updateClassificationRule(orgId, rule.id, { is_active: !rule.is_active }))}>{rule.is_active ? 'Desactivar' : 'Activar'}</button></div>
+    </li>)}</ul>
+    <form onSubmit={save} className="border-t pt-4 space-y-3"><fieldset disabled={busy} className="space-y-3">
+      <h3 className="font-bold">{editing ? 'Editar regla' : 'Crear regla'}</h3>
+      {example && <p className="text-sm">Ejemplo confirmado: {example.descripcion}. Revisa el patrón antes de guardar.</p>}
+      <label className="block">Cuando la descripción contenga<input required maxLength={200} value={pattern} onChange={e => setPattern(e.target.value)} className="block border rounded p-2 w-full" /></label>
+      <div className="grid sm:grid-cols-2 gap-3"><label>Cuenta de origen<select className="block border rounded p-2 w-full" value={account} onChange={e => setAccount(e.target.value)}><option value="">Cualquier cuenta</option>{catalogs.accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
+        <label>Signo bancario<select className="block border rounded p-2 w-full" value={sign} onChange={e => setSign(e.target.value)}><option value="ALL">Cualquiera</option><option value="POSITIVE">Entrada</option><option value="NEGATIVE">Salida</option></select></label></div>
+      <h4 className="font-semibold">Entonces sugerir</h4><AllocationFields key={editing || 'new'} catalogs={catalogs} value={value} onChange={setValue} orgId={orgId} showNotes={false} />
+      <div className="flex gap-3"><button className="bg-emerald-700 text-white rounded px-4 py-2">Guardar regla</button><button type="button" onClick={reset}>Nueva / limpiar</button></div>
+    </fieldset></form>
+    {error && <p role="alert" className="text-red-700">{error}</p>}{message && <p role="status">{message}</p>}
+  </FinanceDialog>;
+}

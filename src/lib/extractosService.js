@@ -9,6 +9,7 @@
  *  - Soft delete
  */
 import { supabase } from './supabase.js';
+import { assertGenericEconomicType } from '../domains/finance/domain/economic';
 import { moneyToDecimal } from '../domains/finance/domain/money';
 
 function requireOrgId(orgId) {
@@ -26,7 +27,7 @@ export async function getExtractosCatalogs(orgId) {
       supabase.from('eco_tax_categories').select('*').eq('organization_id', activeOrgId).order('name'),
       supabase.from('eco_tax_subcategories').select('*').eq('organization_id', activeOrgId).order('name'),
       supabase.from('eco_counterparties').select('*').eq('organization_id', activeOrgId).order('name'),
-      supabase.from('eco_classification_rules').select('*').eq('organization_id', activeOrgId).eq('is_active', true)
+      supabase.from('eco_classification_rules').select('*').eq('organization_id', activeOrgId).order('priority').order('created_at')
     ]);
 
     for (const result of [accountsRes, categoriesRes, subcategoriesRes, counterpartiesRes, rulesRes]) {
@@ -72,8 +73,15 @@ export async function fetchConsolidatedMovements(orgId) {
 }
 
 // ─── Actualiza Asignación Económica / Clasificación ─────────────────────────
-export async function updateAllocationClassification({ orgId, allocationId, counterpartyId, categoryId, subcategoryId, status = 'CONFIRMED', notes }) {
+/**
+ * @param {{ orgId: string, allocationId: string, counterpartyId?: string|null, categoryId?: string|null,
+ * subcategoryId?: string|null, economicType?: import('../domains/finance/domain/economic').EconomicType,
+ * status?: 'PENDING'|'SUGGESTED'|'CONFIRMED', notes?: string|null }} input
+ */
+export async function updateAllocationClassification({ orgId, allocationId, counterpartyId, categoryId, subcategoryId, economicType, status = 'CONFIRMED', notes }) {
+  assertGenericEconomicType(economicType);
   const patch = { classification_status: status };
+  if (economicType !== undefined) patch.economic_type = economicType;
   if (counterpartyId !== undefined) patch.counterparty_id = counterpartyId || null;
   if (categoryId !== undefined) patch.category_id = categoryId || null;
   if (subcategoryId !== undefined) patch.subcategory_id = subcategoryId || null;
@@ -86,9 +94,16 @@ async function rpc(name, input) {
   if (error) throw new Error(error.message);
   return data;
 }
-export async function createClassificationRule({ pattern, counterpartyId, categoryId, subcategoryId, matchSign = 'ALL', orgId }) {
+/**
+ * @param {{ orgId: string, pattern: string, counterpartyId?: string|null, categoryId?: string|null,
+ * subcategoryId?: string|null, economicType?: import('../domains/finance/domain/economic').EconomicType,
+ * sourceAccountId?: string|null, matchSign?: 'ALL'|'POSITIVE'|'NEGATIVE' }} input
+ */
+export async function createClassificationRule({ pattern, counterpartyId, categoryId, subcategoryId, economicType = 'UNCLASSIFIED', sourceAccountId, matchSign = 'ALL', orgId }) {
+  assertGenericEconomicType(economicType);
   const { data, error } = await supabase.from('eco_classification_rules').insert({
     organization_id: requireOrgId(orgId), name: `Regla: ${pattern.trim()}`, pattern: pattern.trim(), match_sign: matchSign,
+    target_economic_type: economicType, source_account_id: sourceAccountId || null,
     target_counterparty_id: counterpartyId || null, target_category_id: categoryId || null,
     target_subcategory_id: subcategoryId || null, is_active: true,
   }).select().single();
@@ -99,6 +114,7 @@ export async function applyClassificationRules(orgId) {
   return rpc('rpc_apply_finance_rules', { requested_organization_id: requireOrgId(orgId) });
 }
 export async function splitMovementAllocations(movementId, _originalAmount, allocationsList, orgId) {
+  for (const allocation of allocationsList) assertGenericEconomicType(allocation.economic_type);
   return rpc('rpc_split_bank_movement', {
     requested_organization_id: requireOrgId(orgId), movement_id: movementId,
     allocations: allocationsList.map(a => {
@@ -127,4 +143,34 @@ export async function createFinanceCatalogEntry(kind, input, orgId) {
   const { data, error } = await supabase.from(tables[kind]).insert({ ...input, organization_id: requireOrgId(orgId) }).select().single();
   if (error) throw new Error(error.message);
   return data;
+}
+
+export async function updateFinanceAccount(orgId, accountId, patch) {
+  return rpc('rpc_update_finance_account', { requested_organization_id: requireOrgId(orgId), account_id: accountId, patch });
+}
+export async function updateClassificationRule(orgId, ruleId, patch) {
+  assertGenericEconomicType(patch.target_economic_type);
+  const allowed = ['pattern', 'name', 'match_sign', 'source_account_id', 'target_economic_type', 'target_category_id', 'target_subcategory_id', 'target_counterparty_id', 'is_active'];
+  if (Object.keys(patch).some(key => !allowed.includes(key))) throw new Error('Invalid rule patch');
+  const { data, error } = await supabase.from('eco_classification_rules').update(patch).eq('organization_id', requireOrgId(orgId)).eq('id', ruleId).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function fetchTransferCandidates(orgId) {
+  const rows = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await supabase.from('eco_finance_match_candidates').select('*').eq('organization_id', requireOrgId(orgId)).order('created_at', { ascending: false }).order('id').range(offset, offset + 499);
+    if (error) throw new Error(error.message);
+    rows.push(...data);
+    if (data.length < 500) return rows;
+  }
+}
+export async function detectTransferCandidates(orgId) {
+  return rpc('rpc_detect_finance_transfers', { requested_organization_id: requireOrgId(orgId) });
+}
+export async function reviewTransferCandidate(orgId, candidateId, decision) {
+  return rpc('rpc_review_finance_transfer', { requested_organization_id: requireOrgId(orgId), candidate_id: candidateId, decision });
+}
+export async function confirmFinanceSuggestions(orgId, allocations) {
+  return rpc('rpc_confirm_finance_suggestions', { requested_organization_id: requireOrgId(orgId), reviews: allocations.map(a => ({ id: a.id, updated_at: a.updated_at })) });
 }
