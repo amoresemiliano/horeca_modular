@@ -23,6 +23,7 @@ export interface SalesOverviewDTO {
     paymentMethod: string;
     total: number;
     currency: string;
+    status: string;
   }>;
 }
 
@@ -60,6 +61,7 @@ export class GetSalesOverviewUseCase {
         paymentMethod: s.sourcePaymentMethod || 'Unknown',
         total: s.total,
         currency: s.currency,
+        status: s.status,
       })),
     };
   }

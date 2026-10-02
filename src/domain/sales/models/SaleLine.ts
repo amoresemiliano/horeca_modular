@@ -1,4 +1,4 @@
-export type SaleLineItemType = 'PRODUCT' | 'MODIFIER' | 'UNKNOWN';
+export type SaleLineItemType = 'PRODUCT' | 'MODIFIER' | 'UNKNOWN' | 'COMBO_COMPONENT';
 
 export interface SaleLineProps {
   id: string;
@@ -13,6 +13,7 @@ export interface SaleLineProps {
   itemType: SaleLineItemType;
   notes?: string | null;
   catalogProductId?: string | null;
+  sourceFacts?: Record<string, unknown>;
   createdAt: Date;
 }
 
@@ -50,6 +51,7 @@ export class SaleLine {
   public get itemType(): SaleLineItemType { return this.props.itemType; }
   public get notes(): string | null | undefined { return this.props.notes; }
   public get catalogProductId(): string | null | undefined { return this.props.catalogProductId; }
+  public get sourceFacts(): Record<string, unknown> | undefined { return this.props.sourceFacts; }
   public get createdAt(): Date { return this.props.createdAt; }
 
   public toJSON(): SaleLineProps {

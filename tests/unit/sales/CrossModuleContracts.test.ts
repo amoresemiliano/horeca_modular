@@ -84,6 +84,8 @@ describe('CrossModuleContracts Unit Tests', () => {
   it('exports Finance reconciliation inputs containing payment and ticket identifiers', () => {
     const fin = CrossModuleContractsExporter.toFinanceReconciliationInput(sale);
     expect(fin).toEqual({
+      status: 'CONFIRMED',
+      sourceBills: undefined,
       organizationId: 'org-1',
       operationalUnitId: 'op-unit-1',
       saleId: 'sale-1',

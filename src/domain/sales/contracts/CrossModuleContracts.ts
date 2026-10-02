@@ -14,6 +14,7 @@ export interface CatalogMappingCandidate {
   rawText: string;
   sourceSystem: string;
   mappedCatalogProductId?: string | null;
+  externalProductId?: string;
 }
 
 // B. SALES -> INVENTORY: Consumption Signal (only for lines with mapped Catalog Product)
@@ -30,6 +31,8 @@ export interface InventoryConsumptionSignal {
 
 // C. SALES -> FINANCE: Reconciliation Input
 export interface FinanceReconciliationInput {
+  status: Sale['status'];
+  sourceBills?: Record<string,unknown>[];
   organizationId: string;
   operationalUnitId?: string | null;
   saleId: string;
@@ -44,6 +47,10 @@ export interface FinanceReconciliationInput {
 
 // D. SALES -> ANALYTICS: Revenue Fact Input
 export interface AnalyticsRevenueFactInput {
+  status: Sale['status'];
+  syncRunId?: string;
+  externalSaleId?: string;
+  externalLocationId?: string;
   organizationId: string;
   operationalUnitId?: string | null;
   saleId: string;
@@ -65,13 +72,16 @@ export class CrossModuleContractsExporter {
   public static toCatalogCandidates(organizationId: string, lines: SaleLine[]): CatalogMappingCandidate[] {
     const candidatesMap = new Map<string, CatalogMappingCandidate>();
     for (const line of lines) {
-      if (!candidatesMap.has(line.displayText)) {
-        candidatesMap.set(line.displayText, {
+      const externalProductId = line.sourceFacts?.externalCatalogProductId as string | undefined;
+      const key = externalProductId || line.displayText;
+      if (!candidatesMap.has(key)) {
+        candidatesMap.set(key, {
           organizationId,
           sourceDescriptor: line.displayText,
           rawText: line.rawText,
           sourceSystem: 'lastapp',
           mappedCatalogProductId: line.catalogProductId,
+          ...(externalProductId ? {externalProductId} : {}),
         });
       }
     }
@@ -82,6 +92,7 @@ export class CrossModuleContractsExporter {
     sale: Sale,
     lines: SaleLine[]
   ): InventoryConsumptionSignal[] {
+    if (sale.status !== 'CONFIRMED') return [];
     return lines
       .filter(line => Boolean(line.catalogProductId))
       .map(line => ({
@@ -98,6 +109,8 @@ export class CrossModuleContractsExporter {
 
   public static toFinanceReconciliationInput(sale: Sale): FinanceReconciliationInput {
     return {
+      status: sale.status,
+      sourceBills: sale.rawPayload?.bills as Record<string,unknown>[] | undefined,
       organizationId: sale.organizationId,
       operationalUnitId: sale.operationalUnitId,
       saleId: sale.id,
@@ -113,6 +126,10 @@ export class CrossModuleContractsExporter {
 
   public static toAnalyticsRevenueFact(sale: Sale, lines: SaleLine[]): AnalyticsRevenueFactInput {
     return {
+      status: sale.status,
+      syncRunId: sale.syncRunId,
+      externalSaleId: sale.externalSaleId,
+      externalLocationId: sale.externalLocationId,
       organizationId: sale.organizationId,
       operationalUnitId: sale.operationalUnitId,
       saleId: sale.id,

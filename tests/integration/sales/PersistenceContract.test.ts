@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { InMemorySaleRepository } from '../../../src/infrastructure/sales/repositories/InMemorySaleRepository';
 import { InMemorySalesImportRepository } from '../../../src/infrastructure/sales/repositories/InMemorySalesImportRepository';
 import { SupabaseSaleRepository } from '../../../src/infrastructure/sales/repositories/SupabaseSaleRepository';
@@ -74,11 +74,14 @@ describe('Sales Persistence & Tenancy Contract Tests', () => {
   });
 
   it('enforces that Production container strictly uses persistent Supabase repositories', () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://vmxjqwlfwnphorthhcwu.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_sales_test');
     const prodContainer = createProductionSalesContainer();
     expect(prodContainer.repositories.saleRepo).toBeInstanceOf(SupabaseSaleRepository);
     expect(prodContainer.repositories.importRepo).toBeInstanceOf(SupabaseSalesImportRepository);
     expect(prodContainer.repositories.saleRepo).not.toBeInstanceOf(InMemorySaleRepository);
     expect(prodContainer.repositories.importRepo).not.toBeInstanceOf(InMemorySalesImportRepository);
+    vi.unstubAllEnvs();
   });
 
   it('confirms createTestSalesContainer provides fully wired in-memory repositories with FK verification', () => {

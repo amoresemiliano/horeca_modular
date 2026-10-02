@@ -1,4 +1,4 @@
-export type SaleStatus = 'CONFIRMED' | 'VOIDED' | 'REFUNDED';
+export type SaleStatus = 'CONFIRMED' | 'VOIDED' | 'REFUNDED' | 'OPEN' | 'REVIEW_REQUIRED';
 
 export interface SaleProps {
   id: string;
@@ -20,6 +20,12 @@ export interface SaleProps {
   currency: string; // 'EUR'
   status: SaleStatus;
   rawPayload?: Record<string, unknown>;
+  externalLocationId?: string;
+  externalSaleId?: string;
+  syncRunId?: string;
+  sourceAdapterVersion?: string;
+  sourceObservedAt?: string;
+  sourceFingerprint?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,6 +71,12 @@ export class Sale {
   public get currency(): string { return this.props.currency; }
   public get status(): SaleStatus { return this.props.status; }
   public get rawPayload(): Record<string, unknown> | undefined { return this.props.rawPayload; }
+  public get externalLocationId(): string | undefined { return this.props.externalLocationId; }
+  public get externalSaleId(): string | undefined { return this.props.externalSaleId; }
+  public get syncRunId(): string | undefined { return this.props.syncRunId; }
+  public get sourceAdapterVersion(): string | undefined { return this.props.sourceAdapterVersion; }
+  public get sourceObservedAt(): string | undefined { return this.props.sourceObservedAt; }
+  public get sourceFingerprint(): string | undefined { return this.props.sourceFingerprint; }
   public get createdAt(): Date { return this.props.createdAt; }
   public get updatedAt(): Date { return this.props.updatedAt; }
 

@@ -1,0 +1,4 @@
+{
+  "functions": { "api/sales.ts": { "maxDuration": 60 }, "api/sales-webhook.ts": { "maxDuration": 10 } },
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+}

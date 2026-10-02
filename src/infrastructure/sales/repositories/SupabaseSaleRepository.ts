@@ -250,7 +250,8 @@ export class SupabaseSaleRepository implements ISaleRepository {
     let query = this.client
       .from('sales')
       .select('total, source_channel, occurred_at')
-      .eq('organization_id', organizationId);
+      .eq('organization_id', organizationId)
+      .eq('status', 'CONFIRMED');
 
     if (startDate) query = query.gte('occurred_at', startDate.toISOString());
     if (endDate) query = query.lte('occurred_at', endDate.toISOString());
@@ -294,7 +295,8 @@ export class SupabaseSaleRepository implements ISaleRepository {
     let salesQuery = this.client
       .from('sales')
       .select('id')
-      .eq('organization_id', organizationId);
+      .eq('organization_id', organizationId)
+      .eq('status', 'CONFIRMED');
 
     if (startDate) salesQuery = salesQuery.gte('occurred_at', startDate.toISOString());
     if (endDate) salesQuery = salesQuery.lte('occurred_at', endDate.toISOString());
@@ -347,7 +349,13 @@ export class SupabaseSaleRepository implements ISaleRepository {
       id: String(row.id),
       organizationId: String(row.organization_id),
       operationalUnitId: row.operational_unit_id ? String(row.operational_unit_id) : null,
-      salesImportId: String(row.sales_import_id),
+      salesImportId: row.sales_import_id ? String(row.sales_import_id) : '',
+      externalLocationId: row.external_location_id ? String(row.external_location_id) : undefined,
+      externalSaleId: row.external_sale_id ? String(row.external_sale_id) : undefined,
+      syncRunId: row.sync_run_id ? String(row.sync_run_id) : undefined,
+      sourceFingerprint: row.source_fingerprint ? String(row.source_fingerprint) : undefined,
+      sourceAdapterVersion: row.source_adapter_version ? String(row.source_adapter_version) : undefined,
+      sourceObservedAt: row.source_observed_at ? String(row.source_observed_at) : undefined,
       sourceSystem: String(row.source_system),
       exportType: String(row.export_type),
       sourceLocation: String(row.source_location),
@@ -382,6 +390,7 @@ export class SupabaseSaleRepository implements ISaleRepository {
       itemType: (row.item_type as SaleLine['itemType']) || 'UNKNOWN',
       notes: row.notes ? String(row.notes) : null,
       catalogProductId: row.catalog_product_id ? String(row.catalog_product_id) : null,
+      sourceFacts: row.source_facts as Record<string,unknown> | undefined,
       createdAt: new Date(String(row.created_at)),
     });
   }

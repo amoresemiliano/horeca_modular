@@ -107,7 +107,7 @@ export class InMemorySaleRepository implements ISaleRepository {
     totalRevenue: number;
     channelBreakdown: Record<string, { count: number; revenue: number }>;
   }> {
-    let sales = Array.from(this.sales.values()).filter(s => s.organizationId === organizationId);
+    let sales = Array.from(this.sales.values()).filter(s => s.organizationId === organizationId && s.status === 'CONFIRMED');
     if (startDate) sales = sales.filter(s => s.occurredAt >= startDate);
     if (endDate) sales = sales.filter(s => s.occurredAt <= endDate);
 
@@ -143,7 +143,7 @@ export class InMemorySaleRepository implements ISaleRepository {
       itemType: string;
     }>
   > {
-    let sales = Array.from(this.sales.values()).filter(s => s.organizationId === organizationId);
+    let sales = Array.from(this.sales.values()).filter(s => s.organizationId === organizationId && s.status === 'CONFIRMED');
     if (startDate) sales = sales.filter(s => s.occurredAt >= startDate);
     if (endDate) sales = sales.filter(s => s.occurredAt <= endDate);
 

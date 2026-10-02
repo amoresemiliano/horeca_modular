@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { defaultSalesContainer } from '../../infrastructure/sales/salesServiceContainer';
+import { SalesSyncPanel } from './SalesSyncPanel';
 
 export const VentasApp = ({ tabActiva }) => {
-  const { organizationId, activeOrganization } = useAuth();
+  const { organizationId } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [infraError, setInfraError] = useState(null);
@@ -111,6 +112,7 @@ export const VentasApp = ({ tabActiva }) => {
 
   return (
     <div className="flex flex-col gap-6 font-sans">
+      <SalesSyncPanel key={organizationId} organizationId={organizationId} onSynced={loadData} />
       {/* ── ERROR DE INFRAESTRUCTURA / PERSISTENCIA ── */}
       {infraError && (
         <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm flex justify-between items-center">
@@ -263,6 +265,7 @@ export const VentasApp = ({ tabActiva }) => {
                     <td className="px-6 py-4 text-gray-600 capitalize">{t.paymentMethod}</td>
                     <td className="px-6 py-4 text-right font-bold text-emerald-600">
                       {formatEuro(t.total)}
+                      {t.status !== 'CONFIRMED' && <span className="block text-xs text-amber-700">{{VOIDED:'Cancelada',OPEN:'Abierta',REVIEW_REQUIRED:'Requiere revisión',REFUNDED:'Reembolsada'}[t.status] || t.status}</span>}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button

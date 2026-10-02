@@ -10,6 +10,7 @@ import { GetSalesOverviewUseCase } from '../../application/sales/useCases/GetSal
 import { GetSaleDetailsUseCase } from '../../application/sales/useCases/GetSaleDetailsUseCase';
 import { GetProductSalesSummaryUseCase } from '../../application/sales/useCases/GetProductSalesSummaryUseCase';
 import { GetSalesImportsUseCase } from '../../application/sales/useCases/GetSalesImportsUseCase';
+import { salesOperation } from './serverSalesClient';
 
 export interface SalesServiceContainer {
   ingestSalesCsv: IngestSalesCsvUseCase;
@@ -76,7 +77,7 @@ export function getProductionSalesContainer(): SalesServiceContainer {
 }
 
 export const defaultSalesContainer = {
-  get ingestSalesCsv() { return getProductionSalesContainer().ingestSalesCsv; },
+  ingestSalesCsv: { execute: (input: {organizationId: string; csvContent: string; filename: string}) => salesOperation({action:'csv',...input}) },
   get getSalesOverview() { return getProductionSalesContainer().getSalesOverview; },
   get getSaleDetails() { return getProductionSalesContainer().getSaleDetails; },
   get getProductSalesSummary() { return getProductionSalesContainer().getProductSalesSummary; },
