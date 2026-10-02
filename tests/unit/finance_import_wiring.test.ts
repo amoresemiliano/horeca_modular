@@ -32,7 +32,7 @@ describe('Finance active UI wiring after Core integration', () => {
   it('reloads after import and keeps classification, catalog, splits and rules connected', () => {
     const app = read('modules/extractos/ExtractosApp.jsx');
     expect(app).toMatch(/const handleImportCompleted = \(summary\) => \{[\s\S]*?loadData\(\);\s*\};/);
-    expect(app).toContain('fetchConsolidatedMovements(organizationId)');
+    expect(app).toContain('fetchConsolidatedMovements(organizationId,');
     expect(app).toMatch(/<ClassificationModal[^\r\n]*onSaved=\{loadData\}/);
     expect(app).toMatch(/<FinanceCatalogModal[^\r\n]*onSaved=\{loadData\}/);
     expect(app).toMatch(/<SplitModal[\s\S]*?onConfirmSplit=\{handleConfirmSplit\}/);

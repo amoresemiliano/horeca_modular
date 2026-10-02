@@ -25,14 +25,15 @@ describe('Consolidated HORECA baseline in embedded PostgreSQL (not hosted Auth)'
   });
   it('matches the exact current canonical wire registry and role defaults', async () => {
     const caps = await db.query<{code:string}>('SELECT code FROM public.eco_capabilities');
-    expect(caps.rows.map(r=>r.code).sort()).toEqual(Object.values(Capability).sort());
+    // Historical baseline: WP-CORE-003 additions are validated by the full-chain suite.
+    expect(caps.rows.map(r=>r.code).sort()).toEqual(Object.values(Capability).filter(c=>!c.startsWith('banks.')).sort());
     const roles = await db.query<{code:string}>('SELECT code FROM public.eco_role_templates');
     expect(roles.rows.map(r=>r.code).sort()).toEqual(Object.values(RoleTemplate).sort());
     for (const role of Object.values(RoleTemplate)) {
       const rows = await db.query<{code:string}>(`SELECT c.code FROM public.eco_role_template_capabilities rc
         JOIN public.eco_role_templates r ON r.id=rc.role_template_id
         JOIN public.eco_capabilities c ON c.id=rc.capability_id WHERE r.code=$1`, [role]);
-      expect(rows.rows.map(r=>r.code).sort(),role).toEqual([...DEFAULT_ROLE_CAPABILITIES[role]].sort());
+      expect(rows.rows.map(r=>r.code).sort(),role).toEqual([...DEFAULT_ROLE_CAPABILITIES[role]].filter(c=>!c.startsWith('banks.')).sort());
     }
   });
   it('enables RLS, PKs and SELECT-only browser access on every Core relation', async () => {

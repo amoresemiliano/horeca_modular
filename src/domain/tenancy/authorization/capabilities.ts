@@ -55,6 +55,14 @@ export const Capability = {
   FINANCIAL_RECONCILIATION_REVIEW: 'financial.reconciliation.review',
   FINANCIAL_RECONCILIATION_CONFIRM: 'financial.reconciliation.confirm',
   FINANCIAL_ALLOCATION_EDIT: 'financial.allocation.edit',
+  BANKS_CONSOLIDATED_VIEW: 'banks.consolidated.view',
+  BANKS_SUMMARY_VIEW: 'banks.summary.view',
+  BANKS_METRICS_VIEW: 'banks.metrics.view',
+  BANKS_ACCOUNTS_MANAGE: 'banks.accounts.manage',
+  BANKS_CATEGORIES_MANAGE: 'banks.categories.manage',
+  BANKS_COUNTERPARTIES_MANAGE: 'banks.counterparties.manage',
+  BANKS_RULES_MANAGE: 'banks.rules.manage',
+  BANKS_TRANSFERS_REVIEW: 'banks.transfers.review',
 
   // 11. Documents & OCR
   DOCUMENTS_UPLOAD: 'documents.upload',

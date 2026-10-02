@@ -24,6 +24,7 @@ const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
   if (!isOpen) return null;
 
   const handleFileSelect = async (file) => {
+    if (!can('statements.import.upload') || !can('statements.import.process')) { setError('No tienes permiso para subir y procesar extractos.'); return; }
     if (!file) return;
     setSelectedFile(file);
     setError('');

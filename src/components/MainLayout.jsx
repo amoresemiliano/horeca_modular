@@ -7,7 +7,8 @@ import PrediccionApp  from '../modules/prediccion/PrediccionApp';
 import EscandallosApp from '../modules/escandallos/EscandallosApp';
 import HorariosApp    from '../modules/horarios/HorariosApp';
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
-import Configuracion  from '../modules/configuracion/Configuracion.jsx';
+import TenantAdministration from '../modules/administration/TenantAdministration';
+import { navigationAllowed, banksSectionAllowed } from '../application/tenancy/accessNavigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoCliente from '../assets/logo_cliente.png';
@@ -24,7 +25,8 @@ const MODULOS = {
   Producción:  { icon: '🍳', label: 'Producción',   tabs: ['Registro', 'Historial', 'Resumen'],                                    group: 'operaciones'},
   Personal:    { icon: '👤', label: 'Personal',     tabs: ['Fichajes', 'Incidencias', 'Empleados', 'Informes'],                     group: 'rrhh'       },
   Predicción:  { icon: '🔮', label: 'Predicción',   tabs: ['Carga', 'Stock', 'Predicciones'],                                       group: 'analytics' },
-  Config:      { icon: '⚙',  label: 'Config',       tabs: ['Accesos', 'Empresa', 'Usuarios'],                                       group: 'sistema'   },
+  PlatformAdmin: { icon: '⚙', label: 'Administración de plataforma', tabs: ['Tenants'], group: 'sistema' },
+  Config:      { icon: '⚙',  label: 'Administración de organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
 };
 
 const GRUPOS = {
@@ -48,7 +50,8 @@ const renderModulo = (modulo, tab, user) => {
     case 'Escandallos': return <EscandallosApp  tabActiva={tab} />;
     case 'Personal':    return <HorariosApp     tabActiva={tab} />;
     case 'Producción':  return <ProduccionApp   tabActiva={tab} />;
-    case 'Config':      return <Configuracion />;
+    case 'Config':      return <TenantAdministration />;
+    case 'PlatformAdmin': return <TenantAdministration platform />;
     default:
       return (
         <div className="flex flex-col items-center justify-center py-24 text-center select-none">
@@ -76,12 +79,13 @@ const AccesoRestringido = ({ modulo }) => (
 
 /* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
 const MainLayout = ({ user: propsUser }) => {
-  const { user: authUser, role, availableOrganizations, activeOrganization, switchOrganization, logout, updatePassword } = useAuth();
+  const { user: authUser, can, isModuleEnabled, platformCan, availableOrganizations, availableOperationalUnits, activeOperationalUnit, switchOperationalUnit, activeOrganization, switchOrganization, logout, updatePassword } = useAuth();
   const user = authUser || propsUser;
   const [moduloActivo,      setModuloActivo]      = useState('Dashboard');
   const [tabActiva,         setTabActiva]          = useState('Inicio');
   const [sidebarOpen,       setSidebarOpen]        = useState(true);
-  const [modulosPermitidos, setModulosPermitidos]  = useState([]);
+  const modulosPermitidos = Object.keys(MODULOS).filter(key => navigationAllowed(key, can, isModuleEnabled, platformCan));
+  const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || banksSectionAllowed(tab, can));
 
   // Change password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -114,23 +118,20 @@ const MainLayout = ({ user: propsUser }) => {
     }
   };
 
+  const navigationKey = modulosPermitidos.map(mod => mod + ':' + permittedTabs(mod).join(',')).join('|');
   useEffect(() => {
-    // Module permission resolution strictly derived from validated DB membership role
-    if (role === 'SUPERADMIN' || role === 'ADMIN' || role === 'OWNER') {
-      setModulosPermitidos(Object.keys(MODULOS));
-    } else if (role === 'GERENTE' || role === 'OPERADOR' || role === 'MANAGER') {
-      setModulosPermitidos(['Dashboard', 'Bancos', 'Ventas', 'KPI', 'Inventario', 'Producción', 'Personal']);
-    } else if (role === 'CONSULTA' || role === 'CONSULTANT') {
-      setModulosPermitidos(['Dashboard', 'Bancos', 'Ventas', 'KPI']);
-    } else {
-      // Fail-closed default
-      setModulosPermitidos(Object.keys(MODULOS));
+    const current = navigationKey.split('|').find(entry => entry.startsWith(moduloActivo + ':'));
+    const tabs = current?.split(':')[1].split(',') || [];
+    if (!current || !tabs.includes(tabActiva)) {
+      const first = navigationKey.split('|')[0].split(':');
+      setModuloActivo(first[0] || 'Dashboard');
+      setTabActiva(first[1]?.split(',')[0] || 'Sin acceso');
     }
-  }, [role]);
+  }, [navigationKey, moduloActivo, tabActiva]);
 
   const cambiarModulo = (mod) => {
     setModuloActivo(mod);
-    setTabActiva(MODULOS[mod].tabs[0]);
+    setTabActiva(permittedTabs(mod)[0]);
   };
 
   const cerrarSesion = async () => {
@@ -193,9 +194,10 @@ const MainLayout = ({ user: propsUser }) => {
           {/* Línea divisoria */}
           <div style={{ width: '1px', height: '28px', background: 'var(--c-border)' }} />
 
+          {activeOrganization && <select aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Contexto de organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
           {/* Navegación por grupos */}
           <nav style={{ display: 'flex', gap: '0.125rem', flexWrap: 'nowrap' }}>
-            {Object.entries(MODULOS).map(([key, mod]) => {
+            {Object.entries(MODULOS).filter(([key]) => modulosPermitidos.includes(key)).map(([key, mod]) => {
               const isActive = moduloActivo === key;
               return (
                 <button
@@ -350,7 +352,7 @@ const MainLayout = ({ user: propsUser }) => {
 
           {/* Nav tabs */}
           <nav style={{ flex: 1, padding: '0.625rem', overflowY: 'auto', overflowX: 'hidden' }}>
-            {tabActual?.tabs.map((tab, i) => {
+            {tabActual?.tabs.filter(tab => moduloActivo !== 'Bancos' || banksSectionAllowed(tab, can)).map((tab, i) => {
               const isActive = tabActiva === tab;
               return (
                 <button
@@ -478,7 +480,7 @@ const MainLayout = ({ user: propsUser }) => {
               padding: '2rem',
               animation: 'fadeIn 200ms ease',
             }}>
-              {!modulosPermitidos.includes(moduloActivo)
+              {(!modulosPermitidos.includes(moduloActivo) || (moduloActivo === 'Bancos' && !banksSectionAllowed(tabActiva, can)))
                 ? <AccesoRestringido modulo={moduloActivo} />
                 : renderModulo(moduloActivo, tabActiva, user)
               }

@@ -17,7 +17,18 @@ export async function resolveAuthorizedCapabilities(client, organizationId, cand
       requested_operational_unit_id: unitId,
     });
     if (error) throw error;
-    return data === true ? code : null;
+    if (data === true) return code;
+    // Organization capabilities remain evaluated at organization scope even while
+    // an operational unit is active. This never grants a failed unit capability.
+    if (unitId) {
+      const fallback = await client.rpc('can_execute_capability_for_org', {
+        requested_organization_id: organizationId, required_capability_code: code,
+        requested_operational_unit_id: null,
+      });
+      if (fallback.error) throw fallback.error;
+      if (fallback.data === true) return code;
+    }
+    return null;
   }));
   return decisions.filter(Boolean);
 }
