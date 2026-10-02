@@ -1,0 +1,336 @@
+{
+  "date": "2026-09-29",
+  "project": "vmxjqwlfwnphorthhcwu",
+  "financeSourceSha": "c3838c54624f184c18b132d6c5d6bdeae5113947",
+  "coreFixPublishedBeforeHosted": "9ddba38f70f2ecd5355631b2fed04498ccc5d8b8",
+  "financeMigrationSha256": "86e1f113321703bf4a48247a4723f2fa552b5122340d67120e0c49dda2e7976a",
+  "coreRuntimeSha256": "989af149203e3c6a0eb31bfe72405bac9eb4910bd42cc903073f01804f899478",
+  "hosted": {
+    "project": "vmxjqwlfwnphorthhcwu",
+    "started": "2026-09-29T12:38:07.951Z",
+    "checks": [
+      {
+        "name": "OWNER confirmation allowed",
+        "status": "PASS"
+      },
+      {
+        "name": "MANAGER confirmation allowed",
+        "status": "PASS"
+      },
+      {
+        "name": "ADMINISTRATIVE confirmation allowed",
+        "status": "PASS"
+      },
+      {
+        "name": "EXTERNAL_ACCOUNTANT confirmation denied",
+        "status": "PASS"
+      },
+      {
+        "name": "CONSULTANT confirmation denied",
+        "status": "PASS"
+      },
+      {
+        "name": "foreign organization denied",
+        "status": "PASS"
+      },
+      {
+        "name": "inactive membership denied",
+        "status": "PASS"
+      },
+      {
+        "name": "platform admin without tenant membership denied",
+        "status": "PASS"
+      },
+      {
+        "name": "explicit revoke denied",
+        "status": "PASS"
+      },
+      {
+        "name": "disabled bancos entitlement denied",
+        "status": "PASS"
+      },
+      {
+        "name": "authenticated direct INSERT denied: eco_source_imports",
+        "status": "PASS"
+      },
+      {
+        "name": "authenticated direct INSERT denied: eco_source_files",
+        "status": "PASS"
+      },
+      {
+        "name": "authenticated direct INSERT denied: eco_import_rows",
+        "status": "PASS"
+      },
+      {
+        "name": "authenticated direct INSERT denied: eco_financial_movements",
+        "status": "PASS"
+      },
+      {
+        "name": "authenticated direct INSERT denied: eco_movement_allocations",
+        "status": "PASS"
+      },
+      {
+        "name": "direct allocation UPDATE/DELETE denied",
+        "status": "PASS"
+      },
+      {
+        "name": "hosted second-row failure rolls back all five relation counts",
+        "status": "PASS",
+        "imports": 3,
+        "files": 3,
+        "rows": 3,
+        "movements": 3,
+        "allocations": 3
+      },
+      {
+        "name": "exact reimport preserves canonical identity and counts",
+        "status": "PASS"
+      },
+      {
+        "name": "independent authenticated concurrent clients 1",
+        "status": "PASS",
+        "persistedCounts": [
+          2,
+          0
+        ],
+        "imports": 1,
+        "files": 1,
+        "movements": 2,
+        "allocations": 2
+      },
+      {
+        "name": "independent authenticated concurrent clients 2",
+        "status": "PASS",
+        "persistedCounts": [
+          2,
+          0
+        ],
+        "imports": 1,
+        "files": 1,
+        "movements": 2,
+        "allocations": 2
+      },
+      {
+        "name": "independent authenticated concurrent clients 3",
+        "status": "PASS",
+        "persistedCounts": [
+          2,
+          0
+        ],
+        "imports": 1,
+        "files": 1,
+        "movements": 2,
+        "allocations": 2
+      },
+      {
+        "name": "persist/reload all canonical fields including SQL NULL valueDate",
+        "status": "PASS"
+      },
+      {
+        "name": "classification survives independent-client reload",
+        "status": "PASS"
+      },
+      {
+        "name": "balanced split preserves exact cents and original BankMovement",
+        "status": "PASS"
+      },
+      {
+        "name": "unbalanced split atomically rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "deterministic SUGGESTED rule remains editable and facts/reconciliation unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "anonymous confirmation denied",
+        "status": "PASS"
+      }
+    ],
+    "status": "PASS",
+    "completed": "2026-09-29T12:38:16.629Z"
+  },
+  "browserImports": {
+    "checks": [
+      "normal password login resolves El Criollo organization without holding_id error",
+      "Finance receives explicit selected organization",
+      "UI creates BBVA Account A",
+      "UI creates BBVA Account B",
+      "UI creates BBVA Card",
+      "UI creates Sabadell Account",
+      "UI creates Sabadell Card",
+      "UI creates GASTO category and subcategory",
+      "UI creates INGRESO category and subcategory",
+      "UI preview/account/confirm BBVA Account A",
+      "UI preview/account/confirm BBVA Account B",
+      "UI preview/account/confirm BBVA Card",
+      "UI preview/account/confirm Sabadell Account",
+      "UI preview/account/confirm Sabadell Card",
+      "browser reload preserves movements",
+      "UI exact reimport creates zero new movements"
+    ],
+    "errors": [],
+    "status": "PASS"
+  },
+  "browserClassification": {
+    "checks": [
+      "UI classifies expense, subcategory and creates counterparty",
+      "UI classifies income and subcategory",
+      "browser reload preserves classifications and counterparty",
+      "UI balanced split preserves original BankMovement",
+      "UI creates deterministic rule and applies editable suggestion",
+      "UI suggestion edited and reloaded; facts unchanged, reconciliation UNMATCHED"
+    ],
+    "errors": [],
+    "status": "PASS"
+  },
+  "fixtures": [
+    {
+      "file": "bbva_account_a_sanitized.xls",
+      "sha256": "384c47e575976aca47e4b054eeff4a8b1fe63dafe4e812698a2878b8a89cda74",
+      "status": "COMPLETED",
+      "accepted": 149,
+      "rejected": 0
+    },
+    {
+      "file": "bbva_account_b_sanitized.xls",
+      "sha256": "67773acc6a1474b9dd7ff5b3e42c53eb83b2eb5287d3984b5ad9eae3112bea52",
+      "status": "COMPLETED",
+      "accepted": 234,
+      "rejected": 0
+    },
+    {
+      "file": "bbva_card_sanitized.xls",
+      "sha256": "cd40e903795278d94c57e7d8fa4924bbb1e6f6cf5529a778a679a931913d920d",
+      "status": "COMPLETED",
+      "accepted": 84,
+      "rejected": 0
+    },
+    {
+      "file": "sabadell_account_sanitized.xls",
+      "sha256": "03b56021eeac11e7251004c969e4cd73e4092b55eb3c89e4623f8a779458071c",
+      "status": "COMPLETED",
+      "accepted": 2,
+      "rejected": 0
+    },
+    {
+      "file": "sabadell_card_sanitized.xls",
+      "sha256": "192fbc4a99758401847ca20b579d3e3e86ee4a42d70ed93821f5d682492c2171",
+      "status": "COMPLETED",
+      "accepted": 7,
+      "rejected": 0
+    }
+  ],
+  "drift": {
+    "status": "PASS",
+    "tables": 21,
+    "legacyPreserved": true,
+    "migrationHistory": [
+      {
+        "name": "horeca_core_baseline",
+        "version": "20260926000000"
+      },
+      {
+        "name": "ccr_fin_001_core_authorization",
+        "version": "20260927000000"
+      },
+      {
+        "name": "finance_atomic_bank_import",
+        "version": "20260928010000"
+      }
+    ]
+  },
+  "cleanup": {
+    "status": "PASS",
+    "temporaryAuthDeleted": true,
+    "temporaryFinanceRowsRemaining": {
+      "eco_source_imports": 0,
+      "eco_source_files": 0,
+      "eco_import_rows": 0,
+      "eco_financial_movements": 0,
+      "eco_movement_allocations": 0,
+      "eco_financial_accounts": 0,
+      "eco_tax_categories": 0,
+      "eco_tax_subcategories": 0,
+      "eco_counterparties": 0,
+      "eco_classification_rules": 0
+    },
+    "productOwnerMembershipPreserved": true,
+    "bancosEnabled": true,
+    "legacyContentHashesPreserved": true
+  },
+  "legacyBefore": [
+    {
+      "content_md5": "381e0be8fff01812006b7d69e5c65d6a",
+      "row_count": 12,
+      "table_name": "categorias"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "empleados"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "extractos"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "fichajes"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "incidencias"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "produccion_registros"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "proveedores"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "recetas"
+    },
+    {
+      "content_md5": "21013a18612ac6d9892f58c131acd060",
+      "row_count": 13,
+      "table_name": "subcategorias"
+    }
+  ],
+  "uat": {
+    "organizationId": "f84168ef-2b78-451b-b0a9-39c1c381e59b",
+    "profileId": "d4fbe02c-38f7-4683-be0e-d87dff174f1a",
+    "membershipId": "4d909aa6-74da-42b0-8f19-b1a737e30ce0",
+    "authUserId": "93fde7c3-24c3-40e2-b7ba-fd55957c2644",
+    "email": "emilianodirosa1+horeca-dev@gmail.com",
+    "authEmailConfirmed": false,
+    "role": "OWNER",
+    "organizationWide": true,
+    "bancosEnabled": true,
+    "legalName": null,
+    "taxId": null,
+    "platformRoleGranted": false,
+    "humanAction": "Use the HORECA DEV Supabase Auth dashboard to send a password reset/recovery email, then complete email confirmation/password setup."
+  },
+  "localQuality": {
+    "core": {
+      "passed": 152,
+      "skipped": 1
+    },
+    "composedFinance": {
+      "passed": 251,
+      "skipped": 1
+    }
+  },
+  "pr2": "READY_FOR_REVIEW; draft and unmerged",
+  "status": "PARTIAL: human Product Owner Auth activation pending"
+}

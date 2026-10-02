@@ -1,0 +1,108 @@
+{
+  "project_ref": "vmxjqwlfwnphorthhcwu",
+  "core_contract": "MATCH",
+  "history": [
+    {
+      "name": "horeca_core_baseline",
+      "version": "20260926000000"
+    },
+    {
+      "name": "ccr_fin_001_core_authorization",
+      "version": "20260927000000"
+    }
+  ],
+  "legacy_tables": [
+    {
+      "content_md5": "381e0be8fff01812006b7d69e5c65d6a",
+      "row_count": 12,
+      "table_name": "categorias"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "empleados"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "extractos"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "fichajes"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "incidencias"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "produccion_registros"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "proveedores"
+    },
+    {
+      "content_md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "row_count": 0,
+      "table_name": "recetas"
+    },
+    {
+      "content_md5": "21013a18612ac6d9892f58c131acd060",
+      "row_count": 13,
+      "table_name": "subcategorias"
+    }
+  ],
+  "cleanup": {
+    "auth_users": 0,
+    "entitlements": 0,
+    "memberships": 0,
+    "no_test_backdoor": true,
+    "organizations": 0,
+    "profiles": 0
+  },
+  "hosted_behavior": {
+    "hosted_sql": "PASS",
+    "authenticated_rpc_nonmember": "DENY",
+    "anonymous_rpc": "DENY"
+  },
+  "verified_at_utc": "2026-09-28T16:42:52.380873+00:00",
+  "migration_sha256_lf": {
+    "20260926000000_horeca_core_baseline.sql": "bba3cf1534a9bdecb2b285fb1adadf8f9d4c4a4891c9a1a343e9ee27b124eebc",
+    "20260927000000_ccr_fin_001_core_authorization.sql": "ee505cda98a3461cc4d3a12d61f53abc794e97fe63e9cc5be31b5ea32e3b8598"
+  },
+  "local_quality": {
+    "lint_errors": 0,
+    "lint_existing_warnings": 14,
+    "typecheck": "PASS",
+    "tests_passed": 147,
+    "tests_skipped": 1,
+    "build": "PASS"
+  },
+  "history_state": "Two executed migrations only; CLI root dry-run up to date",
+  "hosted_sql_checks": [
+    "three_authorized_role_allows",
+    "accountant_without_grant_denied",
+    "nonmember_org_denied",
+    "authorized_second_org_no_first_membership_fallback",
+    "inactive_membership_denied",
+    "disabled_entitlement_denied",
+    "revoke_beats_default_and_explicit_grant",
+    "unit_only_confirmation_denied",
+    "assigned_unit_allowed",
+    "unassigned_and_foreign_unit_denied",
+    "scoped_unit_select_rls",
+    "cross_tenant_scope_fk",
+    "platform_role_tier_fk",
+    "browser_profile_membership_registry_writes_denied",
+    "platform_assignment_without_membership_denied_and_zero_tenant_rows",
+    "authenticated_execute",
+    "anon_and_public_execute_denied",
+    "confirmation_registry_and_bancos_metadata"
+  ]
+}

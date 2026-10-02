@@ -1,3 +1,5 @@
+> QUARANTINED INFRASTRUCTURE HISTORY ? 2026-09-28: References below to `ourzapkjykzlwsjunzmd` identify **Sistema Contable MICA**, not HORECA. Previous target labels and live-schema claims are invalid as HORECA evidence. Canonical HORECA DEV is `vmxjqwlfwnphorthhcwu` (`horeca_modular_staging`). Do not execute deployment instructions from this historical report. See [DEV rebaseline](DEV_SUPABASE_REBASELINE.md).
+
 # DATABASE DRIFT REPORT — HORECA MODULAR
 
 ## 1. Audit Overview

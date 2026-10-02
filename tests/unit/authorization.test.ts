@@ -38,6 +38,35 @@ describe('Canonical Authorization Evaluator (Scope K)', () => {
     expect(decision.allowed).toBe(true);
   });
 
+  it('enforces fail-closed authorization for statement processing (not confirmation)', () => {
+    // OWNER is authorized
+    const ownerDecision = can({
+      user: activeUser,
+      requiredCapability: Capability.STATEMENTS_IMPORT_PROCESS,
+      organizationId: 'org-1',
+      membership: {
+        organizationId: 'org-1',
+        roleTemplate: RoleTemplate.OWNER,
+        isActive: true,
+      },
+    });
+    expect(ownerDecision.allowed).toBe(true);
+
+    // PRODUCTION role is strictly DENIED
+    const productionDecision = can({
+      user: activeUser,
+      requiredCapability: Capability.STATEMENTS_IMPORT_PROCESS,
+      organizationId: 'org-1',
+      membership: {
+        organizationId: 'org-1',
+        roleTemplate: RoleTemplate.PRODUCTION,
+        isActive: true,
+      },
+    });
+    expect(productionDecision.allowed).toBe(false);
+    expect(productionDecision.reason).toContain('lacks required capability');
+  });
+
   it('strictly isolates EXTERNAL_ACCOUNTANT to read/review without execution authority', () => {
     // Reviewing reconciliation is allowed for accountant
     const reviewDecision = can({

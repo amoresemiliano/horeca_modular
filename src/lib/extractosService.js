@@ -9,6 +9,8 @@
  *  - Soft delete
  */
 import { supabase } from './supabase.js';
+import { assertGenericEconomicType } from '../domains/finance/domain/economic';
+import { moneyToDecimal } from '../domains/finance/domain/money';
 
 function requireOrgId(orgId) {
   if (!orgId) {
@@ -20,15 +22,17 @@ function requireOrgId(orgId) {
 // ─── Carga catálogos iniciales ────────────────────────────────────────────────
 export async function getExtractosCatalogs(orgId) {
   const activeOrgId = requireOrgId(orgId);
-  try {
     const [accountsRes, categoriesRes, subcategoriesRes, counterpartiesRes, rulesRes] = await Promise.all([
       supabase.from('eco_financial_accounts').select('*').eq('organization_id', activeOrgId),
-      supabase.from('eco_tax_categories').select('*').order('name'),
+      supabase.from('eco_tax_categories').select('*').eq('organization_id', activeOrgId).order('name'),
       supabase.from('eco_tax_subcategories').select('*').eq('organization_id', activeOrgId).order('name'),
       supabase.from('eco_counterparties').select('*').eq('organization_id', activeOrgId).order('name'),
-      supabase.from('eco_classification_rules').select('*').eq('organization_id', activeOrgId).eq('is_active', true)
+      supabase.from('eco_classification_rules').select('*').eq('organization_id', activeOrgId).order('priority').order('created_at')
     ]);
 
+    for (const result of [accountsRes, categoriesRes, subcategoriesRes, counterpartiesRes, rulesRes]) {
+      if (result.error) throw new Error(result.error.message);
+    }
     return {
       accounts: accountsRes.data || [],
       categories: categoriesRes.data || [],
@@ -36,195 +40,14 @@ export async function getExtractosCatalogs(orgId) {
       counterparties: counterpartiesRes.data || [],
       rules: rulesRes.data || []
     };
-  } catch (err) {
-    console.error('Error fetching catalogs:', err);
-    return { accounts: [], categories: [], subcategories: [], counterparties: [], rules: [] };
-  }
 }
 
-// ─── Verificación de Duplicado Nivel A (File Binary SHA256) ───────────────────
-export async function checkFileDuplicate(fileHash, orgId) {
-  const activeOrgId = requireOrgId(orgId);
-  try {
-    const { data, error } = await supabase
-      .from('eco_source_files')
-      .select('id, import_id, original_name, created_at')
-      .eq('organization_id', activeOrgId)
-      .eq('sha256_hash', fileHash)
-      .maybeSingle();
-
-    if (!error && data) {
-      return { isDuplicate: true, file: data };
-    }
-  } catch (_) {}
-  return { isDuplicate: false };
-}
-
-// ─── Importación completa con Persistencia en Supabase ─────────────────────────
-export async function importBankStatementData(parsedResult, orgId) {
-  const activeOrgId = requireOrgId(orgId);
-  const { file_name, file_hash, account_code, accountCode = account_code, movements } = parsedResult;
-
-  // 1. Resolve source_account_id
-  const { data: accData } = await supabase
-    .from('eco_financial_accounts')
-    .select('id')
-    .eq('organization_id', activeOrgId)
-    .eq('code', accountCode)
-    .maybeSingle();
-
-  const sourceAccountId = accData?.id || null;
-
-  // 2. Create eco_source_imports entry
-  const { data: importEntry, error: importErr } = await supabase
-    .from('eco_source_imports')
-    .insert({
-      organization_id: activeOrgId,
-      source_type: 'BANCO',
-      operation_type: 'BANCO',
-      status: 'PROCESSING',
-      total_rows: movements.length,
-    })
-    .select()
-    .single();
-
-  if (importErr || !importEntry) {
-    throw new Error('Error al registrar importación: ' + (importErr?.message || ''));
-  }
-
-  // 3. Create eco_source_files entry (Level A hash saved)
-  const { data: fileEntry } = await supabase
-    .from('eco_source_files')
-    .insert({
-      import_id: importEntry.id,
-      organization_id: activeOrgId,
-      original_name: file_name,
-      storage_path: `bank_statements/${importEntry.id}_${file_name}`,
-      size_bytes: 0,
-      sha256_hash: file_hash,
-      source_type: accountCode,
-    })
-    .select()
-    .single();
-
-  // 4. Fetch existing overlap hashes for Level C Economic Overlap detection
-  const overlapHashes = movements.map(m => m.overlap_hash);
-  const { data: existingMovements } = await supabase
-    .from('eco_financial_movements')
-    .select('financial_fingerprint')
-    .eq('organization_id', activeOrgId)
-    .in('financial_fingerprint', overlapHashes);
-
-  const existingHashSet = new Set((existingMovements || []).map(m => m.financial_fingerprint));
-
-  // 5. Fetch active classification rules for rule engine
-  const { data: rules } = await supabase
-    .from('eco_classification_rules')
-    .select('*')
-    .eq('organization_id', activeOrgId)
-    .eq('is_active', true);
-
-  let insertedCount = 0;
-  let overlapCount = 0;
-
-  for (const m of movements) {
-    // Save eco_import_rows (Level B Row Identity)
-    const { data: rowEntry } = await supabase
-      .from('eco_import_rows')
-      .insert({
-        file_id: fileEntry?.id,
-        organization_id: activeOrgId,
-        source_row_number: m.source_row_number,
-        raw_payload: m.raw_payload,
-        parse_status: 'ACCEPTED',
-      })
-      .select()
-      .single();
-
-    // Check Level C Economic Overlap
-    const isOverlap = existingHashSet.has(m.overlap_hash);
-    const duplicateStatus = isOverlap ? 'POTENTIAL_OVERLAP' : 'UNIQUE';
-    if (isOverlap) overlapCount++;
-
-    // Insert Raw Immutable Movement (eco_financial_movements)
-    const { data: movEntry, error: movErr } = await supabase
-      .from('eco_financial_movements')
-      .insert({
-        organization_id: activeOrgId,
-        import_id: importEntry.id,
-        row_id: rowEntry?.id,
-        source_account_id: sourceAccountId,
-        source_type: accountCode,
-        operation_type: m.monto >= 0 ? 'INGRESO' : 'GASTO',
-        status: 'ACTIVE',
-        identity_key: m.row_identity_key,
-        financial_fingerprint: m.overlap_hash,
-        fecha: m.fecha,
-        fecha_valor: m.fecha_valor,
-        descripcion: m.original_description,
-        monto: m.monto,
-        duplicate_status: duplicateStatus,
-        row_hash: m.row_identity_key,
-        normalized_payload: {
-          original_description: m.original_description,
-          normalized_description: m.normalized_description,
-        }
-      })
-      .select()
-      .single();
-
-    if (movErr || !movEntry) continue;
-    insertedCount++;
-
-    // Apply Rule Engine to suggest category/counterparty
-    let matchedRule = null;
-    if (rules && rules.length > 0) {
-      matchedRule = rules.find(r => {
-        if (r.source_account_id && r.source_account_id !== sourceAccountId) return false;
-        if (r.match_sign === 'POSITIVE' && m.monto < 0) return false;
-        if (r.match_sign === 'NEGATIVE' && m.monto > 0) return false;
-        return m.normalized_description.includes(r.pattern.toUpperCase());
-      });
-    }
-
-    // Insert Editable Economic Allocation (eco_movement_allocations)
-    await supabase.from('eco_movement_allocations').insert({
-      organization_id: activeOrgId,
-      movement_id: movEntry.id,
-      monto: m.monto,
-      counterparty_id: matchedRule?.target_counterparty_id || null,
-      category_id: matchedRule?.target_category_id || null,
-      subcategory_id: matchedRule?.target_subcategory_id || null,
-      classification_status: matchedRule ? 'SUGGESTED' : 'PENDING',
-      classification_source: matchedRule ? 'RULE' : 'MANUAL',
-      reconciliation_status: 'UNMATCHED',
-    });
-  }
-
-  // Update import summary
-  await supabase
-    .from('eco_source_imports')
-    .update({
-      status: 'COMPLETED',
-      accepted_rows: insertedCount,
-      duplicate_rows: overlapCount,
-      completed_at: new Date().toISOString(),
-    })
-    .eq('id', importEntry.id);
-
-  return {
-    import_id: importEntry.id,
-    total: movements.length,
-    imported: insertedCount,
-    overlaps: overlapCount,
-  };
-}
-
-// ─── Fetch All Financial Movements & Allocations ─────────────────────────────
+// Reload all history instead of silently stopping at PostgREST's row limit.
 export async function fetchConsolidatedMovements(orgId) {
   const activeOrgId = requireOrgId(orgId);
-  try {
-    const { data: movements, error } = await supabase
+    const movements = [];
+    for (let offset = 0; ; offset += 500) {
+    const { data: page, error } = await supabase
       .from('eco_financial_movements')
       .select(`
         *,
@@ -238,180 +61,125 @@ export async function fetchConsolidatedMovements(orgId) {
       `)
       .eq('organization_id', activeOrgId)
       .eq('status', 'ACTIVE')
-      .order('fecha', { ascending: false });
+      .order('fecha', { ascending: false })
+      .order('id')
+      .range(offset, offset + 499);
 
     if (error) throw error;
-    return movements || [];
-  } catch (err) {
-    console.error('Error fetching consolidated movements:', err);
-    return [];
-  }
+    movements.push(...(page || []));
+    if (!page || page.length < 500) break;
+    }
+    return movements;
 }
 
 // ─── Actualiza Asignación Económica / Clasificación ─────────────────────────
-export async function updateAllocationClassification({
-  allocationId,
-  counterpartyId,
-  categoryId,
-  subcategoryId,
-  status = 'CONFIRMED',
-  notes,
-}) {
-  const updates = {
-    classification_status: status,
-    classification_source: 'MANUAL',
-    updated_at: new Date().toISOString(),
-  };
-
-  if (counterpartyId !== undefined) updates.counterparty_id = counterpartyId;
-  if (categoryId !== undefined) updates.category_id = categoryId;
-  if (subcategoryId !== undefined) updates.subcategory_id = subcategoryId;
-  if (notes !== undefined) updates.notes = notes;
-
-  const { data, error } = await supabase
-    .from('eco_movement_allocations')
-    .update(updates)
-    .eq('id', allocationId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+/**
+ * @param {{ orgId: string, allocationId: string, counterpartyId?: string|null, categoryId?: string|null,
+ * subcategoryId?: string|null, economicType?: import('../domains/finance/domain/economic').EconomicType,
+ * status?: 'PENDING'|'SUGGESTED'|'CONFIRMED', notes?: string|null }} input
+ */
+export async function updateAllocationClassification({ orgId, allocationId, counterpartyId, categoryId, subcategoryId, economicType, status = 'CONFIRMED', notes }) {
+  assertGenericEconomicType(economicType);
+  const patch = { classification_status: status };
+  if (economicType !== undefined) patch.economic_type = economicType;
+  if (counterpartyId !== undefined) patch.counterparty_id = counterpartyId || null;
+  if (categoryId !== undefined) patch.category_id = categoryId || null;
+  if (subcategoryId !== undefined) patch.subcategory_id = subcategoryId || null;
+  if (notes !== undefined) patch.notes = notes;
+  return rpc('rpc_update_bank_allocation', { requested_organization_id: requireOrgId(orgId), allocation_id: allocationId, patch });
 }
 
-// ─── Creación y aplicación de Regla Determinística ───────────────────────────
-export async function createClassificationRule({
-  pattern,
-  counterpartyId,
-  categoryId,
-  subcategoryId,
-  matchSign = 'ALL',
-  orgId,
-}) {
-  const activeOrgId = requireOrgId(orgId);
-  const { data, error } = await supabase
-    .from('eco_classification_rules')
-    .insert({
-      organization_id: activeOrgId,
-      name: `Regla: ${pattern}`,
-      pattern: pattern.trim().toUpperCase(),
-      match_sign: matchSign,
-      target_counterparty_id: counterpartyId || null,
-      target_category_id: categoryId || null,
-      target_subcategory_id: subcategoryId || null,
-      is_active: true,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
+async function rpc(name, input) {
+  const { data, error } = await supabase.rpc(name, input);
+  if (error) throw new Error(error.message);
   return data;
 }
-
-// ─── Splits: División de movimiento en N asignaciones ─────────────────────────
-export async function splitMovementAllocations(movementId, originalAmount, allocationsList, orgId) {
-  const activeOrgId = requireOrgId(orgId);
-  const sum = allocationsList.reduce((acc, curr) => acc + (parseFloat(curr.monto) || 0), 0);
-  if (Math.abs(sum - originalAmount) > 0.01) {
-    throw new Error(`La suma de las divisiones (${sum.toFixed(2)} €) no coincide con el movimiento original (${originalAmount.toFixed(2)} €)`);
-  }
-
-  await supabase
-    .from('eco_movement_allocations')
-    .delete()
-    .eq('movement_id', movementId);
-
-  const toInsert = allocationsList.map(a => ({
-    organization_id: activeOrgId,
-    movement_id: movementId,
-    monto: parseFloat(a.monto),
-    counterparty_id: a.counterparty_id || null,
-    category_id: a.category_id || null,
-    subcategory_id: a.subcategory_id || null,
-    classification_status: 'CONFIRMED',
-    classification_source: 'MANUAL',
-    reconciliation_status: 'UNMATCHED',
-    notes: a.notes || 'Split manual',
-  }));
-
-  const { data, error } = await supabase
-    .from('eco_movement_allocations')
-    .insert(toInsert)
-    .select();
-
-  if (error) throw error;
+/**
+ * @param {{ orgId: string, pattern: string, counterpartyId?: string|null, categoryId?: string|null,
+ * subcategoryId?: string|null, economicType?: import('../domains/finance/domain/economic').EconomicType,
+ * sourceAccountId?: string|null, matchSign?: 'ALL'|'POSITIVE'|'NEGATIVE' }} input
+ */
+export async function createClassificationRule({ pattern, counterpartyId, categoryId, subcategoryId, economicType = 'UNCLASSIFIED', sourceAccountId, matchSign = 'ALL', orgId }) {
+  assertGenericEconomicType(economicType);
+  const { data, error } = await supabase.from('eco_classification_rules').insert({
+    organization_id: requireOrgId(orgId), name: `Regla: ${pattern.trim()}`, pattern: pattern.trim(), match_sign: matchSign,
+    target_economic_type: economicType, source_account_id: sourceAccountId || null,
+    target_counterparty_id: counterpartyId || null, target_category_id: categoryId || null,
+    target_subcategory_id: subcategoryId || null, is_active: true,
+  }).select().single();
+  if (error) throw new Error(error.message);
   return data;
 }
-
-// ─── Reconciliación (Transferencia Interna / Liquidación Tarjeta) ───────────────
-export async function reconcileMovements({
-  allocationId,
-  targetMovementId,
-  reconciliationType,
-}) {
-  const isTransfer = reconciliationType === 'INTERNAL_TRANSFER';
-  const isCard = reconciliationType === 'CARD_SETTLEMENT';
-
-  const { data, error } = await supabase
-    .from('eco_movement_allocations')
-    .update({
-      reconciliation_status: 'CONFIRMED',
-      reconciled_movement_id: targetMovementId,
-      reconciliation_type: reconciliationType,
-      is_internal_transfer: isTransfer,
-      is_card_settlement: isCard,
-      classification_status: 'CONFIRMED',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', allocationId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function applyClassificationRules(orgId) {
+  return rpc('rpc_apply_finance_rules', { requested_organization_id: requireOrgId(orgId) });
 }
-
-// ─── Soft Delete Movimiento Bancario Original ─────────────────────────────────
-export async function softDeleteMovement(movementId) {
-  const { data, error } = await supabase
-    .from('eco_financial_movements')
-    .update({
-      status: 'SOFT_DELETED',
-      deleted_at: new Date().toISOString(),
-    })
-    .eq('id', movementId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function splitMovementAllocations(movementId, _originalAmount, allocationsList, orgId) {
+  for (const allocation of allocationsList) assertGenericEconomicType(allocation.economic_type);
+  return rpc('rpc_split_bank_movement', {
+    requested_organization_id: requireOrgId(orgId), movement_id: movementId,
+    allocations: allocationsList.map(a => {
+      if (!/^-?\d+(?:\.\d{1,2})?$/.test(String(a.monto))) throw new Error('Importe de división inválido');
+      return { ...a, monto: moneyToDecimal(Number(a.monto)) };
+    }),
+  });
 }
-
-// ─── Counterparty Manager (Crear / Buscar Contraparte) ─────────────────────────
+export async function reconcileMovements({ orgId, allocationId, targetMovementId, reconciliationType }) {
+  return rpc('rpc_finance_reconcile', { requested_organization_id: requireOrgId(orgId), allocation_id: allocationId,
+    target_movement_id: targetMovementId, reconciliation_type: reconciliationType });
+}
+export async function softDeleteMovement(movementId, orgId) {
+  return rpc('rpc_finance_soft_delete', { requested_organization_id: requireOrgId(orgId), movement_id: movementId });
+}
 export async function findOrCreateCounterparty(name, type = 'PROVEEDOR', orgId) {
-  if (!name || !name.trim()) return null;
+  if (!name?.trim()) return null;
+  const input = { organization_id: requireOrgId(orgId), name: name.trim(), type };
+  const { data, error } = await supabase.from('eco_counterparties').upsert(input, { onConflict: 'organization_id,name' }).select('id').single();
+  if (error) throw new Error(error.message);
+  return data.id;
+}
+export async function createFinanceCatalogEntry(kind, input, orgId) {
+  const tables = { account: 'eco_financial_accounts', category: 'eco_tax_categories', subcategory: 'eco_tax_subcategories', counterparty: 'eco_counterparties' };
+  if (!tables[kind]) throw new Error('Invalid catalog type');
+  const { data, error } = await supabase.from(tables[kind]).insert({ ...input, organization_id: requireOrgId(orgId) }).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateFinanceAccount(orgId, accountId, patch) {
+  return rpc('rpc_update_finance_account', { requested_organization_id: requireOrgId(orgId), account_id: accountId, patch });
+}
+// Name-only editing preserves catalog identities and historical relationships.
+export async function renameFinanceCatalogEntry(kind, id, name, orgId) {
   const activeOrgId = requireOrgId(orgId);
-  const cleanName = name.trim();
-
-  const { data: existing } = await supabase
-    .from('eco_counterparties')
-    .select('id')
-    .eq('organization_id', activeOrgId)
-    .ilike('name', cleanName)
-    .maybeSingle();
-
-  if (existing) return existing.id;
-
-  const { data: created, error } = await supabase
-    .from('eco_counterparties')
-    .insert({
-      organization_id: activeOrgId,
-      name: cleanName,
-      type: type,
-    })
-    .select('id')
-    .single();
-
-  if (error) return null;
-  return created.id;
+  const tables = { category: 'eco_tax_categories', subcategory: 'eco_tax_subcategories', counterparty: 'eco_counterparties' };
+  if (!tables[kind] || !id || !name?.trim()) throw new Error('Nombre y elemento de catálogo requeridos');
+  const { data, error } = await supabase.from(tables[kind]).update({ name: name.trim() }).eq('organization_id', activeOrgId).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function updateClassificationRule(orgId, ruleId, patch) {
+  assertGenericEconomicType(patch.target_economic_type);
+  const allowed = ['pattern', 'name', 'match_sign', 'source_account_id', 'target_economic_type', 'target_category_id', 'target_subcategory_id', 'target_counterparty_id', 'is_active'];
+  if (Object.keys(patch).some(key => !allowed.includes(key))) throw new Error('Invalid rule patch');
+  const { data, error } = await supabase.from('eco_classification_rules').update(patch).eq('organization_id', requireOrgId(orgId)).eq('id', ruleId).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function fetchTransferCandidates(orgId) {
+  const rows = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await supabase.from('eco_finance_match_candidates').select('*').eq('organization_id', requireOrgId(orgId)).order('created_at', { ascending: false }).order('id').range(offset, offset + 499);
+    if (error) throw new Error(error.message);
+    rows.push(...data);
+    if (data.length < 500) return rows;
+  }
+}
+export async function detectTransferCandidates(orgId) {
+  return rpc('rpc_detect_finance_transfers', { requested_organization_id: requireOrgId(orgId) });
+}
+export async function reviewTransferCandidate(orgId, candidateId, decision) {
+  return rpc('rpc_review_finance_transfer', { requested_organization_id: requireOrgId(orgId), candidate_id: candidateId, decision });
+}
+export async function confirmFinanceSuggestions(orgId, allocations) {
+  return rpc('rpc_confirm_finance_suggestions', { requested_organization_id: requireOrgId(orgId), reviews: allocations.map(a => ({ id: a.id, updated_at: a.updated_at })) });
 }
