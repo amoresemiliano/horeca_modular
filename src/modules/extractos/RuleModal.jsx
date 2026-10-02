@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { previewRuleMatches } from '../../domains/finance/application/operationalInsights';
 import { createClassificationRule, updateClassificationRule, applyClassificationRules, getExtractosCatalogs } from '../../lib/extractosService';
 import { economicLabels } from '../../domains/finance/domain/economic';
 import FinanceDialog from './FinanceDialog';
 import AllocationFields from './AllocationFields';
 import { emptyInterpretation, ruleExample } from './workflow';
 
-export default function RuleModal({ catalogs, orgId, example, onClose, onSaved }) {
+export default function RuleModal({ catalogs, orgId, example, onClose, onSaved, movements = [] }) {
   const confirmed = ruleExample(example);
   const [rules, setRules] = useState(catalogs.rules), [editing, setEditing] = useState(null);
   const [pattern, setPattern] = useState(example?.descripcion || ''), [account, setAccount] = useState(example?.source_account_id || '');
   const [sign, setSign] = useState(example ? (Number(example.monto) < 0 ? 'NEGATIVE' : Number(example.monto) > 0 ? 'POSITIVE' : 'ALL') : 'ALL');
   const [value, setValue] = useState({ ...emptyInterpretation(), ...confirmed });
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
+  const matching = useMemo(()=>previewRuleMatches(movements,{pattern,account,sign}),[movements,pattern,account,sign]);
   async function run(action) {
     setBusy(true); setError(''); setMessage('');
     try { await action(); setRules((await getExtractosCatalogs(orgId)).rules); await onSaved(); }
@@ -45,6 +47,7 @@ export default function RuleModal({ catalogs, orgId, example, onClose, onSaved }
       <div className="grid sm:grid-cols-2 gap-3"><label>Cuenta de origen<select aria-label="Cuenta de origen" className="block border border-gray-200 rounded p-2 w-full" value={account} onChange={e => setAccount(e.target.value)}><option value="">Cualquier cuenta</option>{catalogs.accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></label>
         <label>Signo bancario<select aria-label="Signo bancario" className="block border border-gray-200 rounded p-2 w-full" value={sign} onChange={e => setSign(e.target.value)}><option value="ALL">Cualquiera</option><option value="POSITIVE">Entrada</option><option value="NEGATIVE">Salida</option></select></label></div>
       <h4 className="font-semibold">Entonces sugerir</h4><AllocationFields key={editing || 'new'} catalogs={catalogs} value={value} onChange={setValue} orgId={orgId} showNotes={false} />
+      <p role="status" className="text-xs text-amber-900">{matching} movimientos pendientes coinciden con este patrón. Guardar crea una regla; «Aplicar reglas a pendientes» genera sugerencias en una sola operación, sin confirmarlas.</p>
       <div className="flex gap-3"><button disabled={value.economic_type === 'UNCLASSIFIED'} title={value.economic_type === 'UNCLASSIFIED' ? 'Selecciona el tipo económico que propondrá la regla' : 'Guardar regla como sugerencia'} className="bg-emerald-700 text-white rounded px-4 py-2 disabled:opacity-40">Guardar regla</button><button type="button" onClick={reset}>Nueva / limpiar</button></div>
     </fieldset></form>
     {error && <p role="alert" className="text-red-700">{error}</p>}{message && <p role="status">{message}</p>}

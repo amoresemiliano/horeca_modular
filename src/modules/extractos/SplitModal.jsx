@@ -16,7 +16,7 @@ function SplitEditor({ onClose, movement, categories, subcategories, counterpart
     try { await onConfirmSplit(movement.id, original / 100, allocations); onClose(); }
     catch (err) { setError(err.message); } finally { setLoading(false); }
   }
-  return <FinanceDialog title="Dividir movimiento" onClose={onClose} busy={loading}>
+  return <FinanceDialog title="Dividir movimiento" size="large" onClose={onClose} busy={loading}>
     <p className="text-sm">Divide este movimiento en varias interpretaciones económicas. El movimiento bancario original no cambia.</p>
     <p className="font-medium">{movement.descripcion} · {movement.monto} {movement.currency}</p>
     {protectedMovement && <p role="alert">Este movimiento vinculado no puede dividirse.</p>}
