@@ -1,4 +1,4 @@
-import { authorize, serverClient, synchronize, mapping, Request, Response } from '../server/salesRuntime';
+import { authorize, serverClient, synchronize, continueSalesSync, mapping, Request, Response } from '../server/salesRuntime';
 import { IngestSalesCsvUseCase } from '../src/application/sales/useCases/IngestSalesCsvUseCase';
 import { TrustedSalesRepository } from '../src/infrastructure/sales/repositories/TrustedSalesRepository';
 import { SupabaseSalesImportRepository } from '../src/infrastructure/sales/repositories/SupabaseSalesImportRepository';
@@ -21,7 +21,7 @@ export default async function handler(request: Request, response: Response) {
     if (action === 'health') {
       const [configs,runs,events,units,lastReceived,lastProcessed,failed,lastSuccess] = await Promise.all([
         client.from('sales_location_mappings').select('external_location_id,operational_unit_id').eq('organization_id',org).eq('is_active',true),
-        client.from('sales_sync_runs').select('*').eq('organization_id',org).order('started_at',{ascending:false}).limit(10),
+        client.from('sales_sync_runs').select('id,mode,status,started_at,completed_at,pages_fetched,records_fetched,created,updated,unchanged,rejected,unmapped_products,error_summary,continuation_version,checkpoint_enabled').eq('organization_id',org).order('started_at',{ascending:false}).limit(10),
         client.from('sales_lastapp_inbox').select('id,status,received_at,processed_at,error_summary').eq('organization_id',org).neq('status','PROCESSED').order('received_at').limit(100),
         client.from('eco_operational_units').select('id,name').eq('organization_id',org).eq('is_active',true),
         client.from('sales_lastapp_inbox').select('received_at').eq('organization_id',org).order('received_at',{ascending:false}).limit(1),
@@ -35,6 +35,11 @@ export default async function handler(request: Request, response: Response) {
         runs:runs.data,pendingEvents:events.data,lastReceivedWebhook:lastReceived.data?.[0]?.received_at??null,
         lastProcessedWebhook:lastProcessed.data?.[0]?.processed_at??null,failedEventCount:failed.count??0,
         lastSuccessfulReconciliation:lastSuccess.data?.[0]?.completed_at??null}); return;
+    }
+    if (action === 'continue') {
+      if(typeof body.runId!=='string'||!Number.isSafeInteger(body.version)||Number(body.version)<0||
+        ['externalLocationId','startDate','endDate','mode','offset'].some(key=>key in body))throw new Error('INVALID_INPUT');
+      response.status(200).json(await continueSalesSync(client,{organizationId:org,runId:body.runId,version:Number(body.version)}));return;
     }
     if (action === 'replay') {
       if (typeof body.eventId !== 'string') throw new Error('INVALID_INPUT');
@@ -63,7 +68,7 @@ export default async function handler(request: Request, response: Response) {
       startDate:body.startDate,endDate:body.endDate,mode:body.mode==='BACKFILL'?'BACKFILL':'RECONCILIATION'}));
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
-    const safe = ['DENIED','LAST_APP_NOT_CONFIGURED','SERVER_NOT_CONFIGURED','LOCATION_NOT_MAPPED','INVALID_INPUT','HEALTH_UNAVAILABLE','EVENT_REFRESH_FAILED'];
+    const safe = ['DENIED','LAST_APP_NOT_CONFIGURED','SERVER_NOT_CONFIGURED','LOCATION_NOT_MAPPED','INVALID_INPUT','HEALTH_UNAVAILABLE','EVENT_REFRESH_FAILED','SYNC_NOT_FOUND','SYNC_SCOPE_CHANGED','SYNC_RESTART_REQUIRED'];
     response.status(message==='DENIED'?403:400).json({error:safe.includes(message)?message:'SALES_OPERATION_FAILED'});
   }
 }

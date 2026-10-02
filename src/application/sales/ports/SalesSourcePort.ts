@@ -23,7 +23,7 @@ export interface SourceTab {
   schedulingTime?: string | null; pickupType?: string | null; locationBrandId?: string;
   tableName?: string | null; seats?: number | null; products?: SourceProduct[]; bills?: SourceBill[];
 }
-export interface SourceWindow { locationId: string; startDate: string; endDate: string; limit?: number }
+export interface SourceWindow { locationId: string; startDate: string; endDate: string; limit?: number; offset?: number }
 export interface SourcePage<T> { records: T[]; offset: number }
 export interface SalesSourcePort {
   listOrganizations(): Promise<Array<{id: string; name: string}>>;

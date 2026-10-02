@@ -52,11 +52,12 @@ export class LastAppAdapter implements SalesSourcePort {
   private async *list<T>(entity: string, window: SourceWindow): AsyncIterable<SourcePage<T>> {
     const start = Date.parse(window.startDate), end = Date.parse(window.endDate), limit = window.limit ?? 100;
     if (!window.locationId || !Number.isFinite(start) || !Number.isFinite(end) || end <= start ||
-      end - start > 365 * 86400000 || !Number.isInteger(limit) || limit < 5 || limit > 100) {
+      end - start > 365 * 86400000 || !Number.isInteger(limit) || limit < 5 || limit > 100 ||
+      !Number.isSafeInteger(window.offset ?? 0) || (window.offset ?? 0) < 0) {
       throw new SalesSourceError('INVALID_SOURCE_WINDOW');
     }
     for (let page = 0; page < this.options.maxPages; page++) {
-      const offset = page * limit;
+      const offset = (window.offset ?? 0) + page * limit;
       const query = new URLSearchParams({locationId: window.locationId, startDate: window.startDate, endDate: window.endDate,
         offset: String(offset), limit: String(limit)});
       const records = await this.read<T[]>(`/${entity}?${query}`, {LocationID: window.locationId});
