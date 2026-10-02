@@ -3,7 +3,7 @@ import MainLayout from './components/MainLayout';
 import Login from './components/Login';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, isPasswordRecovery } = useAuth();
 
   if (loading) {
     return (
@@ -37,7 +37,7 @@ function AppContent() {
     );
   }
 
-  return user ? <MainLayout user={user} /> : <Login />;
+  return user && !isPasswordRecovery ? <MainLayout user={user} /> : <Login />;
 }
 
 function App() {

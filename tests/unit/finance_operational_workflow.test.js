@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+vi.mock('../../src/context/AuthContext', () => ({ useAuth: () => ({ can: () => true }) }));
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { interpretationDraft, changeCategory, classificationInput, ruleExample, emptyFilters, filterMovements, reviewSummary } from '../../src/modules/extractos/workflow';

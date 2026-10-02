@@ -43,8 +43,9 @@ export async function getExtractosCatalogs(orgId) {
 }
 
 // Reload all history instead of silently stopping at PostgREST's row limit.
-export async function fetchConsolidatedMovements(orgId) {
+export async function fetchConsolidatedMovements(orgId, section = 'consolidated') {
   const activeOrgId = requireOrgId(orgId);
+  await rpc('core_banks_view', { requested_organization_id: activeOrgId, section });
     const movements = [];
     for (let offset = 0; ; offset += 500) {
     const { data: page, error } = await supabase

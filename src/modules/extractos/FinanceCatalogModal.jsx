@@ -3,11 +3,11 @@ import { createFinanceCatalogEntry, updateFinanceAccount, renameFinanceCatalogEn
 import FinanceDialog from './FinanceDialog';
 const sections = [['account', 'Cuentas', 'accounts'], ['category', 'Categorías', 'categories'], ['subcategory', 'Subcategorías', 'subcategories'], ['counterparty', 'Proveedores / contrapartes', 'counterparties']];
 const blank = () => ({ name: '', institution: 'BBVA', product_type: 'BANK_ACCOUNT', masked_identifier: '', is_active: true, type: 'GASTO', category_id: '' });
-export default function FinanceCatalogModal({ orgId, catalogs, onClose, onSaved, canAccounts = true, canClassify = true }) {
-  const [local, setLocal] = useState(catalogs), [kind, setKind] = useState('account'), [editing, setEditing] = useState('');
+export default function FinanceCatalogModal({ orgId, catalogs, onClose, onSaved, canAccounts = false, canClassify = false, canCounterparties = false }) {
+  const [local, setLocal] = useState(catalogs), [kind, setKind] = useState(canAccounts ? 'account' : canClassify ? 'category' : 'counterparty'), [editing, setEditing] = useState('');
   const [value, setValue] = useState(blank), [error, setError] = useState(''), [message, setMessage] = useState(''), [saving, setSaving] = useState(false);
   const field = (key, next) => setValue(v => ({ ...v, [key]: next }));
-  const allowed = kind === 'account' ? canAccounts : canClassify;
+  const allowed = kind === 'account' ? canAccounts : kind === 'counterparty' ? canCounterparties : canClassify;
   const rows = local[sections.find(s => s[0] === kind)[2]];
   function reset() { setEditing(''); setValue(blank()); setError(''); }
   async function save(e) {
@@ -28,7 +28,7 @@ export default function FinanceCatalogModal({ orgId, catalogs, onClose, onSaved,
   }
   const control = 'block border border-gray-200 rounded-lg p-2 w-full bg-white disabled:bg-gray-100';
   return <FinanceDialog title="Cuentas y categorías" onClose={onClose} busy={saving}>
-    <nav aria-label="Secciones del catálogo" className="flex gap-2 flex-wrap">{sections.map(([key, label]) => <button key={key} disabled={saving} aria-pressed={kind === key} className={'px-3 py-2 rounded-lg text-sm ' + (kind === key ? 'bg-emerald-700 text-white' : 'bg-gray-100')} onClick={() => { setKind(key); reset(); setMessage(''); }}>{label}</button>)}</nav>
+    <nav aria-label="Secciones del catálogo" className="flex gap-2 flex-wrap">{sections.filter(([key]) => key === 'account' ? canAccounts : key === 'counterparty' ? canCounterparties : canClassify).map(([key, label]) => <button key={key} disabled={saving} aria-pressed={kind === key} className={'px-3 py-2 rounded-lg text-sm ' + (kind === key ? 'bg-emerald-700 text-white' : 'bg-gray-100')} onClick={() => { setKind(key); reset(); setMessage(''); }}>{label}</button>)}</nav>
     {message && <p role="status" className="p-3 bg-emerald-50 text-emerald-800 rounded-lg">{message}</p>}
     <div className="grid sm:grid-cols-2 gap-5">
       <section><h3 className="font-semibold mb-2">Elementos existentes ({rows.length})</h3><ul className="divide-y max-h-80 overflow-y-auto">{rows.map(row => <li key={row.id} className="py-3 flex justify-between gap-3 items-center text-sm"><div><strong>{row.name}</strong><p className="text-gray-500">{kind === 'account' ? `${row.institution} · ${row.masked_identifier} · ${row.is_active ? 'Activa' : 'Inactiva'}` : kind === 'subcategory' ? local.categories.find(c => c.id === row.category_id)?.name : kind === 'category' ? (row.type === 'GASTO' ? 'Gasto' : 'Ingreso') : ''}</p></div><button disabled={saving || !allowed} title={allowed ? 'Editar ' + row.name : 'Sin permiso para editar este catálogo'} className="text-emerald-800 underline disabled:opacity-40" onClick={() => { setEditing(row.id); setValue({ ...blank(), ...row }); setMessage(''); setError(''); }}>Editar</button></li>)}</ul>{!rows.length && <p className="text-sm text-gray-500">Todavía no hay elementos.</p>}</section>

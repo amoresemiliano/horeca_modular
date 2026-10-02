@@ -12,6 +12,8 @@ const AuthContext = createContext({
   activeOrganization: null,
   activeOperationalUnit: null,
   effectiveCapabilities: [],
+  platformCan: () => false,
+  refreshAccess: async () => {},
   loading: true,
   isPasswordRecovery: false,
   switchOrganization: async (_orgId) => {},
@@ -38,6 +40,8 @@ export function AuthProvider({ children }) {
   const [activeOperationalUnit, setActiveOperationalUnit] = useState(null);
   const [effectiveCapabilities, setEffectiveCapabilities] = useState([]);
   const [entitlements, setEntitlements] = useState([]);
+  const [availableOperationalUnits,setAvailableOperationalUnits] = useState([]);
+  const [platformCapabilities, setPlatformCapabilities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const selectedContext = useRef({ userId: null, organizationId: null, unitId: null });
@@ -66,6 +70,8 @@ export function AuthProvider({ children }) {
     setActiveOperationalUnit(null);
     setEffectiveCapabilities([]);
     setEntitlements([]);
+    setPlatformCapabilities([]);
+    setAvailableOperationalUnits([]);
     if (!authUser) {
       setProfile(null);
       setMembership(null);
@@ -102,6 +108,11 @@ export function AuthProvider({ children }) {
       }
 
       setProfile(profData);
+
+      const { data: platformAllowed, error: platformError } = await supabase.rpc('core_platform_can', { capability: 'platform.tenants.provision' });
+      if (platformError) throw platformError;
+      if (request !== contextRequest.current) return;
+      setPlatformCapabilities(platformAllowed === true ? ['platform.tenants.provision'] : []);
 
       // 2. Fetch memberships
       let query = supabase
@@ -212,6 +223,10 @@ export function AuthProvider({ children }) {
           .eq('organization_id', activeMem.organization_id);
         if (entitlementError) throw entitlementError;
 
+        const { data: units, error: unitsError } = await supabase.from('eco_operational_units').select('id,name').eq('organization_id',activeMem.organization_id).eq('is_active',true);
+        if (unitsError) throw unitsError;
+        if (unitId && !units.some(u=>u.id===unitId)) throw new Error('Invalid active unit');
+
         // The canonical gate resolves role activity, scope, revoke precedence and
         // required entitlements. Candidate codes alone never confer authority.
         const decisions = await resolveAuthorizedCapabilities(supabase, activeMem.organization_id, caps, unitId);
@@ -222,6 +237,7 @@ export function AuthProvider({ children }) {
         setOrganizationId(activeMem.organization_id);
         setActiveOrganization(orgInfo);
         setActiveOperationalUnit(unitId ? { id: unitId } : null);
+        setAvailableOperationalUnits(units);
         setEffectiveCapabilities(decisions);
 
         setEntitlements(entData || []);
@@ -237,6 +253,7 @@ export function AuthProvider({ children }) {
       setActiveOrganization(null);
       setEffectiveCapabilities([]);
       setEntitlements([]);
+      setPlatformCapabilities([]);
     }
   }, []);
 
@@ -251,6 +268,7 @@ export function AuthProvider({ children }) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user && mounted) {
+          if (window.location.pathname === '/reset-password') setIsPasswordRecovery(true);
           setUser(session.user);
           await resolveFullContext(session.user);
         }
@@ -270,7 +288,7 @@ export function AuthProvider({ children }) {
     // released by Supabase before they can obtain their access token.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
-      if (event === 'PASSWORD_RECOVERY') {
+      if (event === 'PASSWORD_RECOVERY' || (session?.user && window.location.pathname === '/reset-password')) {
         setIsPasswordRecovery(true);
       }
       setTimeout(async () => {
@@ -292,6 +310,7 @@ export function AuthProvider({ children }) {
         setActiveOperationalUnit(null);
         setEffectiveCapabilities([]);
         setEntitlements([]);
+        setPlatformCapabilities([]);
       }
       setLoading(false);
       }, 0);
@@ -325,7 +344,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const can = (capabilityCode, unitId = null) => {
+  const can = (capabilityCode, unitId = activeOperationalUnit?.id || null) => {
     if (!organizationId || unitId !== (activeOperationalUnit?.id || null)) return false;
     if (!effectiveCapabilities || effectiveCapabilities.length === 0) return false;
     return effectiveCapabilities.includes(capabilityCode);
@@ -379,6 +398,7 @@ export function AuthProvider({ children }) {
   const updatePassword = async (newPassword) => {
     const { data, error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
+    window.history.replaceState(null, '', '/');
     setIsPasswordRecovery(false);
     return data;
   };
@@ -400,6 +420,7 @@ export function AuthProvider({ children }) {
       setActiveOperationalUnit(null);
       setEffectiveCapabilities([]);
       setEntitlements([]);
+      setPlatformCapabilities([]);
       setLoading(false);
     }
   };
@@ -413,6 +434,7 @@ export function AuthProvider({ children }) {
     availableOrganizations,
     activeOrganization,
     activeOperationalUnit,
+    availableOperationalUnits,
     effectiveCapabilities,
     loading,
     isPasswordRecovery,
@@ -420,6 +442,8 @@ export function AuthProvider({ children }) {
     switchOperationalUnit,
     can,
     isModuleEnabled,
+    platformCan: code => platformCapabilities.includes(code),
+    refreshAccess: () => resolveFullContext(user, organizationId, activeOperationalUnit?.id || null),
     loginWithProvider,
     loginWithGoogle,
     loginWithGithub,
