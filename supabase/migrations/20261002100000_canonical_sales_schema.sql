@@ -1,5 +1,5 @@
 -- ==============================================================================
--- MIGRATION: 20261002000000_canonical_sales_schema.sql
+-- MIGRATION: 20261002100000_canonical_sales_schema.sql
 -- DESCRIPTION: Canonical Sales & Revenue Domain Schema (WP-SALES-001)
 -- AUTHOR: Antigravity / Vegen Digital (05 - Sales & Revenue)
 -- NOTICE: SHARED DEV MIGRATIONS MUST NOT BE APPLIED BY MODULE AGENT.

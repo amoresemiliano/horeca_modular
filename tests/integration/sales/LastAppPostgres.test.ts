@@ -17,7 +17,9 @@ describe('Sales canonical migration, tenant constraints and trusted persistence 
       CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid PRIMARY KEY);
       CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;`);
     for(const file of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql',
-      '20261002000000_canonical_sales_schema.sql','20261002010000_lastapp_sales_ingestion.sql']) {
+      '20260928010000_finance_atomic_bank_import.sql','20261001000000_finance_classification_workflow.sql',
+      '20261002000000_core_tenant_administration.sql','20261002010000_core_secure_provisioning.sql','20261002020000_core_legacy_fail_closed.sql',
+      '20261002100000_canonical_sales_schema.sql','20261002110000_lastapp_sales_ingestion.sql']) {
       await db.exec(readFileSync(`supabase/migrations/${file}`,'utf8'));
     }
     await db.query(`INSERT INTO public.eco_organizations(id,code,name) VALUES($1,'A','Tenant A'),($2,'B','Tenant B')`,[org,foreign]);

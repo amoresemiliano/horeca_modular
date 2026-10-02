@@ -4,7 +4,7 @@
 
 The accepted WP-SALES-002 architecture remains intact. Sales fetched and merged current `origin/dev` (`c66db32`, two commits beyond the previous dev resync) into `module/sales`; current shared UI changes were preserved. No changes were merged into dev/main, and no shared DEV migrations were applied. Core authorization/schema, API money interpretation, CSV ingestion, webhook authenticity/inbox/replay, canonical identity and internal analytical change feed are unchanged.
 
-Master must deploy `20261002020000_sales_resumable_sync.sql` after the two reviewed Sales migrations. This migration adds only Sales-owned checkpoint/lease state and trusted Sales RPCs. It extends the existing status convention with `CONTINUABLE`. Browser mutations and checkpoint RPC execution remain denied.
+Master must deploy `20261002120000_sales_resumable_sync.sql` after the two reviewed Sales migrations. This migration adds only Sales-owned checkpoint/lease state and trusted Sales RPCs. It extends the existing status convention with `CONTINUABLE`. Browser mutations and checkpoint RPC execution remain denied.
 
 ## Logical run and bounded slices
 
