@@ -298,4 +298,96 @@ El Criollo - Palencia,R001,LS2-10688,Uber,card,2026-08-01T11:59:51.000,12.50,12.
     expect(updatedWithLines?.lines[0].catalogProductId).toBe('catalog-product-carnitas-123'); // Mapping preserved!
     expect(updatedWithLines?.lines[1].catalogProductId).toBeNull(); // New modifier is unmapped
   });
+
+  it('11. Regression: Correcting ticket to empty Productos results in zero persisted SaleLines and no stale lines', async () => {
+    const initialCsv = `Ubicación,Código,Factura nº,Hora de creación,Total,Productos
+El Criollo - Palencia,R500,LS2-50000,2026-08-01T12:00:00.000,25.00,"1x Taco Pastor
+\t1x Guacamole"`;
+
+    // 1. Initial Ingestion
+    await ingestUseCase.execute({
+      organizationId: ORG_ID_A,
+      csvContent: initialCsv,
+      filename: 'initial_lines.csv',
+    });
+
+    const overview1 = await overviewUseCase.execute({ organizationId: ORG_ID_A });
+    const saleId = overview1.tickets[0].id;
+    const initialDetails = await detailsUseCase.execute({ organizationId: ORG_ID_A, saleId });
+    expect(initialDetails?.lines).toHaveLength(2);
+
+    // 2. Corrected Ingestion with empty Productos
+    const correctedCsv = `Ubicación,Código,Factura nº,Hora de creación,Total,Productos
+El Criollo - Palencia,R500,LS2-50000,2026-08-01T12:00:00.000,25.00,`;
+
+    const corrResult = await ingestUseCase.execute({
+      organizationId: ORG_ID_A,
+      csvContent: correctedCsv,
+      filename: 'corrected_empty_lines.csv',
+    });
+
+    expect(corrResult.rowsAccepted).toBe(0);
+    expect(corrResult.rowsDuplicate).toBe(1);
+
+    // Verify exactly one canonical Sale remains
+    const overview2 = await overviewUseCase.execute({ organizationId: ORG_ID_A });
+    expect(overview2.totalTickets).toBe(1);
+
+    // Verify persisted lines become completely empty (0 stale lines)
+    const correctedDetails = await detailsUseCase.execute({ organizationId: ORG_ID_A, saleId });
+    expect(correctedDetails?.lines).toHaveLength(0);
+
+    const saleRecord = await saleRepo.findById(ORG_ID_A, saleId);
+    expect(saleRecord?.lines).toHaveLength(0);
+  });
+
+  it('12. Regression: Correcting occurredAt and raw source payload are persisted in canonical Sale', async () => {
+    const initialCsv = `Ubicación,Código,Factura nº,Hora de creación,Total,Productos
+El Criollo - Palencia,R600,LS2-60000,2026-08-01T12:00:00.000,30.00,1x Ensalada`;
+
+    await ingestUseCase.execute({
+      organizationId: ORG_ID_A,
+      csvContent: initialCsv,
+      filename: 'initial_time.csv',
+    });
+
+    const initialOverview = await overviewUseCase.execute({ organizationId: ORG_ID_A });
+    const saleId = initialOverview.tickets[0].id;
+    const initialRecord = await saleRepo.findById(ORG_ID_A, saleId);
+    expect(initialRecord?.sale.occurredAt.toISOString()).toBe(new Date('2026-08-01T12:00:00.000').toISOString());
+
+    // Corrected ticket with different creation time and extra raw column
+    const correctedCsv = `Ubicación,Código,Factura nº,Hora de creación,Total,Productos,Nota
+El Criollo - Palencia,R600,LS2-60000,2026-08-01T14:30:00.000,30.00,1x Ensalada,Mesa VIP`;
+
+    await ingestUseCase.execute({
+      organizationId: ORG_ID_A,
+      csvContent: correctedCsv,
+      filename: 'corrected_time.csv',
+    });
+
+    const updatedRecord = await saleRepo.findById(ORG_ID_A, saleId);
+    expect(updatedRecord?.sale.occurredAt.toISOString()).toBe(new Date('2026-08-01T14:30:00.000').toISOString());
+    expect(updatedRecord?.sale.rawPayload).toEqual(expect.objectContaining({
+      Nota: 'Mesa VIP',
+      'Hora de creación': '2026-08-01T14:30:00.000',
+    }));
+  });
+
+  it('13. Regression: Preserves legitimate numeric zero in paidAmount (null-safe)', async () => {
+    const zeroPaidCsv = `Ubicación,Código,Factura nº,Hora de creación,Total,Pagado,Productos
+El Criollo - Palencia,R700,LS2-70000,2026-08-01T12:00:00.000,50.00,0.00,1x Banquete`;
+
+    await ingestUseCase.execute({
+      organizationId: ORG_ID_A,
+      csvContent: zeroPaidCsv,
+      filename: 'zero_paid.csv',
+    });
+
+    const overview = await overviewUseCase.execute({ organizationId: ORG_ID_A });
+    const saleId = overview.tickets[0].id;
+    const record = await saleRepo.findById(ORG_ID_A, saleId);
+
+    expect(record?.sale.paidAmount).toBe(0); // Legitimate numeric zero preserved, not null
+  });
 });

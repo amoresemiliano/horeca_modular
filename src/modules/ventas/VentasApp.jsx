@@ -3,8 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { defaultSalesContainer } from '../../infrastructure/sales/salesServiceContainer';
 
 export const VentasApp = ({ tabActiva }) => {
-  const { user, activeOrganization } = useAuth();
-  const organizationId = activeOrganization?.id || user?.organizationId || null;
+  const { organizationId, activeOrganization } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [infraError, setInfraError] = useState(null);

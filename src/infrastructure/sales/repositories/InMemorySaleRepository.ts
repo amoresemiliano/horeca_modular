@@ -55,7 +55,7 @@ export class InMemorySaleRepository implements ISaleRepository {
     for (const item of items) {
       if (this.sales.has(item.sale.id)) {
         this.sales.set(item.sale.id, item.sale);
-        if (item.lines) {
+        if (item.lines !== undefined) {
           this.lines.set(item.sale.id, [...item.lines]);
         }
       }

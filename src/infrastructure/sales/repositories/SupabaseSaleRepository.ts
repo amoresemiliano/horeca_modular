@@ -81,10 +81,10 @@ export class SupabaseSaleRepository implements ISaleRepository {
       external_identity_key: item.sale.externalIdentityKey,
       external_identity_algorithm: item.sale.externalIdentityAlgorithm,
       occurred_at: item.sale.occurredAt.toISOString(),
-      source_channel: item.sale.sourceChannel || null,
-      source_payment_method: item.sale.sourcePaymentMethod || null,
+      source_channel: item.sale.sourceChannel !== undefined && item.sale.sourceChannel !== null ? item.sale.sourceChannel : null,
+      source_payment_method: item.sale.sourcePaymentMethod !== undefined && item.sale.sourcePaymentMethod !== null ? item.sale.sourcePaymentMethod : null,
       total: item.sale.total,
-      paid_amount: item.sale.paidAmount || null,
+      paid_amount: item.sale.paidAmount !== undefined && item.sale.paidAmount !== null ? item.sale.paidAmount : null,
       currency: item.sale.currency,
       status: item.sale.status,
       raw_payload: item.sale.rawPayload || {},
@@ -135,9 +135,11 @@ export class SupabaseSaleRepository implements ISaleRepository {
         .from('sales')
         .update({
           total: sale.total,
-          paid_amount: sale.paidAmount || null,
-          source_channel: sale.sourceChannel || null,
-          source_payment_method: sale.sourcePaymentMethod || null,
+          paid_amount: sale.paidAmount !== undefined && sale.paidAmount !== null ? sale.paidAmount : null,
+          source_channel: sale.sourceChannel !== undefined && sale.sourceChannel !== null ? sale.sourceChannel : null,
+          source_payment_method: sale.sourcePaymentMethod !== undefined && sale.sourcePaymentMethod !== null ? sale.sourcePaymentMethod : null,
+          occurred_at: sale.occurredAt.toISOString(),
+          raw_payload: sale.rawPayload || {},
           status: sale.status,
           updated_at: new Date().toISOString(),
         })
@@ -146,8 +148,8 @@ export class SupabaseSaleRepository implements ISaleRepository {
 
       if (saleErr) throw new Error(`SupabaseSaleRepository.updateBatch error: ${saleErr.message}`);
 
-      if (lines && lines.length > 0) {
-        // Replace lines for this sale
+      if (lines !== undefined) {
+        // Replace lines for this sale: delete existing source-derived lines
         const { error: delErr } = await this.client
           .from('sale_lines')
           .delete()
@@ -156,24 +158,27 @@ export class SupabaseSaleRepository implements ISaleRepository {
 
         if (delErr) throw new Error(`SupabaseSaleRepository.updateBatch (delete lines) error: ${delErr.message}`);
 
-        const lineRows = lines.map(line => ({
-          id: line.id,
-          organization_id: line.organizationId,
-          sale_id: line.saleId,
-          line_index: line.lineIndex,
-          depth: line.depth,
-          parent_line_id: line.parentLineId || null,
-          raw_text: line.rawText,
-          display_text: line.displayText,
-          quantity: line.quantity,
-          item_type: line.itemType,
-          notes: line.notes || null,
-          catalog_product_id: line.catalogProductId || null,
-          created_at: line.createdAt.toISOString(),
-        }));
+        // Reinsert only if replacement array contains rows
+        if (lines.length > 0) {
+          const lineRows = lines.map(line => ({
+            id: line.id,
+            organization_id: line.organizationId,
+            sale_id: line.saleId,
+            line_index: line.lineIndex,
+            depth: line.depth,
+            parent_line_id: line.parentLineId || null,
+            raw_text: line.rawText,
+            display_text: line.displayText,
+            quantity: line.quantity,
+            item_type: line.itemType,
+            notes: line.notes || null,
+            catalog_product_id: line.catalogProductId || null,
+            created_at: line.createdAt.toISOString(),
+          }));
 
-        const { error: insErr } = await this.client.from('sale_lines').insert(lineRows);
-        if (insErr) throw new Error(`SupabaseSaleRepository.updateBatch (insert lines) error: ${insErr.message}`);
+          const { error: insErr } = await this.client.from('sale_lines').insert(lineRows);
+          if (insErr) throw new Error(`SupabaseSaleRepository.updateBatch (insert lines) error: ${insErr.message}`);
+        }
       }
     }
   }
