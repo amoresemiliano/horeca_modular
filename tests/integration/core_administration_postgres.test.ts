@@ -125,4 +125,18 @@ describe('WP-CORE-003 complete migration chain: embedded PostgreSQL, real roles/
   for(const item of result) expect(item.allowed,item.code).toBe(await allowed(user,item.code));
   await expect(call(owner,'SELECT public.core_inspect_permissions($1,$2,NULL)',[foreign,userMember])).rejects.toThrow(/denied/);
  });
+ it('business capabilities require their module even for an OWNER',async()=>{
+  for(const code of ['sales.view','suppliers.manage','recipes.view','personnel.employees.manage','reporting.pnl.view']) expect(await allowed(owner,code),code).toBe(false);
+  await db.query("INSERT INTO public.eco_organization_module_entitlements(organization_id,module_key,is_enabled) VALUES($1,'ventas',true)",[org]);
+  expect(await allowed(owner,'sales.view')).toBe(true);
+ });
+ it('scope and entitlement are independent requirements for operational-unit capabilities',async()=>{
+  const u=(await db.query<{id:string}>("INSERT INTO public.eco_operational_units(organization_id,code,name,unit_type) VALUES($1,'U','Synthetic','OTHER') RETURNING id",[org])).rows[0].id;
+  const decision=async()=> (await call(owner,"SELECT public.can_execute_capability_for_org($1,'production.batch.log',$2) allowed",[org,u]))[0].allowed;
+  expect(await decision()).toBe(false);
+  await db.query("INSERT INTO public.eco_organization_module_entitlements(organization_id,module_key,is_enabled) VALUES($1,'produccion',true)",[org]);
+  expect(await decision()).toBe(true);
+  await db.query('UPDATE public.eco_operational_units SET is_active=false WHERE id=$1',[u]);
+  expect(await decision()).toBe(false);
+ });
 });

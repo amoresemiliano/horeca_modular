@@ -37,6 +37,7 @@ Nine legacy relations (`extractos`, `categorias`, `subcategorias`, `proveedores`
 1. `20261002000000_core_tenant_administration.sql`: registry, admin RPCs, focused audit, Banks policies/gates, effective permission inspection.
 2. `20261002010000_core_secure_provisioning.sql`: invitation tickets and service-only completion.
 3. `20261002020000_core_legacy_fail_closed.sql`: close unowned legacy surfaces without moving data.
+4. `20261002030000_core_module_entitlement_registry.sql`: attach existing module capabilities to their commercial entitlement; shared Core capabilities remain module-neutral and resource operations must check their owning module.
 
 Deploy the migration chain before the matching frontend and `tenant-user-invite` function. Set the function's `ADMIN_APP_ORIGIN` to the approved DEV origin and configure Auth redirect allowlisting. Keep JWT verification enabled; the handler also calls Auth getUser.
 
@@ -44,4 +45,20 @@ Deploy the migration chain before the matching frontend and `tenant-user-invite`
 
 Evidence is separated into unit tests, embedded PostgreSQL, hosted DEV authorization and browser UAT. Local synthetic browser regressions cover all existing Finance workflow and pagination/insight behavior. The new database suite executes the entire migration chain under actual PostgreSQL roles/RLS, with only the external Auth FK redirected to a synthetic identity table; it never writes `auth.users`.
 
-Final execution results and hosted/browser checks are recorded after deployment. Production promotion is a separate Master gate; see `WP-CORE-003-PRODUCTION-GATE.md`.
+### Executed DEV verification (2026-10-02)
+
+All four migrations are applied to the verified DEV project. `tenant-user-invite` is deployed with JWT verification and the approved DEV origin. The Product Owner has the preserved organization-wide OWNER membership and a separately audited platform administrator assignment. Exactly 13 role templates remain.
+
+Final local checks: lint passed with zero errors and eight pre-existing warnings; typecheck passed; 31 test files passed with 404 passing tests and one existing opt-in hosted test skipped; production build passed. The complete-chain embedded PostgreSQL administration suite contains 15 tests. Build advisories remain for bundle size and the existing Browserslist dataset.
+
+Hosted authorization tests used genuine Auth identities and authenticated JWTs: platform-only metadata access with zero Finance rows and denied business RPCs; OWNER administration; Banks Full and Import-only allow/deny sets; foreign-tenant read/mutation denial; capability revocation; inactive membership; audit records; and effective permission inspection. Assigned-unit access succeeds only with the module enabled, while absent/foreign scope and scoped REVOKE deny access. A temporary foreign tenant provided a positive import/control case.
+
+Browser UAT against the actual DEV backend and the Vercel DEV preview passed for platform-only, OWNER, Banks Full and Banks Import-only, without page errors. The preview at `d5a555e21b57d4df4cafd6e6293f9aa5cbf7a07a` was tested before the final navigation spacing adjustment; the same four-profile browser matrix passed again locally with the final frontend and hosted DEV backend. The browser harness waits for loaded rows before asserting pagination. Both existing synthetic Finance browser regression suites also passed. Secure invitation callback/password setup and subsequent password login passed with a disposable hosted Auth identity; this is separate from real-mailbox acceptance.
+
+The authorized real recipient received an accepted Auth Admin invitation request and an El Criollo membership with the Banks Import preset. The API returned `invited`; mailbox receipt and human acceptance are pending confirmation and are not asserted by automated UAT. The real recipient is preserved during fixture cleanup. Initial invalid synthetic-address and hourly email-limit failures were reported and resolved before the successful delivery request. Production SMTP and invitation acceptance remain explicit promotion checks.
+
+Protected El Criollo data totals are three accounts, 320 movements and 320 allocations. Before/after hashes verify that these operational rows are unchanged. Local evidence under ignored `.local-data/core3/` contains the hosted, browser, scope, callback, invitation and cleanup results; credentials/session files are not committed.
+
+Cleanup passed: five synthetic Auth users and one temporary tenant were removed, leaving exactly one canonical organization. The real invited recipient, Product Owner OWNER membership and separate platform assignment were preserved. Protected business hashes still match the preflight snapshot. Production was untouched. Delivery is IN_DEV; human Product Owner review/acceptance is not implied by the automated checks.
+
+Production promotion and Product Owner acceptance are separate from implementation delivery; see `WP-CORE-003-PRODUCTION-GATE.md`.
