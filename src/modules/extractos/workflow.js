@@ -3,9 +3,9 @@ export const emptyInterpretation = () => ({ economic_type: 'UNCLASSIFIED', categ
 // Banking sign is deliberately absent from interpretation initialization.
 export function interpretationDraft(allocation) { return { ...emptyInterpretation(), ...allocation, economic_type: allocation?.economic_type || 'UNCLASSIFIED' }; }
 export function changeCategory(value, categoryId) { return { ...value, category_id: categoryId, subcategory_id: categoryId === value.category_id ? value.subcategory_id : '' }; }
-export function classificationInput(orgId, allocationId, value) {
+export function classificationInput(orgId, allocationId, value, requestedStatus = 'CONFIRMED') {
   return { orgId, allocationId, economicType: value.economic_type, categoryId: value.category_id, subcategoryId: value.subcategory_id,
-    counterpartyId: value.counterparty_id, notes: value.notes, status: value.economic_type === 'UNCLASSIFIED' ? 'PENDING' : 'CONFIRMED' };
+    counterpartyId: value.counterparty_id, notes: value.notes, status: value.economic_type === 'UNCLASSIFIED' ? 'PENDING' : requestedStatus === 'SUGGESTED' ? 'SUGGESTED' : 'CONFIRMED' };
 }
 export function ruleExample(movement) {
   if (movement?.allocations?.length !== 1) return null;
