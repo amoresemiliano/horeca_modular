@@ -147,7 +147,8 @@ const MainLayout = ({ user: propsUser }) => {
           TOPBAR
       ══════════════════════════════════════════════════ */}
       <header style={{
-        height: '60px',
+        minHeight: '60px',
+        flexShrink: 0,
         background: 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(12px)',
         borderBottom: '1px solid var(--c-border)',
@@ -194,9 +195,9 @@ const MainLayout = ({ user: propsUser }) => {
           {/* Línea divisoria */}
           <div style={{ width: '1px', height: '28px', background: 'var(--c-border)' }} />
 
-          {activeOrganization && <select aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Contexto de organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
+          {activeOrganization && availableOperationalUnits?.length > 0 && <select style={{maxWidth:210}} aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Contexto de organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
           {/* Navegación por grupos */}
-          <nav style={{ display: 'flex', gap: '0.125rem', flexWrap: 'nowrap' }}>
+          <nav style={{ display: 'flex', gap: '0.125rem', flexWrap: 'wrap', minWidth: 0 }}>
             {Object.entries(MODULOS).filter(([key]) => modulosPermitidos.includes(key)).map(([key, mod]) => {
               const isActive = moduloActivo === key;
               return (
