@@ -387,7 +387,7 @@ const MainLayout = ({ user: propsUser }) => {
                       e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
                     }
                   }}
-                  title={!sidebarOpen ? tab : undefined}
+                  title={!sidebarOpen ? (moduloActivo === 'Bancos' && tab === 'Gráficas' ? 'Métricas' : tab) : undefined}
                 >
                   {/* Dot indicator */}
                   <span style={{
@@ -399,7 +399,7 @@ const MainLayout = ({ user: propsUser }) => {
                   }} />
                   {sidebarOpen && (
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {tab}
+                      {moduloActivo === 'Bancos' && tab === 'Gráficas' ? 'Métricas' : tab}
                     </span>
                   )}
                 </button>
@@ -453,13 +453,13 @@ const MainLayout = ({ user: propsUser }) => {
                 </span>
                 <span style={{ color: 'var(--c-border)', fontSize: '0.75rem' }}>›</span>
                 <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--c-brand)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  {tabActiva}
+                  {moduloActivo === 'Bancos' && tabActiva === 'Gráficas' ? 'Métricas' : tabActiva}
                 </span>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
                 <h1 className="heading-display" style={{ fontSize: '1.75rem', margin: 0 }}>
-                  {tabActiva}
+                  {moduloActivo === 'Bancos' && tabActiva === 'Gráficas' ? 'Métricas' : tabActiva}
                 </h1>
                 <div style={{
                   height: '6px', width: '6px', borderRadius: '50%',
