@@ -19,6 +19,7 @@ describe('Sales canonical migration, tenant constraints and trusted persistence 
     for(const file of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql',
       '20260928010000_finance_atomic_bank_import.sql','20261001000000_finance_classification_workflow.sql',
       '20261002000000_core_tenant_administration.sql','20261002010000_core_secure_provisioning.sql','20261002020000_core_legacy_fail_closed.sql',
+      '20261002030000_core_module_entitlement_registry.sql',
       '20261002100000_canonical_sales_schema.sql','20261002110000_lastapp_sales_ingestion.sql']) {
       await db.exec(readFileSync(`supabase/migrations/${file}`,'utf8'));
     }
