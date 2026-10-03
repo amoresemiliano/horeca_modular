@@ -30,7 +30,7 @@ function AppContent() {
             Iniciando plataforma (Supabase Auth)
           </p>
           <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-            El Criollo · Sistema HORECA
+            Vegen Digital · HORECA Modular
           </p>
         </div>
       </div>

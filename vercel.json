@@ -1,4 +1,21 @@
 {
-  "functions": { "api/sales.ts": { "maxDuration": 60 }, "api/sales-webhook.ts": { "maxDuration": 10 } },
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/sales.ts": {
+      "maxDuration": 60
+    },
+    "api/sales-webhook.ts": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/reset-password",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
 }

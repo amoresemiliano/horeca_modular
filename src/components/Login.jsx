@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoVDC from '../assets/icono_VDC.png';
-import logoCliente from '../assets/logo_cliente.png';
 
 const Login = () => {
   const [status, setStatus] = useState('idle'); // 'idle' | 'loading_google' | 'loading_github' | 'loading_password' | 'loading_reset' | 'loading_update' | 'success_reset' | 'success_update' | 'error'
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState(() => {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    return window.location.pathname === '/reset-password' && params.has('error')
+      ? 'El enlace de acceso ha caducado o ya se ha utilizado. Solicita un nuevo enlace de acceso.' : '';
+  });
   const [successMsg, setSuccessMsg] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [newPasswordInput, setNewPasswordInput] = useState('');
-  const [mode, setMode] = useState('login'); // 'login' | 'reset_request'
 
   const {
     loginWithProvider,
@@ -169,7 +171,7 @@ const Login = () => {
 
         {/* Contenido */}
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <img src={logoCliente} alt="El Criollo" style={{ height: '72px', objectFit: 'contain', marginBottom: '2rem', filter: 'brightness(0) invert(1)' }} />
+          <img src={logoVDC} alt="Vegen Digital" style={{ height: '72px', objectFit: 'contain', marginBottom: '2rem', filter: 'brightness(0) invert(1)' }} />
           <h2 style={{
             fontFamily: 'var(--font-heading)',
             fontSize: '1.75rem',
@@ -207,7 +209,7 @@ const Login = () => {
           position: 'absolute', bottom: '2rem', left: 0, right: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
         }}>
-          <img src={logoVDC} alt="VDC" style={{ height: '20px', opacity: 0.35, filter: 'invert(1)' }} />
+          <img src={logoVDC} alt="Vegen Digital" style={{ height: '20px', opacity: 0.35, filter: 'invert(1)' }} />
           <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             Vegen Digital
           </span>
@@ -228,7 +230,7 @@ const Login = () => {
 
           {/* Logotipo mobile */}
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <img src={logoCliente} alt="El Criollo" style={{ height: '52px', objectFit: 'contain', marginBottom: '1.25rem' }} />
+            <img src={logoVDC} alt="Vegen Digital" style={{ height: '52px', objectFit: 'contain', marginBottom: '1.25rem' }} />
             <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-4)', fontWeight: 500 }}>
               Iniciá sesión para continuar
             </p>
@@ -340,7 +342,7 @@ const Login = () => {
                     type="email"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="emilianodirosa1@gmail.com"
+                    placeholder="tu@correo.com"
                     required
                     style={{
                       width: '100%', padding: '0.65rem 1rem',
@@ -527,6 +529,8 @@ const Login = () => {
               </>
             )}
 
+            {!isPasswordRecovery && <details style={{marginBottom:'1rem'}}><summary>Solicitar un nuevo enlace de acceso</summary><form onSubmit={handleResetRequestSubmit}><label>Correo para recuperar el acceso<input type="email" required value={emailInput} onChange={e=>setEmailInput(e.target.value)} className="block border rounded p-2 w-full"/></label><button type="submit" className="border rounded p-2 mt-2" disabled={status.startsWith('loading_')}>Enviar enlace de acceso</button></form></details>}
+
             {status.startsWith('loading_') && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '0.5rem 0' }}>
                 <div style={{
@@ -557,8 +561,8 @@ const Login = () => {
               </div>
             )}
 
-            {status === 'error' && (
-              <div style={{
+            {errorMsg && (
+              <div role="alert" style={{
                 display: 'flex', alignItems: 'center', gap: '0.75rem',
                 padding: '0.875rem 1rem',
                 background: 'var(--c-brand-light)',

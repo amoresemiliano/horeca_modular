@@ -128,6 +128,7 @@ export function AuthProvider({ children }) {
           created_at,
           eco_organizations (
             id,
+            code,
             name,
             legal_name,
             tax_id,
@@ -163,6 +164,7 @@ export function AuthProvider({ children }) {
           if (!orgs.some((existing) => existing.id === o.id)) {
             orgs.push({
               id: o.id,
+              code: o.code,
               name: o.name || o.legal_name || 'Organization',
               legalName: o.legal_name,
               taxId: o.tax_id,

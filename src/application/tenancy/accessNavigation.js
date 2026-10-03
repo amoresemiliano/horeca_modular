@@ -24,6 +24,14 @@ export const ACCESS_PRESETS = {
   BANKS_READ: { name: 'Bancos · solo lectura', role: 'CONSULTANT', grants: [...BANKS_BASE, 'banks.summary.view', 'banks.metrics.view'] },
   FINANCE_REVIEW: { name: 'Finanzas · revisión', role: 'CONSULTANT', grants: [...BANKS_BASE, 'banks.summary.view', 'banks.metrics.view', 'financial.allocation.edit', 'financial.reconciliation.review'] },
 };
+// Public UX names. Legacy keys remain accepted for existing callers and audit history.
+Object.assign(ACCESS_PRESETS, {
+  BANKS_VIEWER: { ...ACCESS_PRESETS.BANKS_READ, name: 'Bancos · consulta', description: 'Consolidado, Resumen y Métricas. Sin importaciones ni cambios.' },
+  BANKS_IMPORT_OPERATOR: { ...ACCESS_PRESETS.BANKS_IMPORT, name: 'Bancos · importación', description: 'Solo Consolidado e importación. Sin clasificación ni configuración.' },
+  BANKS_RECONCILIATION_OPERATOR: { ...ACCESS_PRESETS.FINANCE_REVIEW, name: 'Bancos · conciliación', description: 'Vistas, clasificación y revisión/confirmación de conciliación. Sin administración del tenant.', grants: [...ACCESS_PRESETS.FINANCE_REVIEW.grants, 'financial.reconciliation.confirm'] },
+  BANKS_ADMIN: { ...ACCESS_PRESETS.BANKS_FULL, name: 'Bancos · administración completa', description: 'Todas las secciones y acciones de Bancos. Sin otros módulos.' },
+});
+export const VISIBLE_PRESETS = ['BANKS_VIEWER', 'BANKS_IMPORT_OPERATOR', 'BANKS_RECONCILIATION_OPERATOR', 'BANKS_ADMIN'];
 export function presetOverrides(key, capabilities) {
   const preset = ACCESS_PRESETS[key];
   if (!preset) throw new Error('Perfil de acceso desconocido');

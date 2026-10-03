@@ -12,6 +12,7 @@ import { navigationAllowed, banksSectionAllowed } from '../application/tenancy/a
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoCliente from '../assets/logo_cliente.png';
+import logoVDC from '../assets/icono_VDC.png';
 
 /* ─── ESTRUCTURA MAESTRA ──────────────────────────────────────────────────── */
 const MODULOS = {
@@ -163,13 +164,16 @@ const MainLayout = ({ user: propsUser }) => {
       }}>
         {/* Logo + Organization Switcher + Nav */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <img src={logoCliente} alt="El Criollo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+          <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}><img src={logoVDC} alt="Vegen Digital" style={{height:32}}/><strong>Vegen Digital</strong></div>
 
+          {/* Tenant identity appears only within its active business context. */}
+          {moduloActivo !== "PlatformAdmin" && activeOrganization?.code === "EL_CRIOLLO" && <img src={logoCliente} alt="Tenant El Criollo" style={{height:32}}/>}
           {/* Tenancy & Organization Switcher */}
           {availableOrganizations && availableOrganizations.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--c-surface-2)', padding: '0.25rem 0.5rem', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border)' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--c-brand)' }}>🏢 CIF:</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--c-brand)' }}>Tenant activo:</span>
               <select
+                aria-label="Tenant activo"
                 value={activeOrganization?.id || ''}
                 onChange={(e) => switchOrganization(e.target.value)}
                 style={{
