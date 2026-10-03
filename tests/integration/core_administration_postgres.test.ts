@@ -43,6 +43,25 @@ describe('WP-CORE-003 complete migration chain: embedded PostgreSQL, real roles/
  const mutate=(actor:string,action:string,payload:object,organization=org)=>call(actor,'SELECT public.core_admin_mutate($1,$2,$3::jsonb) result',[action,organization,JSON.stringify(payload)]);
  const allowed=async(actor:string,code:string,organization=org)=>(await call(actor,'SELECT public.can_execute_capability_for_org($1,$2) allowed',[organization,code]))[0].allowed;
  const preset=(key:string)=>mutate(owner,'member.preset',{membership_id:userMember,preset:key});
+ it('platform creates full tenant metadata; tenant owner edits only its own organization with audit',async()=>{
+  const fields={code:'C',name:'Synthetic C',trade_name:'Synthetic trade',legal_name:'Synthetic legal',tax_id:'TEST-ONLY',tax_id_type:'OTHER',business_address:'Synthetic address',country_code:'ES',currency:'EUR',timezone:'Europe/Madrid',contact_email:'test@example.com',contact_phone:'000'};
+  const created=(await mutate(platform,'tenant.create',fields))[0].result as {organization_id:string,result:Record<string,unknown>};
+  expect(created.result).toMatchObject(fields);
+  await mutate(owner,'tenant.update',{contact_email:'owner@example.com',business_address:'Synthetic owner address'});
+  const snapshot=(await call(owner,'SELECT public.core_admin_snapshot($1,false) result',[org]))[0].result as {organizations:Record<string,unknown>[],audit:Record<string,unknown>[]};
+  expect(snapshot.organizations[0]).toMatchObject({id:org,code:'A',contact_email:'owner@example.com',legal_name:null,tax_id:null});
+  expect(snapshot.audit.some(a=>a.action==='tenant.update'&&a.actor_name==='Synthetic')).toBe(true);
+  await expect(mutate(owner,'tenant.update',{name:'DENIED'},foreign)).rejects.toThrow(/denied/);
+  await expect(mutate(user,'tenant.update',{name:'DENIED'})).rejects.toThrow(/denied/);
+  await mutate(platform,'tenant.update',{name:'Platform metadata edit'},created.organization_id);
+  expect(await call(platform,'SELECT * FROM public.eco_financial_movements')).toHaveLength(0);
+ });
+ it('metadata input cannot mutate lifecycle, identity or ownership and rejects invalid values',async()=>{
+  for(const payload of [{is_active:false},{id:foreign},{name:null},{code:' '},{currency:'usd'},{country_code:'Spain'},{timezone:'Invented/Zone'},{contact_email:'invalid'},{tax_id_type:'invented'},{legal_name:{value:'invalid'}}])await expect(mutate(platform,'tenant.update',payload)).rejects.toThrow();
+  await expect(mutate(platform,'tenant.create',{name:'Duplicate',code:'A'})).rejects.toThrow(/unique/);
+  await expect(call(owner,'SELECT public.core_write_tenant_metadata($1,$2,$3)', ['tenant.update',org,'{"name":"Bypass"}'])).rejects.toThrow(/permission denied/);
+  expect((await db.query<{name:string}>('SELECT name FROM public.eco_organizations WHERE id=$1',[org])).rows[0].name).toBe('A');
+ });
  it('matches all 13 canonical templates and the current capability registry without broadening MANAGER',async()=>{
   expect((await db.query<{code:string}>('SELECT code FROM public.eco_capabilities')).rows.map(r=>r.code).sort()).toEqual(Object.values(Capability).sort());
   expect((await db.query<{code:string}>('SELECT code FROM public.eco_role_templates')).rows.map(r=>r.code).sort()).toEqual(Object.values(RoleTemplate).sort());
