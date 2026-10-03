@@ -7,7 +7,7 @@ Sales was resynchronized from `fa8069219375508b6c74d73c0a92c5c1d4516bf9` with
 The Core hosted-test conflict follows current dev. AuthContext supplies explicit `organizationId`; tenantContext and Core capabilities are unchanged.
 
 No Sales migration was applied to shared DEV. Master must review and deploy
-`20261002100000_canonical_sales_schema.sql` followed by `20261002110000_lastapp_sales_ingestion.sql`, after the current Core/Finance prerequisites.
+`20261003100000_canonical_sales_schema.sql` followed by `20261003110000_lastapp_sales_ingestion.sql`, after the current Core/Finance prerequisites.
 The unapplied pre-Core Sales migration was replaced. No merge into dev/main occurred.
 
 Read-only discovery found a historical Express/MySQL prototype at sibling `last_API/backend`, with a private `.env` containing `LAST_TOKEN`. This is discovery evidence, not product architecture. No sibling files were changed or copied into Git. A minimal live GET `/organizations` using that local credential returned **401**, so successful live reads were not verified. Prerequisite: a valid integrator v2 token, authorized for the mapped source location, configured securely as server `LAST_APP_TOKEN`.

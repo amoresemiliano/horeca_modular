@@ -1,14 +1,16 @@
 # WP-SALES-002-R2 — repository reconciliation
 
+Historical validation snapshot. Migration ordering and deployment guidance are superseded by [WP-SALES-002-R4](WP-SALES-002-R4.md); filename references below reflect the current queue.
+
 Authoritative DEV incorporated: `d5a555e21b57d4df4cafd6e6293f9aa5cbf7a07a` (newer than the requested `543a957`). The reviewed Sales commit `4fe9b13b7f02c56ac6e1e984c6d9c276d22142fd` remains in history. DEV merged without conflicts; no Sales business behavior or Core contract was changed.
 
 ## Current deployment order
 
 Apply all current Core/Finance prerequisites first, including Core tenant administration, secure provisioning, and legacy fail-closed migrations. The three never-applied Sales migrations now follow them:
 
-1. `20261002100000_canonical_sales_schema.sql`
-2. `20261002110000_lastapp_sales_ingestion.sql`
-3. `20261002120000_sales_resumable_sync.sql`
+1. `20261003100000_canonical_sales_schema.sql`
+2. `20261003110000_lastapp_sales_ingestion.sql`
+3. `20261003120000_sales_resumable_sync.sql`
 
 The old colliding Sales versions are SUPERSEDED. Their active files and execution references have been replaced. Both Sales PostgreSQL harnesses load the complete current shared migration chain before Sales.
 
