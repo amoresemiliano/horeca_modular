@@ -51,3 +51,27 @@ For a diagnostic profile in PowerShell: set `$env:CSV_PROFILE='1'`, optionally s
 Validation: `npm run lint` passes with five existing warnings; `npm run typecheck` passes; unmodified `npm run test:run` passes **43 files, 518 tests, one configured hosted test skipped**; `npm run build` passes with existing bundle/Browserslist warnings. The final dedicated benchmark passes the unchanged budget. Existing duplicate, malformed-row, billing-summary, correction, empty-line, zero-paidAmount, and tenant-isolation regressions remain in the standard suite. No `--no-isolate` execution was used as evidence.
 
 PR #6 remains open and draft. The newer remote DEV commit `2431ada` contains Core closure documentation/browser evidence only; R5 does not merge or modify that work. Existing Last.app token/deployment prerequisites remain as documented by prior WPs and are outside this CSV remediation.
+
+## Independent validation repeat
+
+The complete standard commands were repeated successfully: lint (five existing warnings), typecheck, test:run (43 files, 518 passed, one skipped), build and the dedicated performance gate. No runtime or test implementation changed during this repeat.
+
+Sequential diagnostic measurements against the reviewed source and optimized source produced 1295.50 ms and 1049.08 ms. Inclusive timings overlap and must not be summed.
+
+| Phase | Baseline calls | Baseline ms | Optimized ms |
+| --- | ---: | ---: | ---: |
+| fileSha256 | 1 | 282.78 | 148.42 |
+| csvParse | 1 | 96.89 | 126.39 |
+| provenanceConstruction | 2 | 0.16 | 0.17 |
+| provenanceSave | 2 | 0.09 | 0.16 |
+| rowFieldNormalization | 45000 | 66.37 | 58.80 |
+| spanishNumberParsing | 10000 | 22.28 | 19.15 |
+| identitySha256 | 5000 | 169.52 | 108.23 |
+| externalIdentityInclusive | 5000 | 193.33 | 139.59 |
+| repositoryLookup | 1 | 6.59 | 7.10 |
+| saleConstruction | 5000 | 20.28 | 14.29 |
+| productLineParsing | 5000 | 87.68 | 89.59 |
+| lineConstruction | 31395 | 56.11 | 47.48 |
+| repositorySave | 1 | 13.45 | 17.66 |
+
+Uninstrumented reviewed-source samples: 1066.08, 1049.80, 993.09 ms. Optimized samples: 548.29, 635.91, 678.35 ms. Every sample passed the unchanged strict 5,000 ms budget. These repeated observations do not imply a universal speedup. The four additional snapshots use the r5- filename prefix in the evidence directory.

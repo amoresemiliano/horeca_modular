@@ -1,0 +1,16 @@
+{
+  "node": "v22.17.1",
+  "platform": "win32",
+  "arch": "x64",
+  "cpu": "13th Gen Intel(R) Core(TM) i7-1360P",
+  "rows": 5000,
+  "warmups": 1,
+  "samplesMs": [
+    1066.0778,
+    1049.7981999999993,
+    993.0941000000003
+  ],
+  "budgetMs": 5000,
+  "maxMs": 1066.0778,
+  "medianMs": 1049.7981999999993
+}
