@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:csv-performance": "vitest run --config vitest.csv-performance.config.ts",
     "preview": "vite preview",
     "tailwind-init": "tailwindcss init -p"
   },

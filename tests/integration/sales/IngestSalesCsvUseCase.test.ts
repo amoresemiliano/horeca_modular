@@ -78,16 +78,14 @@ describe('IngestSalesCsvUseCase Integration Tests with Approved Fixtures', () =>
     expect(perron?.totalQuantity).toBeGreaterThan(0);
   });
 
-  it('3. Ingests ~5,000-row performance dataset (tabs-report-0-2.csv) with high performance and 0 duplicate collisions', async () => {
+  it('3. Ingests the 5,000-row dataset with exact revenue and 0 duplicate collisions', async () => {
     const csvContent = fs.readFileSync(path.join(fixturesDir, 'tabs-report-0-2.csv'), 'utf8');
 
-    const startTime = Date.now();
     const result = await ingestUseCase.execute({
       organizationId: ORG_ID_A,
       csvContent,
       filename: 'tabs-report-0-2.csv',
     });
-    const durationMs = Date.now() - startTime;
 
     expect(result.status).toBe('COMPLETED');
     expect(result.rowsAttempted).toBe(5000);
@@ -95,7 +93,7 @@ describe('IngestSalesCsvUseCase Integration Tests with Approved Fixtures', () =>
     expect(result.rowsDuplicate).toBe(0);
     expect(result.rowsRejected).toBe(0);
     expect(result.totalRevenue).toBe(95823.36);
-    expect(durationMs).toBeLessThan(5000);
+    // The unchanged <5 s budget runs separately via test:csv-performance.
   });
 
   it('4. Re-importing the same CSV file twice produces NO duplicate sales (100% duplicate detection)', async () => {

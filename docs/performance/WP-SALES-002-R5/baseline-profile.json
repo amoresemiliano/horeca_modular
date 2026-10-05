@@ -1,0 +1,61 @@
+{
+  "node": "v22.17.1",
+  "platform": "win32",
+  "arch": "x64",
+  "cpu": "13th Gen Intel(R) Core(TM) i7-1360P",
+  "totalMs": 1512.3671,
+  "phases": {
+    "fileSha256": {
+      "calls": 1,
+      "ms": 307.1722
+    },
+    "csvParse": {
+      "calls": 1,
+      "ms": 117.09270000000015
+    },
+    "provenanceConstruction": {
+      "calls": 2,
+      "ms": 0.18150000000014188
+    },
+    "provenanceSave": {
+      "calls": 2,
+      "ms": 0.10630000000037398
+    },
+    "rowFieldNormalization": {
+      "calls": 45000,
+      "ms": 72.21029999997882
+    },
+    "spanishNumberParsing": {
+      "calls": 10000,
+      "ms": 30.269799999984116
+    },
+    "identitySha256": {
+      "calls": 5000,
+      "ms": 210.10750000001462
+    },
+    "externalIdentityInclusive": {
+      "calls": 5000,
+      "ms": 250.0365999999799
+    },
+    "repositoryLookup": {
+      "calls": 1,
+      "ms": 16.634500000000116
+    },
+    "saleConstruction": {
+      "calls": 5000,
+      "ms": 25.605599999988044
+    },
+    "productLineParsing": {
+      "calls": 5000,
+      "ms": 61.22500000000855
+    },
+    "lineConstruction": {
+      "calls": 31395,
+      "ms": 71.60720000006722
+    },
+    "repositorySave": {
+      "calls": 1,
+      "ms": 23.6550000000002
+    }
+  }
+}
