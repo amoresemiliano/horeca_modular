@@ -13,6 +13,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoCliente from '../assets/logo_cliente.png';
 import logoVDC from '../assets/icono_VDC.png';
+import './MainLayout.css';
 
 /* ─── ESTRUCTURA MAESTRA ──────────────────────────────────────────────────── */
 const MODULOS = {
@@ -26,8 +27,8 @@ const MODULOS = {
   Producción:  { icon: '🍳', label: 'Producción',   tabs: ['Registro', 'Historial', 'Resumen'],                                    group: 'operaciones'},
   Personal:    { icon: '👤', label: 'Personal',     tabs: ['Fichajes', 'Incidencias', 'Empleados', 'Informes'],                     group: 'rrhh'       },
   Predicción:  { icon: '🔮', label: 'Predicción',   tabs: ['Carga', 'Stock', 'Predicciones'],                                       group: 'analytics' },
-  PlatformAdmin: { icon: '⚙', label: 'Administración de plataforma', tabs: ['Tenants'], group: 'sistema' },
-  Config:      { icon: '⚙',  label: 'Administración de organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
+  PlatformAdmin: { icon: '⚙', label: 'Plataforma', tabs: ['Tenants'], group: 'sistema' },
+  Config:      { icon: '⚙',  label: 'Organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
 };
 
 const GRUPOS = {
@@ -147,7 +148,7 @@ const MainLayout = ({ user: propsUser }) => {
       {/* ══════════════════════════════════════════════════
           TOPBAR
       ══════════════════════════════════════════════════ */}
-      <header style={{
+      <header className="shell-header" style={{
         minHeight: '60px',
         flexShrink: 0,
         background: 'rgba(255,255,255,0.92)',
@@ -163,15 +164,14 @@ const MainLayout = ({ user: propsUser }) => {
         boxShadow: 'var(--shadow-xs)',
       }}>
         {/* Logo + Organization Switcher + Nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}><img src={logoVDC} alt="Vegen Digital" style={{height:32}}/><strong>Vegen Digital</strong></div>
+        <div className="shell-identity-navigation">
+          <div style={{display:"flex",alignItems:"center",flexShrink:0}}><img src={logoVDC} alt="Vegen Digital" style={{height:32}}/></div>
 
           {/* Tenant identity appears only within its active business context. */}
-          {moduloActivo !== "PlatformAdmin" && activeOrganization?.code === "EL_CRIOLLO" && <img src={logoCliente} alt="Tenant El Criollo" style={{height:32}}/>}
           {/* Tenancy & Organization Switcher */}
           {availableOrganizations && availableOrganizations.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--c-surface-2)', padding: '0.25rem 0.5rem', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border)' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--c-brand)' }}>Tenant activo:</span>
+            <div className="shell-tenant-control" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--c-surface-2)', padding: '0.25rem 0.5rem', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border)' }}>
+              {activeOrganization?.code === 'EL_CRIOLLO' && <img src={logoCliente} alt="" style={{height:28, width:28, objectFit:'contain', flexShrink:0}}/>}
               <select
                 aria-label="Tenant activo"
                 value={activeOrganization?.id || ''}
@@ -183,7 +183,13 @@ const MainLayout = ({ user: propsUser }) => {
                   fontWeight: 600,
                   color: 'var(--c-text-1)',
                   cursor: 'pointer',
-                  outline: 'none',
+                  minWidth: 0,
+                  maxWidth: '100%',
+                  height: 32,
+                  minHeight: 32,
+                  padding: '0.25rem',
+                  boxSizing: 'border-box',
+                  margin: 0,
                 }}
               >
                 <option value="" disabled>Seleccionar organización</option>
@@ -201,8 +207,8 @@ const MainLayout = ({ user: propsUser }) => {
 
           {activeOrganization && availableOperationalUnits?.length > 0 && <select style={{maxWidth:210}} aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Contexto de organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
           {/* Navegación por grupos */}
-          <nav style={{ display: 'flex', gap: '0.125rem', flexWrap: 'wrap', minWidth: 0 }}>
-            {Object.entries(MODULOS).filter(([key]) => modulosPermitidos.includes(key)).map(([key, mod]) => {
+          <nav aria-label="Módulos operativos" className="shell-module-navigation">
+            {Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && modulosPermitidos.includes(key)).map(([key, mod]) => {
               const isActive = moduloActivo === key;
               return (
                 <button
@@ -246,7 +252,7 @@ const MainLayout = ({ user: propsUser }) => {
         </div>
 
         {/* Perfil */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+        <div className="shell-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
           <div style={{ textAlign: 'right', display: 'none' }}>
             {/* Desktop only label */}
           </div>
@@ -412,6 +418,17 @@ const MainLayout = ({ user: propsUser }) => {
                 </button>
               );
             })}
+          </nav>
+
+          <nav aria-label="Administración" style={{ padding: '0.625rem', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+            {['PlatformAdmin', 'Config'].filter(key => modulosPermitidos.includes(key)).map(key => (
+              <button key={key} aria-label={MODULOS[key].label} aria-current={moduloActivo === key ? 'page' : undefined}
+                title={MODULOS[key].label} onClick={() => cambiarModulo(key)} className="shell-admin-link"
+                style={{ background: moduloActivo === key ? 'rgba(255,255,255,0.15)' : 'transparent' }}>
+                <span aria-hidden="true">{MODULOS[key].icon}</span>
+                {sidebarOpen && <span>{MODULOS[key].label}</span>}
+              </button>
+            ))}
           </nav>
 
           {/* Toggle + versión */}

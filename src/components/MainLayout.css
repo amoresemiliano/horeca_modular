@@ -1,0 +1,49 @@
+.shell-identity-navigation {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+.shell-tenant-control {
+  flex-shrink: 0;
+  white-space: nowrap;
+  max-width: 280px;
+}
+.shell-tenant-control select {
+  padding: 0.25rem;
+  height: 32px;
+}
+.shell-module-navigation {
+  display: flex;
+  gap: 0.125rem;
+  min-width: 0;
+  overflow-x: auto;
+}
+.shell-profile { flex-shrink: 0; margin-left: 1rem; }
+.shell-admin-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem;
+  border: 0;
+  border-radius: var(--r-md);
+  color: white;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-align: left;
+}
+.shell-admin-link:hover { background: rgba(255,255,255,0.1) !important; }
+.shell-admin-link:focus-visible, .shell-tenant-control select:focus-visible {
+  outline: 2px solid #5c7bd3;
+  outline-offset: 2px;
+}
+@media (max-width: 900px) {
+  .shell-header { flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem !important; }
+  .shell-identity-navigation { flex-wrap: wrap; gap: 0.5rem; flex-basis: 100%; }
+  .shell-tenant-control { max-width: calc(100% - 64px); }
+  .shell-module-navigation { flex-basis: 100%; }
+  .shell-profile { margin-left: auto; max-width: 100%; }
+}

@@ -1,0 +1,11 @@
+{
+  "backend": "vmxjqwlfwnphorthhcwu",
+  "frontend": "http://127.0.0.1:5191",
+  "checks": [
+    "Simulated restricted capability responses on a DEV session: Banks only, no admin entries; separate tenant logo; compact desktop and mobile control",
+    "Authorized DEV platform sidebar entry; real DEV no-op entitlement save immediately confirmed",
+    "Owner tenant administration reachable through capability-gated sidebar; auto-save guidance; simulated successful role response immediately confirmed without modifying memberships"
+  ],
+  "errors": [],
+  "status": "PASS"
+}
