@@ -1,5 +1,7 @@
 # Final pre-production shell polish
 
+Historical validation snapshot. The branding assumption and platform navigation behavior below are superseded by [Core platform shell fix](CORE-PLATFORM-SHELL-FIX.md).
+
 Baseline: `dev` at `2431ada1e0b55725ffa5da6eabfb26de32b4cf9d`.
 
 The shell uses the existing `src/assets/icono_VDC.png` platform asset at the top-left without adjacent text. The supplied attachment contained only instructions, so the existing VDC asset was retained. El Criollo's logo is inside its tenant selector with its name and displayed role. The control stays on one line; the header wraps and operational navigation scrolls at narrow widths.

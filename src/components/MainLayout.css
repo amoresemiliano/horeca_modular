@@ -20,6 +20,12 @@
   min-width: 0;
   overflow-x: auto;
 }
+.shell-module-catalog {
+  flex: 1;
+  flex-wrap: wrap;
+  overflow-x: visible;
+  padding: 0.25rem 0;
+}
 .shell-profile { flex-shrink: 0; margin-left: 1rem; }
 .shell-admin-link {
   display: flex;
