@@ -1,300 +1,369 @@
 /**
- * ImportModal.jsx — Módulo Bancos / Extractos
- * Soporta los 5 formatos de CSV del sistema:
- *   - Cuenta MC (BBVA)      : Fecha, Concepto, Beneficiario, Observaciones, Importe
- *   - Cuenta MT (BBVA)      : Fecha, Concepto, Beneficiario, Observaciones, Importe
- *   - Tarjeta BBVA           : Fecha, Concepto, Importe
- *   - Cuenta Sabadell        : FECHA, CONCEPTO, MONTO
- *   - Tarjeta Sabadell       : FECHA, CONCEPTO, MONTO
+ * ImportModal.jsx — Modal de Importación Canónica de Extractos Bancarios (WP-FIN-001)
+ * Soporta detección automática de fuentes (BBVA Cta, BBVA Tarjeta, Sabadell Cta, Sabadell Tarjeta),
+ * resolución de cuentas bancarias de destino, detección de duplicados Nivel A y Nivel C,
+ * y confirmación canónica de hechos bancarios.
  */
 import React, { useRef, useState } from 'react';
-import Papa from 'papaparse';
+import { useAuth } from '../../context/AuthContext';
+import { BankStatementImportService } from '../../domains/finance/application/BankStatementImportService';
+import { SupabaseFinanceRepository } from '../../domains/finance/infrastructure/repositories/SupabaseFinanceRepository';
+import { formatEuro } from '../../domains/finance/domain/money';
 
-// ─── Canales disponibles ─────────────────────────────────────────────────────
-export const CANALES = [
-  { id: 'cta_mc',       label: 'Cuenta MC · BBVA',      banco: 'BBVA',     tipo: 'cuenta'  },
-  { id: 'cta_mt',       label: 'Cuenta MT · BBVA',      banco: 'BBVA',     tipo: 'cuenta'  },
-  { id: 'tarj_bbva',    label: 'Tarjeta · BBVA',        banco: 'BBVA',     tipo: 'tarjeta' },
-  { id: 'cta_sabadell', label: 'Cuenta · Sabadell',     banco: 'Sabadell', tipo: 'cuenta'  },
-  { id: 'tarj_sabadell',label: 'Tarjeta · Sabadell',    banco: 'Sabadell', tipo: 'tarjeta' },
-];
+const importService = new BankStatementImportService(new SupabaseFinanceRepository());
 
-// ─── Parsea un importe en texto español → número ──────────────────────────────
-const parseImporte = (raw = '') => {
-  if (!raw && raw !== 0) return null;
-  // Eliminar €, espacios, y convertir formato ES (1.234,56 → 1234.56)
-  const limpio = String(raw)
-    .replace(/€/g, '')
-    .replace(/\s/g, '')
-    .replace(/\./g, '')   // miles
-    .replace(',', '.');   // decimal
-  const num = parseFloat(limpio);
-  return isNaN(num) ? null : num;
-};
-
-// ─── Parsea una fecha en varios formatos → ISO yyyy-mm-dd ─────────────────────
-const parseFecha = (raw = '') => {
-  if (!raw) return null;
-  const s = String(raw).trim();
-  // dd/mm/yyyy o dd/mm/yy
-  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-  if (m1) {
-    const [, d, mo, y] = m1;
-    const year = y.length === 2 ? `20${y}` : y;
-    return `${year}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
-  }
-  // dd-mm-yyyy
-  const m2 = s.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/);
-  if (m2) {
-    const [, d, mo, y] = m2;
-    const year = y.length === 2 ? `20${y}` : y;
-    return `${year}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
-  }
-  return s; // devolver tal cual si no reconoce
-};
-
-// ─── Detecta qué columna de importe usar (BBVA: "Importe", Sabadell: "MONTO") ──
-const getImporte = (row) => {
-  const keys = Object.keys(row);
-  for (const k of keys) {
-    const kl = k.toLowerCase().trim();
-    if (kl === 'importe' || kl === 'monto') return parseImporte(row[k]);
-  }
-  return null;
-};
-
-// ─── Detecta la columna de fecha ──────────────────────────────────────────────
-const getFecha = (row) => {
-  const keys = Object.keys(row);
-  for (const k of keys) {
-    if (k.toLowerCase().trim() === 'fecha') return parseFecha(row[k]);
-  }
-  return null;
-};
-
-// ─── Detecta la columna de concepto ───────────────────────────────────────────
-const getConcepto = (row) => {
-  const keys = Object.keys(row);
-  // Combinar Concepto + Beneficiario + Observaciones si existen
-  const partes = [];
-  for (const k of keys) {
-    const kl = k.toLowerCase().trim();
-    if (['concepto', 'beneficiario', 'observaciones'].includes(kl) && row[k]?.trim()) {
-      partes.push(row[k].trim());
-    }
-  }
-  return partes.join(' · ') || '';
-};
-
-// ─── Transforma una fila CSV al formato interno ───────────────────────────────
-const transformarFila = (row, canal) => {
-  const importe = getImporte(row);
-  const fecha   = getFecha(row);
-  if (importe === null || !fecha) return null;
-  return {
-    fecha,
-    importe,
-    concepto:     getConcepto(row),
-    canal:        canal.label,
-    categoria:    '',
-    subcategoria: '',
-    proveedor:    '',
-    notas:        '',
-  };
-};
-
-// ─── COMPONENTE ───────────────────────────────────────────────────────────────
-const ImportModal = ({ isOpen, onClose, onImport }) => {
-  const fileRef    = useRef(null);
-  const [canal,    setCanal]    = useState(CANALES[0]);
-  const [preview,  setPreview]  = useState([]);
-  const [fileName, setFileName] = useState('');
-  const [error,    setError]    = useState('');
-  const [loading,  setLoading]  = useState(false);
+const ImportModal = ({ isOpen, onClose, onImportCompleted }) => {
+  const { organizationId, can } = useAuth();
+  const fileRef = useRef(null);
+  const [preview, setPreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedAccountId, setSelectedAccountId] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleFile = (file) => {
+  const handleFileSelect = async (file) => {
+    if (!can('statements.import.upload') || !can('statements.import.process')) { setError('No tienes permiso para subir y procesar extractos.'); return; }
     if (!file) return;
-    setFileName(file.name);
+    setSelectedFile(file);
     setError('');
-    setPreview([]);
+    setPreview(null);
+    setSelectedAccountId('');
+    setLoading(true);
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      encoding: 'UTF-8',
-      complete: ({ data }) => {
-        const filas = data
-          .map(row => transformarFila(row, canal))
-          .filter(Boolean);
+    if (!organizationId) {
+      setError('No hay una organización activa seleccionada para realizar la importación.');
+      setLoading(false);
+      return;
+    }
 
-        if (filas.length === 0) {
-          setError('No se detectaron filas válidas. Verificá que el CSV tenga las columnas correctas y el canal seleccionado.');
-          return;
-        }
-        setPreview(filas);
-      },
-      error: (err) => setError(`Error al parsear: ${err.message}`),
-    });
+    try {
+      const buffer = await file.arrayBuffer();
+      const previewResult = await importService.generateImportPreview(buffer, file.name, organizationId);
+
+      setPreview(previewResult);
+      if (previewResult.resolvedAccountId) {
+        setSelectedAccountId(previewResult.resolvedAccountId);
+      }
+    } catch (err) {
+      setError(err.message || 'Error al procesar el archivo bancario.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAccountChange = async (accountId) => {
+    setSelectedAccountId('');
+    if (!selectedFile || !accountId) return;
+    setLoading(true);
+    setError('');
+    try {
+      const next = await importService.generateImportPreview(await selectedFile.arrayBuffer(), selectedFile.name, organizationId, accountId);
+      setPreview(next);
+      setSelectedAccountId(accountId);
+    } catch (err) {
+      setPreview(null);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
-    handleFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
   };
 
-  const handleConfirm = async () => {
-    if (preview.length === 0) return;
+  const handleConfirmImport = async () => {
+    if (!preview || loading) return;
+    if (!can('STATEMENTS_IMPORT_CONFIRM')) {
+      setError('No tienes permiso para confirmar importaciones bancarias.');
+      return;
+    }
+    if (!organizationId) {
+      setError('No hay una organización activa seleccionada para realizar la importación.');
+      return;
+    }
+
+    const targetAccId = selectedAccountId || preview.resolvedAccountId;
+    if (!targetAccId) {
+      setError('Selecciona la cuenta bancaria de destino para asociar los movimientos.');
+      return;
+    }
+
     setLoading(true);
-    await onImport(preview);
-    setLoading(false);
-    setPreview([]);
-    setFileName('');
+    setError('');
+
+    try {
+      const result = await importService.confirmBankImport(preview, targetAccId, organizationId);
+      onImportCompleted({
+        imported: result.persistedCount,
+        overlaps: result.potentialOverlapCount,
+        suppressed: result.duplicateSuppressedCount,
+        total: result.totalParsed
+      });
+      handleReset();
+      onClose();
+    } catch (err) {
+      setError(`Error durante la confirmación de la importación: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setSelectedFile(null);
+    setPreview(null);
+    setSelectedAccountId('');
+    setError('');
+  };
+
+  const handleCloseModal = () => {
+    handleReset();
     onClose();
   };
 
-  const handleCancel = () => {
-    setPreview([]);
-    setFileName('');
-    setError('');
-    onClose();
-  };
+  const incomeCount = preview ? preview.movements.filter(m => m.amount > 0).length : 0;
+  const expenseCount = preview ? preview.movements.filter(m => m.amount < 0).length : 0;
+  const overlapCount = preview ? preview.movements.filter(m => m.duplicateStatus === 'POTENTIAL_OVERLAP').length : 0;
+
+  // Authorization check for import confirmation:
+  // STATEMENTS_IMPORT_CONFIRM is the canonical human gate.
+  const hasImportCapability = can('STATEMENTS_IMPORT_CONFIRM');
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">📥 Cargar Movimientos</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Importá el CSV descargado del banco</p>
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span>📥</span> Importar Extracto Bancario
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Soporte nativo BBVA (Cuenta/Tarjeta) y Banco Sabadell (Cuenta/Tarjeta) · Mercado España
+            </p>
           </div>
-          <button onClick={handleCancel} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+          <button onClick={handleCloseModal} className="p-2 text-gray-400 hover:text-gray-600 rounded-full">
+            ✕
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-6 space-y-5">
 
-          {/* Selector de Canal */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              1. Seleccioná la fuente bancaria
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {CANALES.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => { setCanal(c); setPreview([]); setFileName(''); }}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all text-left ${
-                    canal.id === c.id
-                      ? 'border-red-500 bg-red-50 text-red-800'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                  }`}
-                >
-                  <span className="text-lg">{c.banco === 'BBVA' ? '🟦' : '🟥'}</span>
-                  <div>
-                    <div className="font-semibold">{c.label}</div>
-                    <div className="text-xs text-gray-400 capitalize">{c.tipo}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Drop Zone */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              2. Cargá el archivo CSV
-            </label>
-            <div
-              onDrop={handleDrop}
-              onDragOver={e => e.preventDefault()}
-              onClick={() => fileRef.current?.click()}
-              className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-red-400 hover:bg-red-50 transition-all"
-            >
-              <div className="text-4xl mb-2">📂</div>
-              {fileName
-                ? <p className="text-sm font-semibold text-gray-700">{fileName}</p>
-                : <p className="text-sm text-gray-500">Arrastrá el CSV aquí o hacé clic para seleccionar</p>
-              }
-              <p className="text-xs text-gray-400 mt-1">Solo archivos .csv · Formato {canal.banco}</p>
-            </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={e => handleFile(e.target.files[0])}
-            />
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">
-              ⚠️ {error}
+          {!preview && (
+            <div>
+              <div
+                onDrop={handleDrop}
+                onDragOver={e => e.preventDefault()}
+                onClick={() => fileRef.current?.click()}
+                className="border-2 border-dashed border-gray-300 hover:border-emerald-600 hover:bg-emerald-50/50 rounded-2xl p-10 text-center cursor-pointer transition-all"
+              >
+                <div className="text-4xl mb-3">📄</div>
+                <p className="text-sm font-semibold text-gray-800">
+                  Arrastra aquí el archivo bancario (.xls / .xlsx) o haz clic para seleccionarlo
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Formatos detectados automáticamente: BBVA Cuenta MC/MT, BBVA Tarjeta, Sabadell Cuenta, Sabadell Tarjeta
+                </p>
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".xls,.xlsx"
+                className="hidden"
+                onChange={e => handleFileSelect(e.target.files[0])}
+              />
             </div>
           )}
 
-          {/* Preview */}
-          {preview.length > 0 && (
-            <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">
-                3. Vista previa · <span className="text-green-600">{preview.length} movimientos detectados</span>
-              </p>
-              <div className="overflow-x-auto rounded-xl border border-gray-200 max-h-52">
-                <table className="min-w-full text-xs">
-                  <thead className="bg-gray-50 sticky top-0">
-                    <tr>
-                      {['Fecha','Importe','Canal','Concepto'].map(h => (
-                        <th key={h} className="px-3 py-2 text-left text-gray-500 font-semibold uppercase tracking-wide">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {preview.slice(0, 10).map((item, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 whitespace-nowrap">{item.fecha}</td>
-                        <td className={`px-3 py-2 font-medium whitespace-nowrap ${item.importe < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {item.importe.toFixed(2)} €
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-gray-500">{item.canal}</td>
-                        <td className="px-3 py-2 max-w-[180px] truncate text-gray-500">{item.concepto}</td>
-                      </tr>
-                    ))}
-                    {preview.length > 10 && (
-                      <tr>
-                        <td colSpan="4" className="px-3 py-2 text-center text-gray-400">
-                          … y {preview.length - 10} movimientos más
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+          {/* Spinner */}
+          {loading && (
+            <div className="py-8 text-center text-sm font-medium text-gray-500">
+              ⏳ Analizando firmas estructurales e idempotencia...
+            </div>
+          )}
+
+          {/* Warning Level A File Duplicate */}
+          {preview?.isExactFileDuplicate && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-xs flex items-start gap-2.5">
+              <span className="text-lg">⚠️</span>
+              <div>
+                <p className="font-bold mb-0.5">Archivo Idéntico Previamente Importado (Nivel A)</p>
+                <p>
+                  El hash SHA-256 de este archivo coincide exactamente con una importación anterior.
+                  Reconfirmar no creará movimientos duplicados.
+                </p>
               </div>
             </div>
           )}
+
+          {/* Warning Level C Potential Overlaps */}
+          {overlapCount > 0 && !preview?.isExactFileDuplicate && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-900 rounded-xl p-4 text-xs flex items-start gap-2.5">
+              <span className="text-lg">ℹ️</span>
+              <div>
+                <p className="font-bold mb-0.5">Posible Solapamiento de Fechas Detectado ({overlapCount} movimientos)</p>
+                <p>
+                  Se detectaron movimientos cuya huella coincide con extractos previos. Se mantendrán identificados como solapamiento potencial sin pérdida de datos.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl p-4 text-xs flex items-start gap-2">
+              <span className="text-base">⚠️</span>
+              <div>{error}</div>
+            </div>
+          )}
+
+          {preview?.rejectedRows?.length > 0 && (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-xs" role="status">
+              <p className="font-bold">Filas rechazadas: {preview.rejectedRows.length}</p>
+              <ul>{preview.rejectedRows.map(row => (
+                <li key={row.sourceRowNumber}>Fila {row.sourceRowNumber}: {row.code}</li>
+              ))}</ul>
+            </div>
+          )}
+
+          {/* Preview Analysis Summary */}
+          {preview && (
+            <div className="space-y-4">
+
+              {/* Account & Source Detection Banner */}
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Formato Detectado:</span>
+                    <span className="px-2.5 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-800 rounded-full">
+                      {preview.formatFamily}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Archivo: <span className="font-semibold text-gray-700">{preview.fileName}</span>
+                  </p>
+                </div>
+
+                {/* Account Selection / Resolution */}
+                <div className="min-w-[220px]">
+                  <label className="text-xs font-bold text-gray-700 block mb-1">
+                    Cuenta Bancaria de Destino:
+                  </label>
+                  {preview.compatibleAccounts.length > 0 ? (
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs bg-white text-gray-800 font-medium focus:ring-1 focus:ring-emerald-500"
+                      value={selectedAccountId}
+                      disabled={loading}
+                      onChange={e => handleAccountChange(e.target.value)}
+                    >
+                      <option value="">Selecciona una cuenta</option>
+                      {preview.compatibleAccounts.map(acc => (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.displayName} ({acc.maskedIdentifier})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-xs text-gray-700 font-semibold block bg-white px-3 py-1.5 rounded-lg border border-gray-200">
+                      {preview.resolvedAccountName || 'No hay cuentas compatibles'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Stats Summary Grid */}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-white border rounded-xl p-3 shadow-sm">
+                  <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Movimientos</p>
+                  <p className="text-xl font-black text-gray-800 mt-0.5">{preview.totalMovements}</p>
+                </div>
+                <div className="bg-white border rounded-xl p-3 shadow-sm">
+                  <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Ingresos / Gastos</p>
+                  <p className="text-xs font-bold mt-1">
+                    <span className="text-emerald-600">{incomeCount}</span> / <span className="text-rose-600">{expenseCount}</span>
+                  </p>
+                </div>
+                <div className="bg-white border rounded-xl p-3 shadow-sm">
+                  <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Balance Neto</p>
+                  <p className={`text-sm font-black mt-1 ${preview.netAmount >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {formatEuro(preview.netAmount)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Preview Table */}
+              <div>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Vista Previa Canónica (Primeros 6 registros)
+                </p>
+                <div className="border rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                  <table className="min-w-full text-xs text-left">
+                    <thead className="bg-gray-50 text-gray-500 border-b">
+                      <tr>
+                        <th className="px-3 py-2">F. Contable</th>
+                        <th className="px-3 py-2">F. Valor</th>
+                        <th className="px-3 py-2">Importe</th>
+                        <th className="px-3 py-2">Concepto Canónico</th>
+                        <th className="px-3 py-2">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {preview.movements.slice(0, 6).map((m, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 font-mono whitespace-nowrap text-gray-700">{m.bookingDate}</td>
+                          <td className="px-3 py-2 font-mono whitespace-nowrap text-gray-400">{m.valueDate || '—'}</td>
+                          <td className={`px-3 py-2 font-bold whitespace-nowrap ${m.amount >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {formatEuro(m.amount)}
+                          </td>
+                          <td className="px-3 py-2 truncate max-w-[280px] text-gray-700 font-medium" title={m.description}>
+                            {m.description}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            {m.duplicateStatus === 'POTENTIAL_OVERLAP' ? (
+                              <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded">
+                                Posible Solapamiento
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 rounded">
+                                Único
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          )}
+
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
+        <div className="flex items-center justify-between p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
           <button
-            onClick={handleCancel}
-            className="px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition"
+            onClick={preview ? handleReset : handleCloseModal}
+            className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900"
           >
-            Cancelar
+            {preview ? 'Cambiar archivo' : 'Cancelar'}
           </button>
+
           <button
-            onClick={handleConfirm}
-            disabled={preview.length === 0 || loading}
-            className="px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ backgroundColor: preview.length > 0 && !loading ? '#006847' : undefined, background: preview.length === 0 || loading ? '#9CA3AF' : '#006847' }}
+            onClick={handleConfirmImport}
+            disabled={!preview || loading || !hasImportCapability || !selectedAccountId || preview.organizationId !== organizationId || preview.totalMovements === 0}
+            className="px-6 py-2.5 text-xs font-bold text-white rounded-xl shadow-sm disabled:opacity-40 transition-opacity"
+            style={{ backgroundColor: '#006847' }}
           >
-            {loading ? '⏳ Guardando…' : `✅ Importar ${preview.length} movimientos`}
+            {loading ? 'Confirmando...' : `Confirmar Importación (${preview?.totalMovements || 0})`}
           </button>
         </div>
       </div>

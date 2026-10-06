@@ -1,6 +1,14 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import { getAppConfig } from '../shared/config/env';
+import { authFlowForLocation } from '../context/authCallback';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const { url: supabaseUrl, publishableKey: supabaseKey } = getAppConfig().supabase;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    flowType: authFlowForLocation(typeof window !== 'undefined' ? window.location : null),
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});

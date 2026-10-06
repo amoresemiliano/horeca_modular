@@ -1,463 +1,121 @@
-/**
- * ExtractosApp.jsx — Módulo Bancos
- * Persistencia: Supabase (tabla: extractos)
- * Fallback: localStorage mientras no haya conexión
- */
-import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../lib/supabase';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { banksSectionAllowed } from '../../application/tenancy/accessNavigation';
+import { useAuth } from '../../context/AuthContext';
+import { getExtractosCatalogs, fetchConsolidatedMovements, splitMovementAllocations, fetchTransferCandidates,
+  detectTransferCandidates, reviewTransferCandidate, confirmFinanceSuggestions } from '../../lib/extractosService';
+import { financeMetrics, economicLabels } from '../../domains/finance/domain/economic';
+import { paginateMovements, buildConfirmedSimilarityIndex, buildSuggestionGroups, semanticKey } from '../../domains/finance/application/operationalInsights';
+import FinancePagination from './FinancePagination';
+import TransferReview from './TransferReview';
 import ImportModal from './ImportModal';
-import ExtractosFilters from './ExtractosFilters';
+import FinanceCatalogModal from './FinanceCatalogModal';
+import ClassificationModal from './ClassificationModal';
+import SplitModal from './SplitModal';
+import RuleModal from './RuleModal';
+import FinanceDialog from './FinanceDialog';
 import ExtractosResumen from './ExtractosResumen';
-import ExtractosGraficas from './ExtractosGraficas';
+import FinanceMovementRow from './FinanceMovementRow';
+import FinanceFilters from './FinanceFilters';
+import { emptyFilters, filterMovements } from './workflow';
+import ExtractosGraficas, { currencyAmount } from './ExtractosGraficas';
 
-// ─── Catálogos base (se enriquecen desde Supabase) ────────────────────────────
-const CATEGORIAS_DEFAULT = [
-  'Insumos', 'Nóminas', 'Impuestos', 'Servicios', 'Alquileres',
-  'Préstamos', 'Movimiento Interno', 'Ingresos', 'Plataformas',
-  'Marketing', 'Mantenimiento', 'Otros',
-];
-
-const SUBCATEGORIAS_DEFAULT = {
-  'Insumos':   ['Alimentos', 'Bebidas', 'Embalaje / Packaging', 'Limpieza'],
-  'Impuestos': ['Seguridad Social', 'IRPF', 'IVA'],
-  'Servicios': ['Electricidad', 'Agua', 'Gas', 'Internet / Telefonía', 'Software / Suscripciones', 'Comisiones Banco'],
-  'Nóminas':   [],
-};
-
-const CANALES_ORDEN = ['Cta. MC', 'Cta. MT', 'Tarj. BBVA', 'Cta. Sabadell', 'Tarj. Sabadell'];
-
-// ─── Hook: carga y sincroniza con Supabase ─────────────────────────────────────
-const useExtractosDB = () => {
-  const [db,      setDbState]  = useState([]);
-  const [loading, setLoading]  = useState(true);
-  const [synced,  setSynced]   = useState(false);
-
-  // Carga inicial: primero localStorage como cache, luego Supabase
+const emptyCatalogs = { accounts: [], categories: [], subcategories: [], counterparties: [], rules: [] };
+export default function ExtractosApp(props) {
+  const { organizationId, can, isModuleEnabled } = useAuth();
+  if (!organizationId || !isModuleEnabled('bancos') || !banksSectionAllowed(props.tabActiva, can)) return <p role="alert">Sección de Bancos no autorizada.</p>;
+  return <FinanceWorkspace key={(organizationId || 'no-organization') + ':' + props.tabActiva} {...props} />;
+}
+function FinanceWorkspace({ tabActiva }) {
+  const { organizationId, can } = useAuth();
+  const currentOrg = useRef(organizationId), requestSequence = useRef(0);
+  currentOrg.current = organizationId;
+  const [catalogs, setCatalogs] = useState(emptyCatalogs), [movements, setMovements] = useState([]);
+  const [loading, setLoading] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
+  const [importOpen, setImportOpen] = useState(false), [catalogOpen, setCatalogOpen] = useState(false);
+  const [classificationMovement, setClassificationMovement] = useState(null), [split, setSplit] = useState(null);
+  const [rulesOpen, setRulesOpen] = useState(false), [ruleExample, setRuleExample] = useState(null);
+  const [filters, setFilters] = useState(emptyFilters), [reviewFromSummary, setReviewFromSummary] = useState(false);
+  const { status, currency } = filters;
+  const [page,setPage]=useState(1),[pageSize,setPageSize]=useState(25),[suggestionGroup,setSuggestionGroup]=useState('');
+  const [dismissed,setDismissed]=useState(()=>new Set());
+  const [selected, setSelected] = useState([]), [confirmOpen, setConfirmOpen] = useState(false);
+  const [transfersOpen, setTransfersOpen] = useState(false), [candidates, setCandidates] = useState([]), [busy, setBusy] = useState(false);
+  const editable = can('financial.allocation.edit');
+  const manageRules = can('banks.rules.manage'), manageAccounts = can('banks.accounts.manage'), manageCategories = can('banks.categories.manage'), manageParties = can('banks.counterparties.manage'), reviewTransfers = can('banks.transfers.review');
+  const importing = can('statements.import.upload') && can('statements.import.process') && can('STATEMENTS_IMPORT_CONFIRM');
+  const loadData = useCallback(async () => {
+    if (currentOrg.current !== organizationId) return;
+    const request = ++requestSequence.current;
+    setLoading(true); setError('');
+    try {
+      if (!organizationId) { setCatalogs(emptyCatalogs); setMovements([]); return; }
+      const [cats, rows, pairs] = await Promise.all([getExtractosCatalogs(organizationId), fetchConsolidatedMovements(organizationId, tabActiva === 'Resumen' ? 'summary' : tabActiva === 'Gráficas' || tabActiva === 'Métricas' ? 'metrics' : 'consolidated'), reviewTransfers ? fetchTransferCandidates(organizationId) : Promise.resolve([])]);
+      if (request !== requestSequence.current || currentOrg.current !== organizationId) return;
+      setCatalogs(cats); setMovements(rows); setCandidates(pairs); setSelected([]);
+    } catch (err) { if (request === requestSequence.current && currentOrg.current === organizationId) { setError(err.message); setMovements([]); } }
+    finally { if (request === requestSequence.current && currentOrg.current === organizationId) setLoading(false); }
+  }, [organizationId, tabActiva, reviewTransfers]);
+  const invalidateRequests = useCallback(() => { requestSequence.current++; }, []);
+  useEffect(() => { loadData(); return invalidateRequests; }, [loadData, invalidateRequests]);
   useEffect(() => {
-    const cached = JSON.parse(localStorage.getItem('db_extractos') || '[]');
-    if (cached.length > 0) setDbState(cached);
-
-    const fetchFromSupabase = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('extractos')
-          .select('*')
-          .order('fecha', { ascending: false });
-
-        if (!error && data && data.length > 0) {
-          setDbState(data);
-          localStorage.setItem('db_extractos', JSON.stringify(data));
-          setSynced(true);
-        }
-      } catch (_) {
-        // Sin conexión: usa cache local
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFromSupabase();
-  }, []);
-
-  // Guarda en Supabase y localStorage
-  const saveDb = useCallback(async (newDb) => {
-    setDbState(newDb);
-    localStorage.setItem('db_extractos', JSON.stringify(newDb));
-
-    try {
-      // Upsert masivo — Supabase maneja duplicados por id
-      if (newDb.length > 0) setSynced(true);
-    } catch (_) { /* offline */ }
-  }, []);
-
-  const importar = useCallback(async (newItems) => {
-    // Deduplicar por fecha+importe+concepto+canal
-    const novedades = newItems.filter(ni =>
-      !db.find(x =>
-        x.fecha     === ni.fecha    &&
-        x.importe   === ni.importe  &&
-        x.concepto  === ni.concepto &&
-        x.canal     === ni.canal
-      )
-    );
-
-    if (novedades.length === 0) return { imported: 0, skipped: newItems.length };
-
-    try {
-      const { data, error } = await supabase
-        .from('extractos')
-        .insert(novedades.map(({ id, created_at, ...item }) => item)) // strip local ids
-        .select();
-
-      if (!error && data) {
-        const merged = [...db, ...data].sort((a, b) => b.fecha.localeCompare(a.fecha));
-        setDbState(merged);
-        localStorage.setItem('db_extractos', JSON.stringify(merged));
-        setSynced(true);
-        return { imported: data.length, skipped: newItems.length - data.length };
-      }
-    } catch (_) { /* offline */ }
-
-    // Fallback offline
-    const withId = novedades.map(item => ({ ...item, id: crypto.randomUUID(), created_at: new Date().toISOString() }));
-    const merged = [...db, ...withId].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    saveDb(merged);
-    return { imported: novedades.length, skipped: newItems.length - novedades.length };
-  }, [db, saveDb]);
-
-  const updateItem = useCallback(async (itemId, changes) => {
-    try {
-      await supabase.from('extractos').update(changes).eq('id', itemId);
-    } catch (_) { /* offline */ }
-
-    setDbState(prev => {
-      const updated = prev.map(x => x.id === itemId ? { ...x, ...changes } : x);
-      localStorage.setItem('db_extractos', JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
-
-  return { db, loading, synced, importar, updateItem };
-};
-
-// ─── Componente principal ──────────────────────────────────────────────────────
-const ExtractosApp = ({ tabActiva }) => {
-  const { db, loading, synced, importar, updateItem } = useExtractosDB();
-
-  const [isModalOpen,  setIsModalOpen]  = useState(false);
-  const [filterConfig, setFilterConfig] = useState({
-    searchTerm:  '',
-    quickDate:   'todos',
-    canal:       'todos',
-    categoria:   'todas',
-    dateRange:   { from: '', to: '' },
-  });
-  const [sortConfig, setSortConfig] = useState({ key: 'fecha', direction: 'descending' });
-  const [toast,      setToast]      = useState(null);
-  const [editingCell, setEditingCell] = useState(null); // { id, field }
-  const [editValue,   setEditValue]  = useState('');
-
-  // ─── Catálogos derivados de la DB ──────────────────────────────────────────
-  const categorias  = [...new Set([...CATEGORIAS_DEFAULT, ...db.map(x => x.categoria).filter(Boolean)])].sort();
-  const proveedores = [...new Set(db.map(x => x.proveedor).filter(Boolean))].sort();
-  const getSubcats  = (cat) => {
-    const fromDb = [...new Set(db.filter(x => x.categoria === cat).map(x => x.subcategoria).filter(Boolean))];
-    return [...new Set([...(SUBCATEGORIAS_DEFAULT[cat] || []), ...fromDb])].sort();
+    setImportOpen(false); setCatalogOpen(false); setClassificationMovement(null); setSplit(null); setRulesOpen(false);
+    setTransfersOpen(false); setCandidates([]); setSelected([]); setConfirmOpen(false);
+    setMovements([]); setCatalogs(emptyCatalogs); setMessage('');
+  }, [organizationId]);
+  const handleImportCompleted = (summary) => {
+    setMessage(summary.imported + ' movimientos importados');
+    loadData();
   };
-
-  const showToast = (msg, type = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const handleImport = async (items) => {
-    const result = await importar(items);
-    showToast(`✅ ${result.imported} movimientos importados${result.skipped > 0 ? ` · ${result.skipped} duplicados omitidos` : ''}`);
-  };
-
-  // ─── Filtrado ──────────────────────────────────────────────────────────────
-  const filteredData = db.filter(item => {
-    const term = filterConfig.searchTerm.toLowerCase();
-    if (term) {
-      const hay =
-        (item.proveedor    || '').toLowerCase().includes(term) ||
-        (item.categoria    || '').toLowerCase().includes(term) ||
-        (item.subcategoria || '').toLowerCase().includes(term) ||
-        (item.concepto     || '').toLowerCase().includes(term) ||
-        (item.canal        || '').toLowerCase().includes(term);
-      if (!hay) return false;
-    }
-    if (filterConfig.canal !== 'todos' && item.canal !== filterConfig.canal) return false;
-    if (filterConfig.categoria !== 'todas' && item.categoria !== filterConfig.categoria) return false;
-
-    if (filterConfig.dateRange.from || filterConfig.dateRange.to) {
-      const itemDate = new Date(item.fecha);
-      if (filterConfig.dateRange.from && itemDate < new Date(filterConfig.dateRange.from)) return false;
-      if (filterConfig.dateRange.to   && itemDate > new Date(filterConfig.dateRange.to))   return false;
-    }
-    return true;
-  });
-
-  const sortedData = [...filteredData].sort((a, b) => {
-    const dir = sortConfig.direction === 'ascending' ? 1 : -1;
-    if (sortConfig.key === 'fecha') {
-      return (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0) * dir;
-    }
-    if (sortConfig.key === 'importe') return (a.importe - b.importe) * dir;
-    return ((a[sortConfig.key] || '') < (b[sortConfig.key] || '') ? -1 : 1) * dir;
-  });
-
-  const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'ascending' ? 'descending' : 'ascending',
-    }));
-  };
-
-  // ─── Edición inline de celda ───────────────────────────────────────────────
-  const startEdit = (item, field) => {
-    setEditingCell({ id: item.id, field });
-    setEditValue(item[field] || '');
-  };
-
-  const commitEdit = async () => {
-    if (!editingCell) return;
-    await updateItem(editingCell.id, { [editingCell.field]: editValue });
-    setEditingCell(null);
-  };
-
-  // ─── Balances ──────────────────────────────────────────────────────────────
-  const totalFiltrado = filteredData.reduce((a, b) => a + (b.importe || 0), 0);
-  const totalGastos   = filteredData.filter(x => x.importe < 0).reduce((a, b) => a + b.importe, 0);
-  const totalIngresos = filteredData.filter(x => x.importe > 0).reduce((a, b) => a + b.importe, 0);
-
-  const SortIcon = ({ field }) => (
-    <span className={`ml-1 text-xs ${sortConfig.key === field ? 'text-red-500' : 'text-gray-300'}`}>
-      {sortConfig.key === field ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : '↕'}
-    </span>
-  );
-
-  // ─────────────────────────────────── TAB: CONSOLIDADO ─────────────────────
-  if (tabActiva === 'Consolidado') {
-    return (
-      <div className="flex flex-col gap-6">
-
-        {/* Toast */}
-        {toast && (
-          <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold text-white transition-all ${
-            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-          }`}>
-            {toast.msg}
-          </div>
-        )}
-
-        {/* KPI strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { label: 'Balance',   value: totalFiltrado, color: totalFiltrado >= 0 ? '#059669' : '#DC2626' },
-            { label: 'Ingresos',  value: totalIngresos, color: '#059669' },
-            { label: 'Gastos',    value: totalGastos,   color: '#DC2626' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-              <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-1">{label}</p>
-              <p className="text-2xl font-extrabold" style={{ color }}>
-                {value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">{filteredData.length} movimientos</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            {synced
-              ? <span className="flex items-center gap-1 text-green-600">🟢 Sincronizado con Supabase</span>
-              : <span className="flex items-center gap-1 text-amber-500">🟡 Modo local (offline)</span>
-            }
-            {loading && <span className="text-gray-400">· Cargando…</span>}
-          </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white shadow-sm transition"
-            style={{ backgroundColor: '#006847' }}
-          >
-            📥 Cargar Movimientos
-          </button>
-        </div>
-
-        {/* Filtros */}
-        <ExtractosFilters
-          filterConfig={filterConfig}
-          setFilterConfig={setFilterConfig}
-          categorias={categorias}
-          canales={[...new Set(db.map(x => x.canal).filter(Boolean))]}
-        />
-
-        {/* Tabla */}
-        <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wider">
-              <tr>
-                {[
-                  { key: 'fecha',        label: 'Fecha'        },
-                  { key: 'importe',      label: 'Importe'      },
-                  { key: 'canal',        label: 'Canal'        },
-                  { key: 'categoria',    label: 'Categoría'    },
-                  { key: 'subcategoria', label: 'Subcategoría' },
-                  { key: 'proveedor',    label: 'Proveedor'    },
-                  { key: 'concepto',     label: 'Concepto'     },
-                ].map(({ key, label }) => (
-                  <th
-                    key={key}
-                    className="px-4 py-3 cursor-pointer hover:bg-gray-100 select-none whitespace-nowrap"
-                    onClick={() => handleSort(key)}
-                  >
-                    {label}<SortIcon field={key} />
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {sortedData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-
-                  {/* Fecha */}
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-700 font-mono text-xs">
-                    {new Date(item.fecha + 'T12:00:00').toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' })}
-                  </td>
-
-                  {/* Importe */}
-                  <td className={`px-4 py-3 whitespace-nowrap font-bold ${item.importe < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {item.importe.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-                  </td>
-
-                  {/* Canal */}
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                      {item.canal}
-                    </span>
-                  </td>
-
-                  {/* Categoría — editable con select */}
-                  <td className="px-4 py-3 min-w-[150px]">
-                    {editingCell?.id === item.id && editingCell?.field === 'categoria' ? (
-                      <select
-                        autoFocus
-                        className="w-full border border-red-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-red-200"
-                        value={editValue}
-                        onChange={e => setEditValue(e.target.value)}
-                        onBlur={commitEdit}
-                        onKeyDown={e => e.key === 'Enter' && commitEdit()}
-                      >
-                        <option value="">— Sin categoría —</option>
-                        {categorias.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    ) : (
-                      <span
-                        onClick={() => startEdit(item, 'categoria')}
-                        className={`cursor-pointer px-2 py-0.5 rounded-full text-xs font-medium ${
-                          item.categoria
-                            ? 'bg-purple-50 text-purple-700 hover:bg-purple-100'
-                            : 'text-gray-300 hover:text-gray-500 border border-dashed border-gray-200 px-2 py-0.5 rounded'
-                        }`}
-                      >
-                        {item.categoria || '+ Categoría'}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Subcategoría — editable con select */}
-                  <td className="px-4 py-3 min-w-[160px]">
-                    {editingCell?.id === item.id && editingCell?.field === 'subcategoria' ? (
-                      <select
-                        autoFocus
-                        className="w-full border border-red-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-red-200"
-                        value={editValue}
-                        onChange={e => setEditValue(e.target.value)}
-                        onBlur={commitEdit}
-                        onKeyDown={e => e.key === 'Enter' && commitEdit()}
-                      >
-                        <option value="">— Sin subcategoría —</option>
-                        {getSubcats(item.categoria).map(s => <option key={s} value={s}>{s}</option>)}
-                        <option value="__nueva__">+ Nueva subcategoría…</option>
-                      </select>
-                    ) : (
-                      <span
-                        onClick={() => startEdit(item, 'subcategoria')}
-                        className={`cursor-pointer text-xs font-medium ${
-                          item.subcategoria
-                            ? 'text-indigo-600 hover:text-indigo-800'
-                            : 'text-gray-300 hover:text-gray-500'
-                        }`}
-                      >
-                        {item.subcategoria || '+ Subcategoría'}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Proveedor — editable con input + datalist */}
-                  <td className="px-4 py-3 min-w-[150px]">
-                    {editingCell?.id === item.id && editingCell?.field === 'proveedor' ? (
-                      <>
-                        <input
-                          autoFocus
-                          list="proveedores-list"
-                          className="w-full border border-red-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-red-200"
-                          value={editValue}
-                          onChange={e => setEditValue(e.target.value)}
-                          onBlur={commitEdit}
-                          onKeyDown={e => e.key === 'Enter' && commitEdit()}
-                        />
-                        <datalist id="proveedores-list">
-                          {proveedores.map(p => <option key={p} value={p} />)}
-                        </datalist>
-                      </>
-                    ) : (
-                      <span
-                        onClick={() => startEdit(item, 'proveedor')}
-                        className={`cursor-pointer text-sm ${
-                          item.proveedor
-                            ? 'text-gray-800 font-medium hover:text-red-700'
-                            : 'text-gray-300 hover:text-gray-500 text-xs'
-                        }`}
-                      >
-                        {item.proveedor || '+ Proveedor'}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Concepto original */}
-                  <td
-                    className="px-4 py-3 text-xs text-gray-400 max-w-[220px] truncate"
-                    title={item.concepto}
-                  >
-                    {item.concepto}
-                  </td>
-                </tr>
-              ))}
-
-              {sortedData.length === 0 && !loading && (
-                <tr>
-                  <td colSpan="7" className="px-6 py-16 text-center">
-                    <div className="text-4xl mb-3">🏦</div>
-                    <p className="text-gray-500 font-medium">No hay movimientos{db.length > 0 ? ' con esos filtros' : ' cargados'}.</p>
-                    {db.length === 0 && (
-                      <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="mt-4 px-5 py-2.5 text-sm font-semibold text-white rounded-xl"
-                        style={{ backgroundColor: '#006847' }}
-                      >
-                        📥 Cargar primer extracto
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <ImportModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onImport={handleImport}
-        />
-      </div>
-    );
+  async function handleConfirmSplit(movementId, origAmount, allocations) {
+    await splitMovementAllocations(movementId, origAmount, allocations, organizationId); await loadData();
   }
-
-  // ─────────────────────────────────── TAB: RESUMEN ─────────────────────────
-  if (tabActiva === 'Resumen') {
-    return <ExtractosResumen db={db} filterConfig={filterConfig} setFilterConfig={setFilterConfig} />;
+  async function run(action) {
+    setBusy(true); setError('');
+    try { await action(); } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
-
-  // ─────────────────────────────────── TAB: GRÁFICAS ────────────────────────
-  if (tabActiva === 'Gráficas') {
-    return <ExtractosGraficas db={db} filterConfig={filterConfig} />;
-  }
-
-  return null;
-};
-
-export default ExtractosApp;
+  async function refreshCandidates() { setCandidates(await fetchTransferCandidates(organizationId)); }
+  const similarityIndex = useMemo(()=>buildConfirmedSimilarityIndex(movements,organizationId),[movements,organizationId]);
+  const assistance = useMemo(()=>buildSuggestionGroups(movements,similarityIndex,organizationId,dismissed),[movements,similarityIndex,organizationId,dismissed]);
+  const filtered = useMemo(()=>filterMovements(movements,filters),[movements,filters]);
+  const visible = useMemo(()=>!suggestionGroup?filtered:filtered.filter(m=>assistance.suggestions.get(m.id)?.groupKey===suggestionGroup || m.allocations.some(a=>a.classification_status==='SUGGESTED'&&semanticKey(a)===suggestionGroup)),[filtered,suggestionGroup,assistance]);
+  const pagination = useMemo(()=>paginateMovements(visible,page,pageSize),[visible,page,pageSize]);
+  const banking = useMemo(()=>financeMetrics(visible,currency).banking,[visible,currency]);
+  const movementMap = useMemo(()=>new Map(movements.map(m=>[m.id,m])),[movements]);
+  const attention = useMemo(()=>({pending:movements.filter(m=>m.currency===currency&&m.allocations.some(a=>a.classification_status==='PENDING')).length,suggested:movements.filter(m=>m.currency===currency&&m.allocations.some(a=>a.classification_status==='SUGGESTED')).length,transfers:candidates.filter(c=>c.status==='SUGGESTED').length}),[movements,candidates,currency]);
+  const reviewable = useMemo(()=>visible.flatMap(m => m.allocations.filter(a => a.classification_status === 'SUGGESTED' && !a.transfer_candidate_id && a.reconciliation_status === 'UNMATCHED'
+    && !['UNCLASSIFIED', 'INTERNAL_TRANSFER'].includes(a.economic_type || 'UNCLASSIFIED')).map(a => ({ ...a, movement: m }))),[visible]);
+  const pageReviewable = useMemo(()=>{const ids=new Set(pagination.rows.map(m=>m.id));return reviewable.filter(a=>ids.has(a.movement.id));},[pagination,reviewable]);
+  const reviewed = useMemo(()=>{const ids=new Set(selected);return reviewable.filter(a=>ids.has(a.id));},[reviewable,selected]);
+  function changeFilters(next) { setFilters(next); setPage(1); setSuggestionGroup(''); setSelected([]); setConfirmOpen(false); }
+  if (tabActiva === 'Gráficas' || tabActiva === 'Métricas') return <>{error && <p role="alert">{error}</p>}<ExtractosGraficas movements={movements} /></>;
+  if (tabActiva === 'Resumen' && !reviewFromSummary) return <>{error && <p role="alert">{error}</p>}{loading && <p role="status">Cargando…</p>}<ExtractosResumen movements={movements} onReview={can('banks.consolidated.view') ? nextCurrency => { changeFilters({ ...emptyFilters(), currency: nextCurrency }); setReviewFromSummary(true); } : undefined} /></>;
+  return <div className="p-3 space-y-2 text-sm text-gray-900">
+    {tabActiva === 'Resumen' && <button className="text-sm text-emerald-800 underline" onClick={() => setReviewFromSummary(false)}>Volver al resumen</button>}
+    <header className="flex flex-wrap justify-between gap-3 items-center"><div><h2 className="text-base font-semibold">Movimientos bancarios</h2></div>
+      <div className="flex gap-2 flex-wrap">{(manageAccounts || manageCategories || manageParties) && <button disabled={!organizationId} className="border border-gray-200 rounded-lg px-3 py-1.5" onClick={() => setCatalogOpen(true)}>Cuentas y categorías</button>}{manageRules && <button disabled={!manageRules} className="border border-gray-200 rounded-lg px-3 py-1.5" onClick={() => { setRuleExample(null); setRulesOpen(true); }}>Reglas</button>}{importing && <button disabled={!importing} className="bg-emerald-700 text-white rounded-lg px-3 py-1.5" onClick={() => setImportOpen(true)}>Cargar</button>}</div>
+    </header>
+    {error && <p role="alert" className="p-3 bg-red-50 text-red-800 rounded">{error}<button className="ml-3 underline" onClick={loadData}>Recargar</button></p>}
+    {message && <p role="status" className="text-sm text-emerald-800">{message}</p>}
+    <FinanceFilters value={filters} onChange={changeFilters} catalogs={catalogs} movements={movements} />
+    <div aria-label="Atención y revisión" className="flex gap-2 flex-wrap items-center text-xs"><button aria-pressed={status === 'PENDING'} className="bg-amber-50 text-amber-900 rounded px-2 py-1.5" onClick={() => changeFilters({ ...emptyFilters(), currency, status: 'PENDING' })}>Pendientes ({attention.pending})</button><button aria-pressed={status === 'SUGGESTED'} className="bg-amber-50 text-amber-900 rounded px-2 py-1.5" onClick={() => changeFilters({ ...emptyFilters(), currency, status: 'SUGGESTED' })}>Sugeridas · revisar ({attention.suggested})</button>{reviewTransfers && <button disabled={busy} title={!editable?'Tu rol no permite revisar transferencias':'Revisión dedicada de pares'} className="bg-emerald-50 text-emerald-800 rounded px-2 py-1.5 disabled:opacity-40" onClick={()=>run(async()=>{await refreshCandidates();setTransfersOpen(true);})}>Transferencias posibles ({attention.transfers})</button>}<button className="text-gray-600 underline" onClick={() => changeFilters({ ...emptyFilters(), currency })}>Ver todas / limpiar</button>{loading&&<span role="status">Cargando…</span>}</div>
+    {editable && assistance.groups.size>0 && <details className="text-xs bg-amber-50 rounded-lg px-3 py-2"><summary className="cursor-pointer">Propuestas por historial ({assistance.suggestions.size}) · pendientes de revisión</summary><p className="py-1">No se guardan automáticamente. Revisa cada propuesta o crea una regla para sugerir el grupo en una operación.</p>{[...assistance.groups.values()].slice(0,10).map(g=><div key={g.groupKey} className="flex gap-3 py-1 items-center flex-wrap"><span>{g.merchant} · {g.ids.size} pendientes · {g.explanation}</span><button className="underline" onClick={()=>{changeFilters({...emptyFilters(),currency});setSuggestionGroup(g.groupKey);}}>Revisar grupo</button>{manageRules && <button className="underline" onClick={()=>{setRuleExample(g.example);setRulesOpen(true);}}>Crear regla para este grupo</button>}</div>)}</details>}
+    {suggestionGroup&&<p className="text-xs text-amber-900">Grupo de interpretación similar · {visible.length} movimientos. Las sugerencias guardadas se confirman con selección explícita.</p>}
+    {editable && (status === 'SUGGESTED' || suggestionGroup) && <section className="border border-gray-200 rounded-xl p-4 bg-amber-50 space-y-2"><h3 className="font-semibold">Revisión de sugerencias · selección explícita</h3><p className="text-sm">Las transferencias y las asignaciones sin tipo requieren revisión individual. Selecciona hasta 100 líneas.</p>
+      <div className="max-h-52 overflow-y-auto">{pageReviewable.map(a => <label key={a.id} className="block py-1 text-sm"><input disabled={!editable || busy || (!selected.includes(a.id) && selected.length >= 100)} type="checkbox" checked={selected.includes(a.id)} onChange={e => setSelected(e.target.checked ? [...selected, a.id] : selected.filter(id => id !== a.id))} /> {a.movement.descripcion} · {currencyAmount(Number(a.monto) * 100, currency)} · {economicLabels[a.economic_type]} · {a.category?.name || 'Sin categoría'} · {a.counterparty?.name || 'Sin proveedor / contraparte'}</label>)}</div>
+      <button disabled={!reviewed.length || !editable || busy} onClick={() => setConfirmOpen(true)} className="border border-gray-200 rounded px-3 py-1.5">Revisar selección ({reviewed.length})</button>
+    </section>}
+    <div className="border border-gray-200 rounded-xl bg-white overflow-x-auto"><table className="w-full table-fixed text-sm min-w-[780px]"><thead className="bg-gray-50"><tr>{['Fecha', 'Descripción', 'Importe', 'Clasificación', 'Proveedor', 'Acciones'].map((label, i) => <th key={label} className={'px-2 py-2 text-left ' + (i === 0 ? 'w-24' : i === 1 ? 'w-[29%]' : i === 2 ? 'w-28' : i === 5 ? 'w-[108px]' : '')}>{label}</th>)}</tr></thead><tbody>
+      {pagination.rows.map(m => <FinanceMovementRow key={m.id + ':' + m.allocations.map(a => a.updated_at).join(':')} movement={m} suggestion={assistance.suggestions.get(m.id)} editable={editable} canRules={manageRules} hideDenied onEdit={setClassificationMovement} onRule={movement => { setRuleExample(movement); setRulesOpen(true); }} onSplit={setSplit} />)}
+      {!visible.length && <tr><td colSpan={6} className="p-8 text-center text-gray-500">{loading ? 'Cargando movimientos…' : 'No hay movimientos con estos filtros.'}</td></tr>}
+    </tbody></table></div>
+    <FinancePagination pagination={pagination} onPage={setPage} onSize={size=>{setPageSize(size);setPage(1);setSelected([]);}} />
+    <p data-testid="filtered-banking-summary" className="text-xs text-gray-500">Flujo bancario de esta selección: {banking.count} movimientos · entradas {currencyAmount(banking.inflows,currency)} · salidas {currencyAmount(banking.outflows,currency)} · neto {currencyAmount(banking.net,currency)}</p>
+    {catalogOpen && <FinanceCatalogModal orgId={organizationId} catalogs={catalogs} canAccounts={manageAccounts} canClassify={manageCategories} canCounterparties={manageParties} onClose={() => setCatalogOpen(false)} onSaved={loadData} />}
+    {classificationMovement && <ClassificationModal key={classificationMovement.id} movement={classificationMovement} suggestion={assistance.suggestions.get(classificationMovement.id)} onDismissSuggestion={id=>setDismissed(prev=>new Set([...prev,id]))} catalogs={catalogs} orgId={organizationId} onClose={() => setClassificationMovement(null)} onSaved={loadData} />}
+    <ImportModal isOpen={importOpen} onClose={() => setImportOpen(false)} onImportCompleted={handleImportCompleted} />
+    <SplitModal isOpen={!!split} movement={split} categories={catalogs.categories} subcategories={catalogs.subcategories} counterparties={catalogs.counterparties} onClose={() => setSplit(null)} onConfirmSplit={handleConfirmSplit} />
+    {rulesOpen && <RuleModal movements={movements} catalogs={catalogs} orgId={organizationId} example={ruleExample} onClose={() => setRulesOpen(false)} onSaved={loadData} />}
+    {confirmOpen && <FinanceDialog title="Confirmar sugerencias seleccionadas" busy={busy} onClose={() => setConfirmOpen(false)}>{error && <p role="alert" className="text-red-700">{error}</p>}<p>Confirmarás {reviewed.length} asignaciones. Esta acción valida su interpretación económica.</p><ul>{reviewed.map(a => <li key={a.id}>{a.movement.descripcion} · {a.monto} {currency} · {economicLabels[a.economic_type]} · {a.category?.name} · {a.counterparty?.name}</li>)}</ul><button disabled={busy || !reviewed.length} className="bg-emerald-700 text-white rounded p-2" onClick={() => run(async () => { const count = await confirmFinanceSuggestions(organizationId, reviewed); setConfirmOpen(false); await loadData(); setMessage(count + ' sugerencias confirmadas'); })}>Confirmar explícitamente la selección</button></FinanceDialog>}
+    {transfersOpen && <TransferReview candidates={candidates} movementMap={movementMap} busy={busy} error={error} onClose={()=>setTransfersOpen(false)} onDetect={()=>run(async()=>{const count=await detectTransferCandidates(organizationId);await refreshCandidates();setMessage(count+' nuevos candidatos');})} onReview={(id,decision)=>run(async()=>{await reviewTransferCandidate(organizationId,id,decision);await loadData();})} />}
+  </div>;
+}

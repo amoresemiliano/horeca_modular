@@ -1,0 +1,73 @@
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { adminSnapshot, adminMutate, inviteTenantUser, inspectPermissions } from '../../lib/tenantAdminService';
+import { ACCESS_PRESETS, VISIBLE_PRESETS, permissionGroup, explainPermission } from '../../application/tenancy/accessNavigation';
+import TenantDetailsForm from './TenantDetailsForm';
+import AccessAudit from './AccessAudit';
+
+const modules = {bancos:'Bancos',ventas:'Ventas',compras:'Compras',inventario:'Inventario',produccion:'Producción',escandallos:'Escandallos',personal:'Personal',reporting:'Informes',prediccion:'Predicción',documentos:'Documentos',integraciones:'Integraciones'};
+const input = 'border rounded p-2 bg-white';
+const platformPages = {tenants:'Tenants',lifecycle:'Ciclo de vida',modules:'Módulos y disponibilidad',users:'Usuarios e invitaciones',audit:'Auditoría'};
+const tenantPages = {general:'Información general',users:'Usuarios y membresías',access:'Perfiles y permisos',scope:'Alcance operativo',audit:'Auditoría'};
+export default function TenantAdministration({ platform = false }) {
+  const { organizationId, can, platformCan } = useAuth();
+  const allowed = platform ? platformCan('platform.tenants.provision') : ['membership.users.invite','membership.roles.assign','membership.users.remove','org.config.write'].some(c => can(c));
+  return allowed ? <AdminWorkspace key={(platform ? 'platform' : organizationId) || 'none'} platform={platform} organizationId={organizationId} can={can} /> : <p role="alert">Administración no autorizada.</p>;
+}
+function AdminWorkspace({ platform, organizationId, can }) {
+  const [org,setOrg] = useState(platform ? '' : organizationId), [page,setPage] = useState(platform?'tenants':'general');
+  const [data,setData] = useState(null), [memberId,setMemberId] = useState(''), [unitId,setUnitId] = useState('');
+  const [effective,setEffective] = useState([]), [error,setError] = useState(''), [message,setMessage] = useState(''), [busy,setBusy] = useState(false);
+  const [email,setEmail] = useState(''), [role,setRole] = useState('CONSULTANT'), [preset,setPreset] = useState('BANKS_IMPORT_OPERATOR');
+  const load = useCallback(async()=>setData(await adminSnapshot(org,platform)),[org,platform]);
+  useEffect(()=>{let active=true;setData(null);setMessage('');adminSnapshot(org,platform).then(d=>{if(active)setData(d)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[org,platform]);
+  useEffect(()=>{let active=true;setEffective([]);if(memberId&&!platform)inspectPermissions(org,memberId,unitId).then(rows=>{if(active)setEffective(rows)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[org,memberId,unitId,platform,data]);
+  async function run(action) {
+    setBusy(true);setError('');setMessage('');
+    try {
+      await action();
+      setMessage('Cambios guardados');
+      try { await load(); }
+      catch { setError('Los cambios se guardaron, pero no se pudo actualizar la vista. Vuelve a abrir esta sección.'); }
+    } catch(e) { setError(e.message); }
+    finally { setBusy(false); }
+  }
+  const mutate=(action,payload)=>run(()=>adminMutate(action,org,payload));
+  const member=data?.members.find(m=>m.id===memberId), tenant=data?.organizations.find(o=>o.id===org);
+  const canAssign=!platform&&can('membership.roles.assign'), pages=platform?platformPages:tenantPages;
+  return <div className="p-5 space-y-5 max-w-6xl text-sm">
+    <header><p className="text-gray-600">{platform?'Vegen Digital · HORECA Modular':tenant?.name}</p><h2 className="text-xl font-semibold">{platform?'Administración de plataforma':'Administración de organización'}</h2></header>
+    <nav aria-label="Secciones de administración" className="flex flex-wrap gap-2">{Object.entries(pages).map(([key,label])=><button key={key} aria-current={page===key?'page':undefined} className={input+(page===key?' font-semibold border-blue-600 bg-blue-50':'')} onClick={()=>{setPage(key);setError('');setMessage('')}}>{label}</button>)}</nav>
+    {error&&<p role="alert" className="text-red-700">{error}</p>}
+    <div role="status" aria-live="polite" aria-atomic="true" className="sticky top-0 z-10 rounded border bg-white p-3 shadow-sm">
+      {message ? <p className="font-semibold text-emerald-800">✓ {message}</p> : busy ? <p>Guardando cambios…</p> : <p className="text-gray-600">Los cambios de módulos, roles, permisos y alcance se guardan automáticamente. Los formularios se guardan al pulsar su botón.</p>}
+    </div>
+    {platform&&<label className="block">Tenant a administrar <select aria-label="Tenant" disabled={busy} className={input} value={org} onChange={e=>{setOrg(e.target.value);setMemberId('');setUnitId('');setError('')}}><option value="">Seleccionar tenant</option>{data?.organizations.map(o=><option key={o.id} value={o.id}>{o.name} · {o.is_active?'Activo':'Inactivo'}</option>)}</select></label>}
+    {!data&&<p role="status">Cargando administración…</p>}
+    {platform&&page==='tenants'&&<details><summary className="font-semibold cursor-pointer">Crear tenant</summary><TenantDetailsForm disabled={busy} onSave={values=>run(async()=>{const r=await adminMutate('tenant.create',null,values);setOrg(r.organization_id)})}/></details>}
+    {!org&&data&&<p>Selecciona un tenant para consultar su información y administrarlo.</p>}
+    {tenant&&data&&<>
+      <section className="bg-gray-50 rounded p-3"><h3 className="font-semibold">{tenant.name}</h3><p>{tenant.trade_name} · {tenant.country_code} · {tenant.currency} · {tenant.timezone}</p><p>{tenant.is_active?'Activo':'Inactivo'}</p></section>
+      {(page==='tenants'||page==='general')&&<>
+        <TenantDetailsForm key={tenant.id+tenant.updated_at} tenant={tenant} disabled={busy||(!platform&&!can('org.config.write'))} onSave={values=>mutate('tenant.update',values)}/>
+        {!platform&&<section><h3 className="font-semibold">Módulos disponibles</h3><p>{Object.entries(modules).filter(([key])=>data.entitlements.some(e=>e.module_key===key&&e.is_enabled)).map(([,label])=>label).join(', ')||'Ninguno'}</p><p>La disponibilidad comercial se gestiona desde Vegen Digital. Cada usuario necesita además sus permisos.</p></section>}
+      </>}
+      {platform&&page==='lifecycle'&&<section className="space-y-3"><h3 className="font-semibold">Ciclo de vida del tenant</h3><p>Desactivar el tenant suspende el acceso de sus miembros. Conserva sus datos.</p><button disabled={busy} className={input} onClick={()=>mutate('tenant.active',{active:!tenant.is_active})}>{tenant.is_active?'Desactivar tenant':'Activar tenant'}</button></section>}
+      {platform&&page==='modules'&&<section><h3 className="font-semibold">Módulos disponibles para la organización</h3><p>Habilitar un módulo no concede permisos a sus usuarios.</p><div className="grid sm:grid-cols-3 gap-3 mt-3">{Object.entries(modules).map(([key,label])=><label key={key}><input type="checkbox" disabled={busy} checked={data.entitlements.some(e=>e.module_key===key&&e.is_enabled)} onChange={e=>mutate('entitlement.set',{module:key,enabled:e.target.checked})}/> {label}</label>)}</div></section>}
+      {page==='users'&&(platform||(can('membership.users.invite')&&canAssign))&&<section className="space-y-3"><h3 className="font-semibold">Invitar usuario</h3><form className="flex gap-2 flex-wrap items-end" onSubmit={e=>{e.preventDefault();run(async()=>{await inviteTenantUser(org,email,role);setEmail('')})}}><label>Correo electrónico<input type="email" required className={'block '+input} value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Rol inicial<select className={'block '+input} value={role} onChange={e=>setRole(e.target.value)}>{data.roles.map(r=><option key={r.id} value={r.code}>{r.name}</option>)}</select></label><button disabled={busy} className={input}>Enviar invitación segura</button></form><p>El destinatario configura su acceso mediante un enlace. Después, un administrador del tenant puede aplicar un perfil de acceso.</p></section>}
+      {['users','access','scope'].includes(page)&&<section className="space-y-3"><h3 className="font-semibold">Usuario a administrar</h3><select aria-label="Usuario a administrar" className={input} value={memberId} onChange={e=>{setMemberId(e.target.value);setUnitId('')}}><option value="">Seleccionar usuario</option>{data.members.map(m=><option key={m.id} value={m.id}>{m.display_name||'Usuario'} · {m.role_code} · {m.is_active?'Activo':'Inactivo'}</option>)}</select>{member&&<p>{member.display_name||'Usuario'} · {member.is_active?'Membresía activa':'Membresía inactiva'}</p>}</section>}
+      {member&&page==='users'&&<section className="space-y-3">
+        {platform?<p>La plataforma consulta membresías e inicia invitaciones. Los perfiles, permisos y alcance se gestionan desde la administración del tenant.</p>:<><label>Rol base <select disabled={!canAssign||busy} className={input} value={member.role_code} onChange={e=>mutate('member.role',{membership_id:member.id,role:e.target.value})}>{data.roles.map(r=><option key={r.id} value={r.code}>{r.name}</option>)}</select></label>{can('membership.users.remove')&&<button className={input} disabled={busy} onClick={()=>mutate('member.active',{membership_id:member.id,active:!member.is_active})}>{member.is_active?'Desactivar membresía':'Activar membresía'}</button>}<p>Las excepciones se conservan al cambiar el rol base. Revísalas en Perfiles y permisos.</p></>}
+      </section>}
+      {member&&!platform&&page==='access'&&<section className="space-y-4">
+        <h3 className="font-semibold">Perfil de acceso</h3><select aria-label="Perfil de acceso" className={input} disabled={!canAssign||busy} value={preset} onChange={e=>setPreset(e.target.value)}>{VISIBLE_PRESETS.map(key=><option key={key} value={key}>{ACCESS_PRESETS[key].name}</option>)}</select><p>{ACCESS_PRESETS[preset].description}</p><p>Aplicar un perfil sustituye el rol base por Consultor y reemplaza todas sus excepciones. Conserva el alcance asignado.</p><button disabled={!canAssign||busy} className={input} onClick={()=>mutate('member.preset',{membership_id:member.id,preset})}>Aplicar perfil y reemplazar excepciones</button>
+        <details><summary className="font-semibold cursor-pointer">Permisos avanzados e inspección efectiva</summary>
+          <label>Contexto de unidad para inspección <select className={input} value={unitId} onChange={e=>setUnitId(e.target.value)}><option value="">Organización</option>{data.units.filter(u=>u.is_active).map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
+          {[...new Set(data.capabilities.map(c=>permissionGroup(c.code)))].map(group=><details key={group} open={group==='Bancos'}><summary className="font-semibold cursor-pointer">{group}</summary>{data.capabilities.filter(c=>permissionGroup(c.code)===group).map(c=>{const override=data.overrides.find(o=>o.membership_id===member.id&&o.capability_id===c.id&&!o.operational_unit_id);const decision=effective.find(e=>e.code===c.code);return <div key={c.id} className="grid sm:grid-cols-3 gap-2 border-b py-2"><span>{c.description||c.code}<details className="text-xs text-gray-500"><summary>Código avanzado</summary>{c.code}</details></span><span>{decision?(decision.allowed?'Permitido · ':'Denegado · ')+explainPermission(data,member,c,unitId||null):'Consultando permiso…'}</span><select aria-label={'Permiso '+(c.description||c.code)} disabled={!canAssign||busy} className={input} value={override?.effect||'INHERIT'} onChange={e=>mutate('member.override',{membership_id:member.id,capability:c.code,effect:e.target.value})}><option value="INHERIT">Heredar rol</option><option value="GRANT">Conceder</option><option value="REVOKE">Denegar</option></select></div>})}</details>)}
+        </details>
+      </section>}
+      {member&&!platform&&page==='scope'&&<section className="space-y-3"><h3 className="font-semibold">Alcance operativo</h3><label><input type="checkbox" disabled={!can('opunit.assign_scope')||busy} checked={member.is_organization_wide} onChange={e=>mutate('member.scope',{membership_id:member.id,organization_wide:e.target.checked,units:[]})}/> Toda la organización</label><p>Sin acceso a toda la organización, solo se permiten acciones cuyo ámbito corresponda a las unidades asignadas.</p>{!data.units.length&&<p>No hay unidades operativas registradas.</p>}{data.units.map(u=><label className="block" key={u.id}><input type="checkbox" disabled={!can('opunit.assign_scope')||busy||member.is_organization_wide||!u.is_active} checked={data.scopes.some(s=>s.membership_id===member.id&&s.operational_unit_id===u.id)} onChange={e=>mutate('member.scope',{membership_id:member.id,organization_wide:false,units:e.target.checked?[...data.scopes.filter(s=>s.membership_id===member.id).map(s=>s.operational_unit_id),u.id]:data.scopes.filter(s=>s.membership_id===member.id&&s.operational_unit_id!==u.id).map(s=>s.operational_unit_id)})}/> {u.name}</label>)}</section>}
+      {page==='audit'&&<AccessAudit data={data} tenant={tenant}/>}
+    </>}
+  </div>;
+}

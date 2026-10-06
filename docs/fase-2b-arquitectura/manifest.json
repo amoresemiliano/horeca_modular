@@ -1,0 +1,85 @@
+{
+  "fase": "FASE 2B — DECISIÓN ARQUITECTÓNICA DEL HUB ECONÓMICO (CIERRE CORRECTIVO)",
+  "proyecto": "Taquería El Criollo / Ecosistema Vegen Digital SL",
+  "estado_decision": "ALTERNATIVA PRESELECCIONADA PARA EL MVP (SPA React/Vite + Supabase/PostgreSQL)",
+  "fecha_generacion": "2026-08-05",
+  "naturaleza": "Exclusivamente Documental (Ninguna modificación de código en src/ o app/, sin instalación de dependencias ni conexión de bases locales o remotas)",
+  "directorio_canonicamente_establecido": "el_criollo_modular/docs/fase-2b-arquitectura/",
+  "entregables_formales_obligatorios": [
+    {
+      "archivo": "00-resumen-ejecutivo.md",
+      "descripcion": "Resumen ejecutivo del estudio, encuadre metodológico no invasivo y declaración de la alternativa preseleccionada condicionada a validaciones."
+    },
+    {
+      "archivo": "01-estado-actual.md",
+      "descripcion": "Inspección técnica estática clasificada en Hecho Verificado, Inferencia, Riesgo, Recomendación y Decisión Pendiente sin exponer secretos."
+    },
+    {
+      "archivo": "02-alternativas-arquitectura.md",
+      "descripcion": "Evaluación técnico-funcional de alternativas A, B, C y D distinguiendo capacidades del proveedor, estado verificado, brechas de trabajo y riesgos de configuración."
+    },
+    {
+      "archivo": "03-matriz-decision.md",
+      "descripcion": "Matriz de decisión ponderada recalibrada con sobriedad y valoración técnica objetiva sin expresiones hiperbólicas."
+    },
+    {
+      "archivo": "04-arquitectura-recomendada.md",
+      "descripcion": "Especificación del esquema preseleccionada (SPA React/Vite + Supabase/PostgreSQL), componentes, topología y límites para la primera vertical MVP."
+    },
+    {
+      "archivo": "05-modelo-minimo-datos.md",
+      "descripcion": "Modelo relacional mínimo en dos capas de abstracción (raw vs intermedia transitory) en 7 entidades para importación y estrategia single-tenant con organization_id."
+    },
+    {
+      "archivo": "06-autenticacion-autorizacion.md",
+      "descripcion": "Evaluación no dogmática sobre identidad, comparando tres estrategias de autenticación (A, B, C) y prescribiendo la Estrategia B para preservar el login HORECA activo."
+    },
+    {
+      "archivo": "07-storage-archivos.md",
+      "descripcion": "Especificaciones de resguardo inalterable en bucket privado, nomenclatura sanitizada, cuarentena documental y comparación objetiva con otros proveedores."
+    },
+    {
+      "archivo": "08-procesamiento-importaciones.md",
+      "descripcion": "Arquitectura distribuida y estrategia híbrida en 5 fases, segregando validaciones ligeras en navegador web frente a ejecuciones protegidas en el backend y SQL transaccional."
+    },
+    {
+      "archivo": "09-seguridad-amenazas.md",
+      "descripcion": "Matriz analítica de 19 vectores probables y riesgos de seguridad cibernética en la ingesta mercantil, tasando probabilidad, impacto y mitigaciones directivas por rol."
+    },
+    {
+      "archivo": "10-despliegue-entornos.md",
+      "descripcion": "Política de segmentación por entornos aislados (Local, Staging y Producción) y delimitación irrenunciable entre el portal de comensales (app/) frente al ERP interno (src/)."
+    },
+    {
+      "archivo": "11-backup-recuperacion.md",
+      "descripcion": "Especificación de copias de seguridad de BD SQL y Storage, imposibilidad de Git para datos, reversión lógica no lesiva y objetivos técnicos RPO y RTO razonados."
+    },
+    {
+      "archivo": "12-transicion-laboratorio.md",
+      "descripcion": "Clasificación unitaria de los ficheros transicionables en 4 categorías, frontera desacoplada en src/domain/import-engine/ y dictamen de aprobación restringido para SheetJS."
+    },
+    {
+      "archivo": "13-deudas-y-bloqueos.md",
+      "descripcion": "Matriz de tratamiento sobre 15 deudas y vacíos técnicos observados en el estudio, indicando severidad e imposiciones irrenunciables por cada entorno en curso."
+    },
+    {
+      "archivo": "14-decisiones-directivas.md",
+      "descripcion": "Criterio directivo vinculante aislando las 7 decisiones que bloquean la primera vertical del MVP frente a 7 iniciativas diferidas que NO paralizan su implementación."
+    },
+    {
+      "archivo": "15-plan-fase-2c.md",
+      "descripcion": "Plan de endurecimiento y verificación técnica que estructura las 14 etapas y pruebas experimentales obligadas en Fase 2C previas a la decisión GO/NO-GO para Staging."
+    },
+    {
+      "archivo": "manifest.json",
+      "descripcion": "Archivo de registro, inventario y control documental general de la estructura de entregables arquitectónicos pertenecientes a la Fase 2B."
+    }
+  ],
+  "antecedentes_conservados_en_directorio": [
+    {
+      "archivo": "01-decision-arquitectonica-hub-economico.md",
+      "nota": "Documento preliminar conservado expresamente por razones de antecedente histórico, pero cuyo contenido no sustituye la oficialidad y rigor verificable transaccionado en los presentes 16 entregables formales obligatorios de este manifiesto."
+    }
+  ],
+  "cumplimiento_regla_de_oro": "CERTIFICADO Y RESPETADO AL 100% (cero alteraciones lesivas, cero dependencias introducidas, cero caídas operacionales y cero migraciones no consensuadas)."
+}

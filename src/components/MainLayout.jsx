@@ -7,11 +7,13 @@ import PrediccionApp  from '../modules/prediccion/PrediccionApp';
 import EscandallosApp from '../modules/escandallos/EscandallosApp';
 import HorariosApp    from '../modules/horarios/HorariosApp';
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
-import Configuracion  from '../modules/configuracion/Configuracion.jsx';
+import TenantAdministration from '../modules/administration/TenantAdministration';
+import { navigationAllowed, banksSectionAllowed, visibleModules } from '../application/tenancy/accessNavigation';
 import { useState, useEffect } from 'react';
-import { auth } from '../firebaseConfig';
-import { signOut } from 'firebase/auth';
+import { useAuth } from '../context/AuthContext';
 import logoCliente from '../assets/logo_cliente.png';
+import platformLogo from '../assets/vegen-digital.png';
+import './MainLayout.css';
 
 /* ─── ESTRUCTURA MAESTRA ──────────────────────────────────────────────────── */
 const MODULOS = {
@@ -25,7 +27,8 @@ const MODULOS = {
   Producción:  { icon: '🍳', label: 'Producción',   tabs: ['Registro', 'Historial', 'Resumen'],                                    group: 'operaciones'},
   Personal:    { icon: '👤', label: 'Personal',     tabs: ['Fichajes', 'Incidencias', 'Empleados', 'Informes'],                     group: 'rrhh'       },
   Predicción:  { icon: '🔮', label: 'Predicción',   tabs: ['Carga', 'Stock', 'Predicciones'],                                       group: 'analytics' },
-  Config:      { icon: '⚙',  label: 'Config',       tabs: ['Accesos', 'Empresa', 'Usuarios'],                                       group: 'sistema'   },
+  PlatformAdmin: { icon: '⚙', label: 'Plataforma', tabs: ['Tenants'], group: 'sistema' },
+  Config:      { icon: '⚙',  label: 'Organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
 };
 
 const GRUPOS = {
@@ -35,12 +38,6 @@ const GRUPOS = {
   rrhh:        { label: 'Personal',     color: '#3B82F6' },
   analytics:   { label: 'Analytics',   color: '#8B5CF6' },
   sistema:     { label: 'Sistema',      color: '#6B7280' },
-};
-
-/* ─── PERMISOS ────────────────────────────────────────────────────────────── */
-const PERMISOS = {
-  'emilianodirosa1@gmail.com': Object.keys(MODULOS),
-  'epalacios1194@gmail.com':   ['Compras', 'Personal'],
 };
 
 /* ─── RENDER DE CONTENIDO ────────────────────────────────────────────────── */
@@ -55,7 +52,8 @@ const renderModulo = (modulo, tab, user) => {
     case 'Escandallos': return <EscandallosApp  tabActiva={tab} />;
     case 'Personal':    return <HorariosApp     tabActiva={tab} />;
     case 'Producción':  return <ProduccionApp   tabActiva={tab} />;
-    case 'Config':      return <Configuracion />;
+    case 'Config':      return <TenantAdministration />;
+    case 'PlatformAdmin': return <TenantAdministration platform />;
     default:
       return (
         <div className="flex flex-col items-center justify-center py-24 text-center select-none">
@@ -82,31 +80,75 @@ const AccesoRestringido = ({ modulo }) => (
 );
 
 /* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
-const MainLayout = ({ user }) => {
-  const [moduloActivo,      setModuloActivo]      = useState('Dashboard');
-  const [tabActiva,         setTabActiva]          = useState('Inicio');
+const MainLayout = ({ user: propsUser }) => {
+  const { user: authUser, can, isModuleEnabled, platformCan, navigationScope, setNavigationScope, availableOrganizations, availableOperationalUnits, activeOperationalUnit, switchOperationalUnit, activeOrganization, switchOrganization, logout, updatePassword } = useAuth();
+  const user = authUser || propsUser;
+  const [moduloActivo,      setModuloActivo]      = useState(() => navigationScope === 'platform' ? 'PlatformAdmin' : 'Dashboard');
+  const [tabActiva,         setTabActiva]          = useState(() => navigationScope === 'platform' ? 'Tenants' : 'Inicio');
   const [sidebarOpen,       setSidebarOpen]        = useState(true);
-  const [modulosPermitidos, setModulosPermitidos]  = useState([]);
-
+  const modulosPermitidos = visibleModules(Object.keys(MODULOS), can, isModuleEnabled, platformCan, navigationScope);
+  const platformCatalog = navigationScope === 'platform' && platformCan('platform.tenants.provision');
+  const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || platformCatalog || banksSectionAllowed(tab, can));
   useEffect(() => {
-    setModulosPermitidos(PERMISOS[user?.email] ?? ['Dashboard']);
-  }, [user]);
+    if (platformCatalog) {
+      setModuloActivo('PlatformAdmin');
+      setTabActiva('Tenants');
+    }
+  }, [platformCatalog]);
+
+  // Change password modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPasswordInput, setNewPasswordInput]   = useState('');
+  const [passwordStatus, setPasswordStatus]       = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
+  const [passwordMsg, setPasswordMsg]             = useState('');
+
+  const handlePasswordChangeSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPasswordInput || newPasswordInput.length < 6) {
+      setPasswordMsg('La contraseña debe tener al menos 6 caracteres.');
+      setPasswordStatus('error');
+      return;
+    }
+    setPasswordStatus('loading');
+    setPasswordMsg('');
+    try {
+      await updatePassword(newPasswordInput);
+      setPasswordStatus('success');
+      setPasswordMsg('¡Contraseña actualizada correctamente!');
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordStatus('idle');
+        setNewPasswordInput('');
+        setPasswordMsg('');
+      }, 1500);
+    } catch (err) {
+      setPasswordStatus('error');
+      setPasswordMsg(err.message || 'Error al actualizar la contraseña.');
+    }
+  };
+
+  const navigationKey = modulosPermitidos.map(mod => mod + ':' + permittedTabs(mod).join(',')).join('|');
+  useEffect(() => {
+    const current = navigationKey.split('|').find(entry => entry.startsWith(moduloActivo + ':'));
+    const tabs = current?.split(':')[1].split(',') || [];
+    if (!current || !tabs.includes(tabActiva)) {
+      const entries = navigationKey.split('|');
+      const first = (platformCatalog ? entries.find(entry => entry.startsWith('PlatformAdmin:')) || entries[0] : entries[0]).split(':');
+      setModuloActivo(first[0] || 'Dashboard');
+      setTabActiva(first[1]?.split(',')[0] || 'Sin acceso');
+    }
+  }, [navigationKey, moduloActivo, tabActiva, platformCatalog]);
 
   const cambiarModulo = (mod) => {
+    if (mod === 'PlatformAdmin') setNavigationScope('platform');
+    if (mod === 'Config') setNavigationScope('organization');
     setModuloActivo(mod);
-    setTabActiva(MODULOS[mod].tabs[0]);
+    setTabActiva(permittedTabs(mod)[0]);
   };
 
   const cerrarSesion = async () => {
-    try { await signOut(auth); } catch (e) { console.error(e); }
+    try { await logout(); } catch (e) { console.error(e); }
   };
-
-  // Agrupar módulos por grupo para la nav top
-  const gruposConModulos = Object.entries(GRUPOS).map(([key, grupo]) => ({
-    key,
-    ...grupo,
-    modulos: Object.entries(MODULOS).filter(([, m]) => m.group === key).map(([k]) => k),
-  })).filter(g => g.modulos.length > 0);
 
   const tabActual = MODULOS[moduloActivo];
 
@@ -116,8 +158,9 @@ const MainLayout = ({ user }) => {
       {/* ══════════════════════════════════════════════════
           TOPBAR
       ══════════════════════════════════════════════════ */}
-      <header style={{
-        height: '60px',
+      <header className="shell-header" style={{
+        minHeight: '60px',
+        flexShrink: 0,
         background: 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(12px)',
         borderBottom: '1px solid var(--c-border)',
@@ -130,16 +173,52 @@ const MainLayout = ({ user }) => {
         top: 0,
         boxShadow: 'var(--shadow-xs)',
       }}>
-        {/* Logo + Nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <img src={logoCliente} alt="El Criollo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+        {/* Logo + Organization Switcher + Nav */}
+        <div className="shell-identity-navigation">
+          <div style={{display:"flex",alignItems:"center",flexShrink:0}}><img src={platformLogo} alt="Vegen Digital" style={{width:132,height:44,objectFit:'cover'}}/></div>
+
+          {/* Tenant identity appears only within its active business context. */}
+          {/* Tenancy & Organization Switcher */}
+          {availableOrganizations && availableOrganizations.length > 0 && (
+            <div className="shell-tenant-control" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--c-surface-2)', padding: '0.25rem 0.5rem', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border)' }}>
+              {activeOrganization?.code === 'EL_CRIOLLO' && <img src={logoCliente} alt="" style={{height:28, width:28, objectFit:'contain', flexShrink:0}}/>}
+              <select
+                aria-label="Tenant activo"
+                value={activeOrganization?.id || ''}
+                onChange={(e) => switchOrganization(e.target.value)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--c-text-1)',
+                  cursor: 'pointer',
+                  minWidth: 0,
+                  maxWidth: '100%',
+                  height: 32,
+                  minHeight: 32,
+                  padding: '0.25rem',
+                  boxSizing: 'border-box',
+                  margin: 0,
+                }}
+              >
+                <option value="" disabled={!platformCan('platform.tenants.provision')}>{platformCan('platform.tenants.provision') ? 'Sin organización · Plataforma' : 'Seleccionar organización'}</option>
+                {availableOrganizations.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name || org.legalName || org.taxId || 'Organización'}{org.role ? ` (${org.role})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Línea divisoria */}
           <div style={{ width: '1px', height: '28px', background: 'var(--c-border)' }} />
 
+          {activeOrganization && availableOperationalUnits?.length > 0 && <select style={{maxWidth:210}} aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Contexto de organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
           {/* Navegación por grupos */}
-          <nav style={{ display: 'flex', gap: '0.125rem', flexWrap: 'nowrap' }}>
-            {Object.entries(MODULOS).map(([key, mod]) => {
+          <nav aria-label="Módulos operativos" className={'shell-module-navigation' + (platformCatalog ? ' shell-module-catalog' : '')}>
+            {Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && modulosPermitidos.includes(key)).map(([key, mod]) => {
               const isActive = moduloActivo === key;
               return (
                 <button
@@ -183,7 +262,7 @@ const MainLayout = ({ user }) => {
         </div>
 
         {/* Perfil */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+        <div className="shell-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
           <div style={{ textAlign: 'right', display: 'none' }}>
             {/* Desktop only label */}
           </div>
@@ -203,6 +282,30 @@ const MainLayout = ({ user }) => {
             </div>
           </div>
           <div style={{ width: '1px', height: '24px', background: 'var(--c-border)' }} />
+          <button
+            onClick={() => setShowPasswordModal(true)}
+            title="Cambiar contraseña"
+            style={{
+              padding: '0.35rem 0.65rem',
+              borderRadius: 'var(--r-lg)',
+              border: '1px solid var(--c-border)',
+              background: 'var(--c-surface-2)',
+              color: 'var(--c-text-2)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              transition: 'all var(--t-fast)',
+              fontFamily: 'var(--font-body)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--c-brand-light)'; e.currentTarget.style.color = 'var(--c-brand)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--c-surface-2)'; e.currentTarget.style.color = 'var(--c-text-2)'; }}
+          >
+            <span>🔑</span>
+            <span style={{ display: 'none' }} className="md:inline">Cambiar contraseña</span>
+          </button>
           <button
             onClick={cerrarSesion}
             title="Cerrar sesión"
@@ -270,7 +373,7 @@ const MainLayout = ({ user }) => {
 
           {/* Nav tabs */}
           <nav style={{ flex: 1, padding: '0.625rem', overflowY: 'auto', overflowX: 'hidden' }}>
-            {tabActual?.tabs.map((tab, i) => {
+            {tabActual?.tabs.filter(tab => moduloActivo !== 'Bancos' || banksSectionAllowed(tab, can)).map((tab, i) => {
               const isActive = tabActiva === tab;
               return (
                 <button
@@ -307,7 +410,7 @@ const MainLayout = ({ user }) => {
                       e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
                     }
                   }}
-                  title={!sidebarOpen ? tab : undefined}
+                  title={!sidebarOpen ? (moduloActivo === 'Bancos' && tab === 'Gráficas' ? 'Métricas' : tab) : undefined}
                 >
                   {/* Dot indicator */}
                   <span style={{
@@ -319,12 +422,23 @@ const MainLayout = ({ user }) => {
                   }} />
                   {sidebarOpen && (
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {tab}
+                      {moduloActivo === 'Bancos' && tab === 'Gráficas' ? 'Métricas' : tab}
                     </span>
                   )}
                 </button>
               );
             })}
+          </nav>
+
+          <nav aria-label="Administración" style={{ padding: '0.625rem', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+            {['PlatformAdmin', 'Config'].filter(key => modulosPermitidos.includes(key) || key === 'Config' && platformCan('platform.tenants.provision')).map(key => (
+              <button key={key} aria-label={MODULOS[key].label} aria-current={moduloActivo === key ? 'page' : undefined}
+                title={MODULOS[key].label} onClick={() => cambiarModulo(key)} className="shell-admin-link"
+                style={{ background: moduloActivo === key ? 'rgba(255,255,255,0.15)' : 'transparent' }}>
+                <span aria-hidden="true">{MODULOS[key].icon}</span>
+                {sidebarOpen && <span>{MODULOS[key].label}</span>}
+              </button>
+            ))}
           </nav>
 
           {/* Toggle + versión */}
@@ -373,13 +487,13 @@ const MainLayout = ({ user }) => {
                 </span>
                 <span style={{ color: 'var(--c-border)', fontSize: '0.75rem' }}>›</span>
                 <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--c-brand)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  {tabActiva}
+                  {moduloActivo === 'Bancos' && tabActiva === 'Gráficas' ? 'Métricas' : tabActiva}
                 </span>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
                 <h1 className="heading-display" style={{ fontSize: '1.75rem', margin: 0 }}>
-                  {tabActiva}
+                  {moduloActivo === 'Bancos' && tabActiva === 'Gráficas' ? 'Métricas' : tabActiva}
                 </h1>
                 <div style={{
                   height: '6px', width: '6px', borderRadius: '50%',
@@ -398,7 +512,8 @@ const MainLayout = ({ user }) => {
               padding: '2rem',
               animation: 'fadeIn 200ms ease',
             }}>
-              {!modulosPermitidos.includes(moduloActivo)
+              {moduloActivo !== 'PlatformAdmin' && !activeOrganization ? <div role="status"><h2 className="heading-section">Selecciona una organización</h2><p>Elige un tenant en el selector para abrir {MODULOS[moduloActivo]?.label || 'sus módulos'}. El contexto de plataforma no concede acceso a sus datos.</p></div>
+                : (!navigationAllowed(moduloActivo, can, isModuleEnabled, platformCan) || (moduloActivo === 'Bancos' && !banksSectionAllowed(tabActiva, can)))
                 ? <AccesoRestringido modulo={moduloActivo} />
                 : renderModulo(moduloActivo, tabActiva, user)
               }
@@ -406,6 +521,117 @@ const MainLayout = ({ user }) => {
           </div>
         </main>
       </div>
+
+      {/* ── MODAL CAMBIAR CONTRASEÑA ────────────────────── */}
+      {showPasswordModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 50,
+          background: 'rgba(15,23,42,0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem',
+        }}>
+          <div style={{
+            background: 'var(--c-surface)',
+            borderRadius: 'var(--r-2xl)',
+            border: '1px solid var(--c-border)',
+            boxShadow: 'var(--shadow-xl)',
+            width: '100%', maxWidth: '400px',
+            padding: '2rem',
+            animation: 'fadeIn 150ms ease-out',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--c-text-1)', margin: 0 }}>
+                🔑 Cambiar contraseña
+              </h3>
+              <button
+                onClick={() => { setShowPasswordModal(false); setPasswordStatus('idle'); setPasswordMsg(''); }}
+                style={{ background: 'none', border: 'none', color: 'var(--c-text-4)', cursor: 'pointer', fontSize: '1.25rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-3)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+              Ingresá tu nueva contraseña para reemplazar la contraseña temporal de tu usuario (<strong>{user?.email}</strong>).
+            </p>
+
+            <form onSubmit={handlePasswordChangeSubmit}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--c-text-3)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                  Nueva Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={newPasswordInput}
+                  onChange={(e) => setNewPasswordInput(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  minLength={6}
+                  style={{
+                    width: '100%', padding: '0.65rem 1rem',
+                    border: '1.5px solid var(--c-border)',
+                    borderRadius: 'var(--r-lg)',
+                    background: 'var(--c-bg)',
+                    color: 'var(--c-text-1)',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {passwordStatus === 'error' && (
+                <div style={{ padding: '0.75rem', borderRadius: 'var(--r-md)', background: 'var(--c-brand-light)', color: 'var(--c-brand)', fontSize: '0.8125rem', marginBottom: '1rem', fontWeight: 600 }}>
+                  ⚠️ {passwordMsg}
+                </div>
+              )}
+
+              {passwordStatus === 'success' && (
+                <div style={{ padding: '0.75rem', borderRadius: 'var(--r-md)', background: 'rgba(16,185,129,0.1)', color: '#059669', fontSize: '0.8125rem', marginBottom: '1rem', fontWeight: 600 }}>
+                  ✅ {passwordMsg}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowPasswordModal(false); setPasswordStatus('idle'); setPasswordMsg(''); }}
+                  style={{
+                    padding: '0.625rem 1rem',
+                    borderRadius: 'var(--r-xl)',
+                    border: '1px solid var(--c-border)',
+                    background: 'transparent',
+                    color: 'var(--c-text-3)',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={passwordStatus === 'loading'}
+                  style={{
+                    padding: '0.625rem 1.25rem',
+                    borderRadius: 'var(--r-xl)',
+                    border: 'none',
+                    background: '#006847',
+                    color: '#fff',
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    opacity: passwordStatus === 'loading' ? 0.6 : 1,
+                  }}
+                >
+                  {passwordStatus === 'loading' ? 'Guardando…' : 'Guardar nueva contraseña'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

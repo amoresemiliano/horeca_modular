@@ -1,0 +1,15 @@
+{
+  "frontend": "http://127.0.0.1:5191",
+  "backend": "vmxjqwlfwnphorthhcwu",
+  "hostedWrites": false,
+  "checks": [
+    "Hosted DEV platform superadmin starts neutral, sees ten operational catalog entries, and a module requires explicit tenant selection",
+    "Hosted DEV organization context recomputes authorized navigation: 🏦Bancos",
+    "Explicit deselection clears tenant context and restores the platform catalog",
+    "Hosted DEV tenant metadata without membership cannot execute a module or retain previous organization navigation",
+    "Restricted canonical RPC responses on DEV identity: Banks-only navigation and landing, no Sales, no administrative entries",
+    "Desktop/mobile login uses the original supplied Vegen mark, clean left content, registered-brand signature and centered sign-in copy"
+  ],
+  "errors": [],
+  "status": "PASS"
+}

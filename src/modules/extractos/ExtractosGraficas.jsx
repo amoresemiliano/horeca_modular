@@ -1,271 +1,35 @@
-import React, { useState, useMemo } from 'react';
-
-const CAT_COLORS = [
-  '#E2231A', '#006847', '#F59E0B', '#3B82F6', '#8B5CF6',
-  '#EC4899', '#10B981', '#F97316', '#6366F1', '#14B8A6',
-  '#84CC16', '#EF4444',
-];
-
-/* ─── Gráfica de barras horizontales estilizada ──────────────────────────── */
-const BarrasHorizontales = ({ data, total, title, icon }) => {
-  const max = data[0]?.[1] || 1;
-  return (
-    <div style={{
-      background: 'var(--c-surface)',
-      borderRadius: 'var(--r-xl)',
-      border: '1px solid var(--c-border)',
-      boxShadow: 'var(--shadow-sm)',
-      overflow: 'hidden',
-    }}>
-      <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <span style={{ fontSize: '1.125rem' }}>{icon}</span>
-        <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--c-text-1)' }}>{title}</span>
-        <span style={{ marginLeft: 'auto', fontSize: '0.6875rem', color: 'var(--c-text-4)', fontWeight: 600, textTransform: 'uppercase' }}>Top {data.length}</span>
-      </div>
-      <div style={{ padding: '1.25rem 1.5rem' }}>
-        {data.length === 0 ? (
-          <p style={{ color: 'var(--c-text-4)', fontSize: '0.875rem', textAlign: 'center', padding: '2rem 0' }}>Sin datos suficientes</p>
-        ) : data.map(([name, val], i) => {
-          const pct = ((val / max) * 100).toFixed(1);
-          const pctTotal = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
-          const color = CAT_COLORS[i % CAT_COLORS.length];
-          return (
-            <div key={name} style={{ marginBottom: i < data.length - 1 ? '1.125rem' : 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: color, flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--c-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {name || 'Sin asignar'}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0, marginLeft: '0.75rem' }}>
-                  <span style={{ fontSize: '0.6875rem', color: 'var(--c-text-4)', fontWeight: 500 }}>{pctTotal}%</span>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--c-text-1)', minWidth: '80px', textAlign: 'right' }}>
-                    {val.toLocaleString('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-              </div>
-              <div style={{ height: '8px', background: 'var(--c-bg)', borderRadius: '9999px', overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%',
-                  width: `${pct}%`,
-                  background: `linear-gradient(90deg, ${color}CC, ${color})`,
-                  borderRadius: '9999px',
-                  transition: 'width 800ms cubic-bezier(0.34,1.56,0.64,1)',
-                }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-/* ─── Mini donut CSS ─────────────────────────────────────────────────────── */
-const MiniDonut = ({ data, total, size = 120 }) => {
-  let offset = 0;
-  const r = 40, circ = 2 * Math.PI * r;
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx="50" cy="50" r={r} fill="none" stroke="var(--c-bg)" strokeWidth="14" />
-      {data.map(([name, val], i) => {
-        const pct  = total > 0 ? val / total : 0;
-        const dash = circ * pct;
-        const gap  = circ - dash;
-        const el = (
-          <circle
-            key={name}
-            cx="50" cy="50" r={r}
-            fill="none"
-            stroke={CAT_COLORS[i % CAT_COLORS.length]}
-            strokeWidth="14"
-            strokeDasharray={`${dash} ${gap}`}
-            strokeDashoffset={-offset * circ}
-            strokeLinecap="butt"
-          />
-        );
-        offset += pct;
-        return el;
-      })}
-    </svg>
-  );
-};
-
-/* ─── Evolución mensual: línea temporal con barras ───────────────────────── */
-const EvolucionMensual = ({ db }) => {
-  const meses = useMemo(() => {
-    const map = {};
-    db.forEach(item => {
-      if (!item.fecha) return;
-      const mes = item.fecha.slice(0, 7); // yyyy-mm
-      if (!map[mes]) map[mes] = { gastos: 0, ingresos: 0 };
-      if (item.importe < 0) map[mes].gastos   += Math.abs(item.importe);
-      else                  map[mes].ingresos += item.importe;
-    });
-    return Object.entries(map)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-12); // últimos 12 meses
-  }, [db]);
-
-  if (meses.length === 0) {
-    return (
-      <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--c-text-4)', fontSize: '0.875rem' }}>
-        Cargá movimientos para ver la evolución mensual
-      </div>
-    );
-  }
-
-  const maxVal = Math.max(...meses.flatMap(([, v]) => [v.gastos, v.ingresos])) || 1;
-
-  return (
-    <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'flex-end', height: '160px', padding: '0.5rem 0' }}>
-      {meses.map(([mes, vals], i) => {
-        const [year, month] = mes.split('-');
-        const label = new Date(+year, +month - 1).toLocaleString('es-ES', { month: 'short' });
-        const gastH = (vals.gastos   / maxVal) * 130;
-        const ingH  = (vals.ingresos / maxVal) * 130;
-        return (
-          <div key={mes} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }} title={`${mes}\nGastos: ${vals.gastos.toFixed(0)}€\nIngresos: ${vals.ingresos.toFixed(0)}€`}>
-            <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '130px' }}>
-              <div style={{
-                width: '10px', height: `${gastH}px`,
-                background: 'var(--c-brand)', borderRadius: '3px 3px 0 0',
-                opacity: 0.85, minHeight: '2px',
-                transition: 'height 600ms ease',
-              }} />
-              <div style={{
-                width: '10px', height: `${ingH}px`,
-                background: 'var(--c-green)', borderRadius: '3px 3px 0 0',
-                opacity: 0.85, minHeight: '2px',
-                transition: 'height 600ms ease',
-              }} />
-            </div>
-            <span style={{ fontSize: '0.6rem', color: 'var(--c-text-4)', textTransform: 'uppercase', fontWeight: 600 }}>
-              {label}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-/* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
-const ExtractosGraficas = ({ db, filterConfig }) => {
-  const filteredData = useMemo(() => db.filter(item => {
-    const { from, to } = filterConfig.dateRange;
-    if (!from && !to) return true;
-    const d = new Date(item.fecha);
-    if (from && d < new Date(from)) return false;
-    if (to   && d > new Date(to))   return false;
-    return true;
-  }), [db, filterConfig]);
-
-  const gastos   = filteredData.filter(i => i.importe < 0);
-  const totalAbs = Math.abs(gastos.reduce((a, b) => a + b.importe, 0)) || 1;
-
-  const groupBy = (key, limit = 8) => {
-    const g = {};
-    gastos.forEach(item => {
-      const k = item[key] || 'Sin asignar';
-      g[k] = (g[k] || 0) + Math.abs(item.importe);
-    });
-    return Object.entries(g).sort((a, b) => b[1] - a[1]).slice(0, limit);
-  };
-
-  const topCats  = groupBy('categoria',    8);
-  const topProvs = groupBy('proveedor',   10);
-  const topCanal = groupBy('canal',        5);
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-      {/* ── Evolución mensual ─────────────────────────────────── */}
-      <div style={{
-        background: 'var(--c-surface)',
-        borderRadius: 'var(--r-xl)',
-        border: '1px solid var(--c-border)',
-        boxShadow: 'var(--shadow-sm)',
-        padding: '1.25rem 1.5rem',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.125rem' }}>📅</span>
-            <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--c-text-1)' }}>
-              Evolución Mensual
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--c-text-3)', fontWeight: 600 }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'var(--c-brand)', display: 'inline-block' }} />
-              Gastos
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--c-text-3)', fontWeight: 600 }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'var(--c-green)', display: 'inline-block' }} />
-              Ingresos
-            </span>
-          </div>
-        </div>
-        <EvolucionMensual db={db} />
-      </div>
-
-      {/* ── Donut + Top categorías ────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '1.25rem', alignItems: 'start' }}>
-        {/* Donut */}
-        <div style={{
-          background: 'var(--c-surface)',
-          borderRadius: 'var(--r-xl)',
-          border: '1px solid var(--c-border)',
-          boxShadow: 'var(--shadow-sm)',
-          padding: '1.5rem',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem',
-          minWidth: '200px',
-        }}>
-          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '0.875rem', color: 'var(--c-text-1)' }}>
-            Distribución Gastos
-          </span>
-          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-            <MiniDonut data={topCats} total={totalAbs} size={150} />
-            <div style={{ position: 'absolute', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1rem', color: 'var(--c-brand)', margin: 0 }}>
-                {totalAbs.toLocaleString('es-ES', { maximumFractionDigits: 0 })}€
-              </p>
-              <p style={{ fontSize: '0.6875rem', color: 'var(--c-text-4)', margin: 0 }}>total</p>
-            </div>
-          </div>
-          {/* Leyenda */}
-          <div style={{ width: '100%' }}>
-            {topCats.slice(0, 5).map(([name, val], i) => (
-              <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: CAT_COLORS[i % CAT_COLORS.length], flexShrink: 0 }} />
-                <span style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                  {name || 'Sin asignar'}
-                </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--c-text-2)', flexShrink: 0 }}>
-                  {((val / totalAbs) * 100).toFixed(0)}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Top categorías (barras) */}
-        <BarrasHorizontales
-          title="Gasto por Categoría"
-          icon="📂"
-          data={topCats}
-          total={totalAbs}
-        />
-      </div>
-
-      {/* ── Top proveedores + Canal ───────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
-        <BarrasHorizontales title="Top Proveedores" icon="🏢" data={topProvs} total={totalAbs} />
-        <BarrasHorizontales title="Por Canal Bancario" icon="🏦" data={topCanal} total={totalAbs} />
-      </div>
-    </div>
-  );
-};
-
-export default ExtractosGraficas;
+import { useMemo, useState } from 'react';
+import { financeInsights, percentage } from '../../domains/finance/application/operationalInsights';
+import { economicLabels } from '../../domains/finance/domain/economic';
+export const currencyAmount = (cents, currency = 'EUR') => (cents / 100).toLocaleString('es-ES', { style: 'currency', currency });
+export function BankingCards({ flow, currency = 'EUR' }) {
+  return <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 bg-gray-50 rounded-xl p-3">{[['Entradas bancarias brutas',flow.inflows],['Salidas bancarias brutas',flow.outflows],['Flujo bancario neto',flow.net],['Movimientos',flow.count]].map(([label,n],i)=><div key={label} className="px-2"><p className="text-xs text-gray-500">{label}</p><strong className="text-lg tabular-nums">{i===3?n:currencyAmount(n,currency)}</strong></div>)}</div>;
+}
+export function RankedBars({ title, rows, currency, limit = 8 }) {
+  return <section aria-label={title} className="space-y-2 min-w-0"><h3 className="font-semibold text-sm">{title}</h3>{rows.length?rows.slice(0,limit).map(row=><div key={row.id} className="text-xs"><div className="flex justify-between gap-2"><span className="truncate" title={row.name}>{row.name}</span><span className="whitespace-nowrap">{currencyAmount(row.amount,currency)} · {row.percent.toFixed(1)}%</span></div><div className="h-2 rounded bg-gray-100 mt-1"><div className="h-2 rounded bg-emerald-600" style={{width:`${Math.min(100,row.percent)}%`}} /></div></div>):<p className="text-xs text-gray-500">Sin gastos operativos confirmados.</p>}<p className="text-xs text-gray-500">% de salidas operativas confirmadas, incluidos los importes sin asignación de catálogo. Reembolsos excluidos.</p></section>;
+}
+export function AccountAnalysis({ accounts, currency }) {
+  return <section aria-label="Cuentas y tarjetas" className="space-y-2"><h3 className="text-sm font-semibold">Cuentas y tarjetas · flujo bancario</h3><div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="text-left text-gray-500"><th className="py-2">Banco / producto / cuenta</th><th className="text-right">Entradas</th><th className="text-right">Salidas</th><th className="text-right">Neto</th></tr></thead><tbody>{accounts.map(a=><tr key={a.id} className="border-t border-gray-100"><td className="py-2 pr-2">{a.institution} · {a.product==='CARD'?'Tarjeta':a.product==='BANK_ACCOUNT'?'Cuenta':'Producto no informado'} · {a.name}</td><td className="text-right px-2 whitespace-nowrap">{currencyAmount(a.inflows,currency)}</td><td className="text-right px-2 whitespace-nowrap">{currencyAmount(a.outflows,currency)}</td><td className="text-right whitespace-nowrap">{currencyAmount(a.net,currency)}</td></tr>)}</tbody></table></div></section>;
+}
+function MonthChart({ months, currency }) {
+  const rows=Object.entries(months).sort(([a],[b])=>a.localeCompare(b)),max=Math.max(1,...rows.flatMap(([,v])=>[v.inflows,v.outflows]));
+  const minNet=Math.min(0,...rows.map(([,v])=>v.net)),maxNet=Math.max(1,...rows.map(([,v])=>v.net));
+  const y=n=>110-(n-minNet)/(maxNet-minNet)*90,x=i=>rows.length<2?250:20+i*460/(rows.length-1);
+  return <section aria-label="Flujo mensual" className="space-y-3"><h3 className="font-semibold text-sm">Entradas y salidas por mes</h3><p className="text-xs text-gray-500">Verde: entradas · rojo: salidas. Importes bancarios brutos.</p><div className="max-h-64 overflow-y-auto space-y-2">{rows.map(([month,v])=><div key={month} className="grid grid-cols-[4.5rem_1fr] gap-2 text-xs"><span>{month}</span><div><div className="flex items-center gap-2"><div className="h-2 bg-emerald-600 rounded" style={{width:`${v.inflows/max*70}%`}}/><span>{currencyAmount(v.inflows,currency)}</span></div><div className="flex items-center gap-2"><div className="h-2 bg-red-400 rounded" style={{width:`${v.outflows/max*70}%`}}/><span>{currencyAmount(v.outflows,currency)}</span></div></div></div>)}</div>
+    <h4 className="text-sm font-semibold">Tendencia del flujo neto</h4><svg role="img" aria-label="Tendencia mensual de flujo bancario neto" viewBox="0 0 500 140" className="w-full max-h-40"><title>Flujo neto por mes; valores disponibles en la tabla inferior</title><line x1="15" x2="485" y1={y(0)} y2={y(0)} stroke="#d1d5db"/><polyline fill="none" stroke="#047857" strokeWidth="2" points={rows.map(([,v],i)=>`${x(i)},${y(v.net)}`).join(' ')}/>{rows.map(([month,v],i)=><circle key={month} cx={x(i)} cy={y(v.net)} r="3" fill="#047857"><title>{month}: {currencyAmount(v.net,currency)}</title></circle>)}</svg>
+    <details className="text-xs"><summary className="cursor-pointer">Valores mensuales</summary><dl>{rows.map(([month,v])=><div key={month} className="flex justify-between"><dt>{month}</dt><dd>{currencyAmount(v.net,currency)}</dd></div>)}</dl></details>
+  </section>;
+}
+export default function ExtractosGraficas({ movements = [] }) {
+  const [month,setMonth]=useState(''),[currency,setCurrency]=useState('EUR');
+  const filtered=useMemo(()=>movements.filter(m=>!month||m.fecha.startsWith(month)),[movements,month]);
+  const data=useMemo(()=>financeInsights(filtered,currency),[filtered,currency]),m=data.metrics;
+  const composition=Object.entries(m.economic).filter(([,v])=>v.count>0);
+  return <div className="p-4 space-y-5"><header className="flex flex-wrap items-center gap-3"><h2 className="text-lg font-semibold mr-auto">Métricas</h2><label className="text-sm">Mes <input aria-label="Mes" type="month" value={month} onChange={e=>setMonth(e.target.value)} className="border border-gray-200 rounded p-1"/></label><label className="text-sm">Moneda <select aria-label="Moneda" className="border border-gray-200 rounded p-1" value={currency} onChange={e=>setCurrency(e.target.value)}>{[...new Set(['EUR',...movements.map(m=>m.currency||'EUR')])].map(c=><option key={c}>{c}</option>)}</select></label></header>
+    <BankingCards flow={m.banking} currency={currency}/>
+    <div className="grid lg:grid-cols-2 gap-6"><MonthChart months={m.months} currency={currency}/><section aria-label="Composición económica" className="space-y-3"><h3 className="text-sm font-semibold">Interpretación del volumen de asignaciones</h3><p className="text-xs text-amber-900">{data.unresolvedPercent.toFixed(1)}% del volumen absoluto de asignaciones sigue sin interpretación confirmada ({currencyAmount(data.unresolvedVolume,currency)}).</p>{composition.map(([type,v])=><div key={type} className="text-xs"><div className="flex justify-between"><span>{economicLabels[type]}</span><span>{currencyAmount(v.inflows+v.outflows,currency)} · {percentage(v.inflows+v.outflows,data.allocationVolume).toFixed(1)}%</span></div><div className="h-2 bg-gray-100 rounded mt-1"><div className={'h-2 rounded '+(type==='UNCLASSIFIED'?'bg-amber-400':'bg-emerald-600')} style={{width:`${percentage(v.inflows+v.outflows,data.allocationVolume)}%`}}/></div></div>)}<p className="text-xs text-gray-500">Las sugerencias se incluyen en «Sin clasificar». Transferencias: ambos lados. Financiación y transferencias no son resultados operativos.</p></section></div>
+    <section aria-label="Resultado operativo" className="text-sm bg-emerald-50 rounded-lg p-3">Confirmado: ingresos {currencyAmount(m.operatingIncome,currency)} · gastos netos {currencyAmount(m.operatingExpense,currency)} · resultado {currencyAmount(m.operatingIncome-m.operatingExpense,currency)}</section>
+    <div className="grid lg:grid-cols-3 gap-6"><RankedBars title="Gasto por categoría" rows={data.categories} currency={currency}/><RankedBars title="Gasto por subcategoría" rows={data.subcategories} currency={currency}/><RankedBars title="Concentración por proveedor / contraparte" rows={data.providers} currency={currency}/></div>
+    <AccountAnalysis accounts={data.accounts} currency={currency}/>
+  </div>;
+}
