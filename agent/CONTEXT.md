@@ -18,8 +18,9 @@
 ## 3. Core Repository & Infrastructure Map
 - **Repository**: `https://github.com/amoresemiliano/horeca_modular`
 - **Active Branch**: `dev`
-- **Canonical Supabase Staging Project**: `vmxjqwlfwnphorthhcwu` (`https://vmxjqwlfwnphorthhcwu.supabase.co`)
+- **Canonical shared DEV + PROD Supabase**: `vmxjqwlfwnphorthhcwu` (`https://vmxjqwlfwnphorthhcwu.supabase.co`), historical name `horeca_modular_staging`.
 - **Deployed DEV Preview**: `https://horecamodular-git-dev-vegen-s-projects.vercel.app/`
+- **Production (2026-10-06)**: Core + Banks active at `https://horecamodular.vercel.app/` from `main`; nine migrations applied. **EL CRIOLLO REAL DATA MODE = ACTIVE.** NEVER use El Criollo for fixtures, global cleanup/reset or automated destructive tests. Future DEV/UAT data belongs to HORECA DEV LAB (`HORECA_DEV_LAB`, `f7f6da70-f7dc-4b1a-aa23-f5612174dcbc`) or another explicit disposable tenant. DEV LAB has separate OWNER membership and Banks-only entitlement. See `docs/PRODUCTION_STATE.md` and `docs/SHARED-PRODUCTION-OPERATING-RULES.md`. Sales PR #6 is excluded and remains a separate next stream. The dated DEV baseline below is historical.
 
 - **Core DEV deployment state (2026-09-28)**: Core baseline and CCR-FIN-001 deployed to the canonical HORECA DEV target. Hosted grants, RLS and authorization scenarios verified. Active migration chain: `20260926000000` then `20260927000000`; historical migrations are archived, not marked applied. Tenant bootstrap is intentionally empty. See `docs/CORE_DEV_BASELINE_RESTORATION.md`.
 
@@ -27,5 +28,5 @@
 1. **Language**: All documentation, commit messages, and reports must be in **ENGLISH**.
 2. **Fail-Closed Security**: NEVER weaken RLS policies, bypass database security, or introduce client-side fallback authorization.
 3. **No Secrets**: NEVER print, commit, or log plain-text passwords or secret keys.
-4. **HORECA Test Fixture Standard**: All test fixtures must be explicitly HORECA-owned (`HORECA_TEST_ORG_A`, `HORECA_TEST_ORG_B`, `horeca-security-*@test.invalid`). Zero reuse of unrelated DEV users or MICA artifacts.
+4. **HORECA Test Fixture Standard**: All fixtures must be explicitly HORECA-owned and confined to HORECA DEV LAB or another explicit disposable tenant (`HORECA_TEST_ORG_A`, `HORECA_TEST_ORG_B`, `horeca-security-*@test.invalid`). NEVER use El Criollo for fixtures, global cleanup/reset or automated destructive tests. Zero reuse of unrelated DEV users or MICA artifacts.
 5. **No Scope Creep**: Perform work package tasks strictly within the defined WP boundaries.
