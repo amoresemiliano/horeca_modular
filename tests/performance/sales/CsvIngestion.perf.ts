@@ -15,7 +15,7 @@ import { SaleLine } from '../../../src/domain/sales/models/SaleLine';
 import { SalesImport } from '../../../src/domain/sales/models/SalesImport';
 
 const csvContent = readFileSync('tests/fixtures/sales/lastapp/tabs-report-0-2.csv', 'utf8');
-const input = { organizationId: 'org-elcriollo-palencia', csvContent, filename: 'tabs-report-0-2.csv' };
+const input = { organizationId: 'f7f6da70-f7dc-4b1a-aa23-f5612174dcbc', csvContent, filename: 'tabs-report-0-2.csv' };
 const environment = { node: process.version, platform: platform(), arch: arch(), cpu: cpus()[0]?.model };
 function setup() {
   const imports = new InMemorySalesImportRepository();

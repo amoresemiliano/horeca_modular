@@ -22,14 +22,26 @@ function AdminWorkspace({ platform, organizationId, can }) {
   const load = useCallback(async()=>setData(await adminSnapshot(org,platform)),[org,platform]);
   useEffect(()=>{let active=true;setData(null);setMessage('');adminSnapshot(org,platform).then(d=>{if(active)setData(d)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[org,platform]);
   useEffect(()=>{let active=true;setEffective([]);if(memberId&&!platform)inspectPermissions(org,memberId,unitId).then(rows=>{if(active)setEffective(rows)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[org,memberId,unitId,platform,data]);
-  async function run(action) {setBusy(true);setError('');setMessage('');try{await action();await load();setMessage('Cambio guardado y auditado.')}catch(e){setError(e.message)}finally{setBusy(false)}}
+  async function run(action) {
+    setBusy(true);setError('');setMessage('');
+    try {
+      await action();
+      setMessage('Cambios guardados');
+      try { await load(); }
+      catch { setError('Los cambios se guardaron, pero no se pudo actualizar la vista. Vuelve a abrir esta sección.'); }
+    } catch(e) { setError(e.message); }
+    finally { setBusy(false); }
+  }
   const mutate=(action,payload)=>run(()=>adminMutate(action,org,payload));
   const member=data?.members.find(m=>m.id===memberId), tenant=data?.organizations.find(o=>o.id===org);
   const canAssign=!platform&&can('membership.roles.assign'), pages=platform?platformPages:tenantPages;
   return <div className="p-5 space-y-5 max-w-6xl text-sm">
     <header><p className="text-gray-600">{platform?'Vegen Digital · HORECA Modular':tenant?.name}</p><h2 className="text-xl font-semibold">{platform?'Administración de plataforma':'Administración de organización'}</h2></header>
     <nav aria-label="Secciones de administración" className="flex flex-wrap gap-2">{Object.entries(pages).map(([key,label])=><button key={key} aria-current={page===key?'page':undefined} className={input+(page===key?' font-semibold border-blue-600 bg-blue-50':'')} onClick={()=>{setPage(key);setError('');setMessage('')}}>{label}</button>)}</nav>
-    {error&&<p role="alert" className="text-red-700">{error}</p>}{message&&<p role="status" className="text-emerald-800">{message}</p>}
+    {error&&<p role="alert" className="text-red-700">{error}</p>}
+    <div role="status" aria-live="polite" aria-atomic="true" className="sticky top-0 z-10 rounded border bg-white p-3 shadow-sm">
+      {message ? <p className="font-semibold text-emerald-800">✓ {message}</p> : busy ? <p>Guardando cambios…</p> : <p className="text-gray-600">Los cambios de módulos, roles, permisos y alcance se guardan automáticamente. Los formularios se guardan al pulsar su botón.</p>}
+    </div>
     {platform&&<label className="block">Tenant a administrar <select aria-label="Tenant" disabled={busy} className={input} value={org} onChange={e=>{setOrg(e.target.value);setMemberId('');setUnitId('');setError('')}}><option value="">Seleccionar tenant</option>{data?.organizations.map(o=><option key={o.id} value={o.id}>{o.name} · {o.is_active?'Activo':'Inactivo'}</option>)}</select></label>}
     {!data&&<p role="status">Cargando administración…</p>}
     {platform&&page==='tenants'&&<details><summary className="font-semibold cursor-pointer">Crear tenant</summary><TenantDetailsForm disabled={busy} onSave={values=>run(async()=>{const r=await adminMutate('tenant.create',null,values);setOrg(r.organization_id)})}/></details>}

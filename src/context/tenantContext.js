@@ -1,6 +1,7 @@
 // Selection does not grant access. An invalid explicit selection must stay empty.
-export function selectOrganization(organizations, requestedId, previousId) {
-  const id = requestedId || previousId || (organizations.length === 1 ? organizations[0].id : null);
+export function selectOrganization(organizations, requestedId, previousId, platform = false) {
+  if (requestedId === '') return null;
+  const id = requestedId || previousId || (!platform && organizations.length === 1 ? organizations[0].id : null);
   return organizations.find((organization) => organization.id === id) || null;
 }
 

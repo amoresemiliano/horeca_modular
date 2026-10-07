@@ -19,6 +19,13 @@ describe('Core browser tenant context (RPC mocked; not hosted proof)', () => {
     expect(moduleEnabled(null, [{ module_key: 'bancos', is_enabled: true }], 'bancos')).toBe(false);
     expect(moduleEnabled('a', [{ module_key: 'bancos', is_enabled: true }], 'bancos')).toBe(true);
   });
+  it('keeps platform login neutral even with one tenant and supports explicit deselection', () => {
+    expect(selectOrganization([a], null, null, true)).toBeNull();
+    expect(selectOrganization([a, b], 'a', null, true)).toEqual(a);
+    expect(selectOrganization([a, b], '', 'a', true)).toBeNull();
+    expect(selectOrganization([a, b], null, 'b', true)).toEqual(b);
+    expect(selectOrganization([a, b], 'foreign', 'a', true)).toBeNull();
+  });
   it('does not turn candidate grants into authority when the canonical gate denies', async () => {
     const client = { rpc: vi.fn().mockResolvedValueOnce({ data: false }).mockResolvedValueOnce({ data: true }) };
     expect(await resolveAuthorizedCapabilities(client, 'b', ['revoked', 'allowed'])).toEqual(['allowed']);

@@ -8,11 +8,12 @@ import EscandallosApp from '../modules/escandallos/EscandallosApp';
 import HorariosApp    from '../modules/horarios/HorariosApp';
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
 import TenantAdministration from '../modules/administration/TenantAdministration';
-import { navigationAllowed, banksSectionAllowed } from '../application/tenancy/accessNavigation';
+import { navigationAllowed, banksSectionAllowed, visibleModules } from '../application/tenancy/accessNavigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoCliente from '../assets/logo_cliente.png';
-import logoVDC from '../assets/icono_VDC.png';
+import platformLogo from '../assets/vegen-digital.png';
+import './MainLayout.css';
 
 /* ─── ESTRUCTURA MAESTRA ──────────────────────────────────────────────────── */
 const MODULOS = {
@@ -26,8 +27,8 @@ const MODULOS = {
   Producción:  { icon: '🍳', label: 'Producción',   tabs: ['Registro', 'Historial', 'Resumen'],                                    group: 'operaciones'},
   Personal:    { icon: '👤', label: 'Personal',     tabs: ['Fichajes', 'Incidencias', 'Empleados', 'Informes'],                     group: 'rrhh'       },
   Predicción:  { icon: '🔮', label: 'Predicción',   tabs: ['Carga', 'Stock', 'Predicciones'],                                       group: 'analytics' },
-  PlatformAdmin: { icon: '⚙', label: 'Administración de plataforma', tabs: ['Tenants'], group: 'sistema' },
-  Config:      { icon: '⚙',  label: 'Administración de organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
+  PlatformAdmin: { icon: '⚙', label: 'Plataforma', tabs: ['Tenants'], group: 'sistema' },
+  Config:      { icon: '⚙',  label: 'Organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
 };
 
 const GRUPOS = {
@@ -80,13 +81,20 @@ const AccesoRestringido = ({ modulo }) => (
 
 /* ─── COMPONENTE PRINCIPAL ───────────────────────────────────────────────── */
 const MainLayout = ({ user: propsUser }) => {
-  const { user: authUser, can, isModuleEnabled, platformCan, availableOrganizations, availableOperationalUnits, activeOperationalUnit, switchOperationalUnit, activeOrganization, switchOrganization, logout, updatePassword } = useAuth();
+  const { user: authUser, can, isModuleEnabled, platformCan, navigationScope, setNavigationScope, availableOrganizations, availableOperationalUnits, activeOperationalUnit, switchOperationalUnit, activeOrganization, switchOrganization, logout, updatePassword } = useAuth();
   const user = authUser || propsUser;
-  const [moduloActivo,      setModuloActivo]      = useState('Dashboard');
-  const [tabActiva,         setTabActiva]          = useState('Inicio');
+  const [moduloActivo,      setModuloActivo]      = useState(() => navigationScope === 'platform' ? 'PlatformAdmin' : 'Dashboard');
+  const [tabActiva,         setTabActiva]          = useState(() => navigationScope === 'platform' ? 'Tenants' : 'Inicio');
   const [sidebarOpen,       setSidebarOpen]        = useState(true);
-  const modulosPermitidos = Object.keys(MODULOS).filter(key => navigationAllowed(key, can, isModuleEnabled, platformCan));
-  const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || banksSectionAllowed(tab, can));
+  const modulosPermitidos = visibleModules(Object.keys(MODULOS), can, isModuleEnabled, platformCan, navigationScope);
+  const platformCatalog = navigationScope === 'platform' && platformCan('platform.tenants.provision');
+  const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || platformCatalog || banksSectionAllowed(tab, can));
+  useEffect(() => {
+    if (platformCatalog) {
+      setModuloActivo('PlatformAdmin');
+      setTabActiva('Tenants');
+    }
+  }, [platformCatalog]);
 
   // Change password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -124,13 +132,16 @@ const MainLayout = ({ user: propsUser }) => {
     const current = navigationKey.split('|').find(entry => entry.startsWith(moduloActivo + ':'));
     const tabs = current?.split(':')[1].split(',') || [];
     if (!current || !tabs.includes(tabActiva)) {
-      const first = navigationKey.split('|')[0].split(':');
+      const entries = navigationKey.split('|');
+      const first = (platformCatalog ? entries.find(entry => entry.startsWith('PlatformAdmin:')) || entries[0] : entries[0]).split(':');
       setModuloActivo(first[0] || 'Dashboard');
       setTabActiva(first[1]?.split(',')[0] || 'Sin acceso');
     }
-  }, [navigationKey, moduloActivo, tabActiva]);
+  }, [navigationKey, moduloActivo, tabActiva, platformCatalog]);
 
   const cambiarModulo = (mod) => {
+    if (mod === 'PlatformAdmin') setNavigationScope('platform');
+    if (mod === 'Config') setNavigationScope('organization');
     setModuloActivo(mod);
     setTabActiva(permittedTabs(mod)[0]);
   };
@@ -147,7 +158,7 @@ const MainLayout = ({ user: propsUser }) => {
       {/* ══════════════════════════════════════════════════
           TOPBAR
       ══════════════════════════════════════════════════ */}
-      <header style={{
+      <header className="shell-header" style={{
         minHeight: '60px',
         flexShrink: 0,
         background: 'rgba(255,255,255,0.92)',
@@ -163,15 +174,14 @@ const MainLayout = ({ user: propsUser }) => {
         boxShadow: 'var(--shadow-xs)',
       }}>
         {/* Logo + Organization Switcher + Nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}><img src={logoVDC} alt="Vegen Digital" style={{height:32}}/><strong>Vegen Digital</strong></div>
+        <div className="shell-identity-navigation">
+          <div style={{display:"flex",alignItems:"center",flexShrink:0}}><img src={platformLogo} alt="Vegen Digital" style={{width:132,height:44,objectFit:'cover'}}/></div>
 
           {/* Tenant identity appears only within its active business context. */}
-          {moduloActivo !== "PlatformAdmin" && activeOrganization?.code === "EL_CRIOLLO" && <img src={logoCliente} alt="Tenant El Criollo" style={{height:32}}/>}
           {/* Tenancy & Organization Switcher */}
           {availableOrganizations && availableOrganizations.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--c-surface-2)', padding: '0.25rem 0.5rem', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border)' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--c-brand)' }}>Tenant activo:</span>
+            <div className="shell-tenant-control" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--c-surface-2)', padding: '0.25rem 0.5rem', borderRadius: 'var(--r-md)', border: '1px solid var(--c-border)' }}>
+              {activeOrganization?.code === 'EL_CRIOLLO' && <img src={logoCliente} alt="" style={{height:28, width:28, objectFit:'contain', flexShrink:0}}/>}
               <select
                 aria-label="Tenant activo"
                 value={activeOrganization?.id || ''}
@@ -183,13 +193,19 @@ const MainLayout = ({ user: propsUser }) => {
                   fontWeight: 600,
                   color: 'var(--c-text-1)',
                   cursor: 'pointer',
-                  outline: 'none',
+                  minWidth: 0,
+                  maxWidth: '100%',
+                  height: 32,
+                  minHeight: 32,
+                  padding: '0.25rem',
+                  boxSizing: 'border-box',
+                  margin: 0,
                 }}
               >
-                <option value="" disabled>Seleccionar organización</option>
+                <option value="" disabled={!platformCan('platform.tenants.provision')}>{platformCan('platform.tenants.provision') ? 'Sin organización · Plataforma' : 'Seleccionar organización'}</option>
                 {availableOrganizations.map((org) => (
                   <option key={org.id} value={org.id}>
-                    {org.name || org.legalName || org.taxId || 'Organización'} ({org.role || 'MEMBER'})
+                    {org.name || org.legalName || org.taxId || 'Organización'}{org.role ? ` (${org.role})` : ''}
                   </option>
                 ))}
               </select>
@@ -201,8 +217,8 @@ const MainLayout = ({ user: propsUser }) => {
 
           {activeOrganization && availableOperationalUnits?.length > 0 && <select style={{maxWidth:210}} aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Contexto de organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
           {/* Navegación por grupos */}
-          <nav style={{ display: 'flex', gap: '0.125rem', flexWrap: 'wrap', minWidth: 0 }}>
-            {Object.entries(MODULOS).filter(([key]) => modulosPermitidos.includes(key)).map(([key, mod]) => {
+          <nav aria-label="Módulos operativos" className={'shell-module-navigation' + (platformCatalog ? ' shell-module-catalog' : '')}>
+            {Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && modulosPermitidos.includes(key)).map(([key, mod]) => {
               const isActive = moduloActivo === key;
               return (
                 <button
@@ -246,7 +262,7 @@ const MainLayout = ({ user: propsUser }) => {
         </div>
 
         {/* Perfil */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+        <div className="shell-profile" style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
           <div style={{ textAlign: 'right', display: 'none' }}>
             {/* Desktop only label */}
           </div>
@@ -414,6 +430,17 @@ const MainLayout = ({ user: propsUser }) => {
             })}
           </nav>
 
+          <nav aria-label="Administración" style={{ padding: '0.625rem', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+            {['PlatformAdmin', 'Config'].filter(key => modulosPermitidos.includes(key) || key === 'Config' && platformCan('platform.tenants.provision')).map(key => (
+              <button key={key} aria-label={MODULOS[key].label} aria-current={moduloActivo === key ? 'page' : undefined}
+                title={MODULOS[key].label} onClick={() => cambiarModulo(key)} className="shell-admin-link"
+                style={{ background: moduloActivo === key ? 'rgba(255,255,255,0.15)' : 'transparent' }}>
+                <span aria-hidden="true">{MODULOS[key].icon}</span>
+                {sidebarOpen && <span>{MODULOS[key].label}</span>}
+              </button>
+            ))}
+          </nav>
+
           {/* Toggle + versión */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '0.625rem' }}>
             <button
@@ -485,7 +512,8 @@ const MainLayout = ({ user: propsUser }) => {
               padding: '2rem',
               animation: 'fadeIn 200ms ease',
             }}>
-              {(!modulosPermitidos.includes(moduloActivo) || (moduloActivo === 'Bancos' && !banksSectionAllowed(tabActiva, can)))
+              {moduloActivo !== 'PlatformAdmin' && !activeOrganization ? <div role="status"><h2 className="heading-section">Selecciona una organización</h2><p>Elige un tenant en el selector para abrir {MODULOS[moduloActivo]?.label || 'sus módulos'}. El contexto de plataforma no concede acceso a sus datos.</p></div>
+                : (!navigationAllowed(moduloActivo, can, isModuleEnabled, platformCan) || (moduloActivo === 'Bancos' && !banksSectionAllowed(tabActiva, can)))
                 ? <AccesoRestringido modulo={moduloActivo} />
                 : renderModulo(moduloActivo, tabActiva, user)
               }

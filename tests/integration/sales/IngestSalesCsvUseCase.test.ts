@@ -17,7 +17,7 @@ describe('IngestSalesCsvUseCase Integration Tests with Approved Fixtures', () =>
   let productSummaryUseCase: GetProductSalesSummaryUseCase;
   let detailsUseCase: GetSaleDetailsUseCase;
 
-  const ORG_ID_A = 'org-elcriollo-palencia';
+  const ORG_ID_A = 'f7f6da70-f7dc-4b1a-aa23-f5612174dcbc';
   const ORG_ID_B = 'org-other-client';
 
   const fixturesDir = path.join(process.cwd(), 'tests', 'fixtures', 'sales', 'lastapp');

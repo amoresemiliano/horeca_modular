@@ -11,7 +11,15 @@ export function navigationAllowed(module, can, enabled, platformCan = () => fals
   if (module === 'PlatformAdmin') return platformCan('platform.tenants.provision');
   if (module === 'Config') return TENANT_ADMIN_CAPS.some(code => can(code));
   const [key, ...codes] = MODULE_ACCESS[module] || [];
+  if (module === 'Bancos') return Boolean(enabled(key) && can('sensitivedata.banking.read') && codes.some(code => can(code)));
   return Boolean(key && enabled(key) && codes.some(code => can(code)));
+}
+// Discovery in platform context is separate from permission to execute a module.
+export function visibleModules(keys, can, enabled, platformCan, scope) {
+  const catalog = scope === 'platform' && platformCan('platform.tenants.provision');
+  return keys.filter(key => (catalog && key in MODULE_ACCESS)
+    || (key === 'Config' && platformCan('platform.tenants.provision'))
+    || navigationAllowed(key, can, enabled, platformCan));
 }
 export function banksSectionAllowed(tab, can) { return Boolean(BANKS_SECTIONS[tab] && can(BANKS_SECTIONS[tab]) && can('sensitivedata.banking.read')); }
 

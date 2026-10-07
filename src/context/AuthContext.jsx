@@ -42,6 +42,7 @@ export function AuthProvider({ children }) {
   const [entitlements, setEntitlements] = useState([]);
   const [availableOperationalUnits,setAvailableOperationalUnits] = useState([]);
   const [platformCapabilities, setPlatformCapabilities] = useState([]);
+  const [navigationScope, setNavigationScope] = useState('organization');
   const [loading, setLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const selectedContext = useRef({ userId: null, organizationId: null, unitId: null });
@@ -145,7 +146,8 @@ export function AuthProvider({ children }) {
       const { data: memList, error: memErr } = await query;
       if (request !== contextRequest.current) return;
 
-      if (memErr || !memList || memList.length === 0) {
+      if (memErr) throw memErr;
+      if ((!memList || memList.length === 0) && platformAllowed !== true) {
         console.warn('FAIL-CLOSED: No active organization membership found for profile:', profData.id);
         setMembership(null);
         setRole(null);
@@ -158,7 +160,7 @@ export function AuthProvider({ children }) {
 
       // Build available organizations
       const orgs = [];
-      for (const m of memList) {
+      for (const m of memList || []) {
         const o = m.eco_organizations;
         if (o && o.is_active === true) {
           if (!orgs.some((existing) => existing.id === o.id)) {
@@ -176,13 +178,34 @@ export function AuthProvider({ children }) {
           }
         }
       }
+      // Platform metadata discovery does not confer tenant membership or access.
+      if (platformAllowed === true) {
+        const { data: catalog, error: catalogError } = await supabase.rpc('core_admin_snapshot', {
+          requested_organization_id: null, platform: true,
+        });
+        if (catalogError) throw catalogError;
+        if (request !== contextRequest.current) return;
+        for (const tenant of catalog.organizations || []) {
+          if (tenant.is_active && !orgs.some(org => org.id === tenant.id)) {
+            orgs.push({ id: tenant.id, code: tenant.code, name: tenant.name, role: null });
+          }
+        }
+      }
       setAvailableOrganizations(orgs);
 
       // Select active organization
       const previous = selectedContext.current.userId === authUser.id ? selectedContext.current : {};
-      const selectedOrg = selectOrganization(orgs, targetOrgId, previous.organizationId);
-      const activeMem = selectedOrg ? memList.find((m) => m.organization_id === selectedOrg.id) : null;
+      const selectedOrg = selectOrganization(orgs, targetOrgId, previous.organizationId, platformAllowed === true);
+      const activeMem = selectedOrg ? memList?.find((m) => m.organization_id === selectedOrg.id) : null;
       const unitId = targetOrgId ? targetUnitId : previous.unitId || null;
+
+      if (selectedContext.current.userId !== authUser.id) {
+        setNavigationScope(platformAllowed === true ? 'platform' : 'organization');
+      }
+      if (!selectedOrg && platformAllowed === true) setNavigationScope('platform');
+      selectedContext.current = { userId: authUser.id, organizationId: selectedOrg?.id || null, unitId: activeMem ? unitId : null };
+      setActiveOrganization(selectedOrg);
+      setOrganizationId(selectedOrg?.id || null);
 
       if (activeMem) {
         const orgInfo = orgs.find((o) => o.id === activeMem.organization_id);
@@ -445,6 +468,8 @@ export function AuthProvider({ children }) {
     can,
     isModuleEnabled,
     platformCan: code => platformCapabilities.includes(code),
+    navigationScope,
+    setNavigationScope,
     refreshAccess: () => resolveFullContext(user, organizationId, activeOperationalUnit?.id || null),
     loginWithProvider,
     loginWithGoogle,

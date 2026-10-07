@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import logoVDC from '../assets/icono_VDC.png';
+import platformLogo from '../assets/vegen-digital.png';
 
 const Login = () => {
   const [status, setStatus] = useState('idle'); // 'idle' | 'loading_google' | 'loading_github' | 'loading_password' | 'loading_reset' | 'loading_update' | 'success_reset' | 'success_update' | 'error'
@@ -171,7 +171,6 @@ const Login = () => {
 
         {/* Contenido */}
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <img src={logoVDC} alt="Vegen Digital" style={{ height: '72px', objectFit: 'contain', marginBottom: '2rem', filter: 'brightness(0) invert(1)' }} />
           <h2 style={{
             fontFamily: 'var(--font-heading)',
             fontSize: '1.75rem',
@@ -181,11 +180,10 @@ const Login = () => {
             lineHeight: 1.2,
             marginBottom: '1rem',
           }}>
-            Plataforma de Gestión<br />
-            <span style={{ color: '#F87171' }}>HORECA</span>
+            Plataforma de Gestión HORECA
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.9375rem', lineHeight: 1.6, maxWidth: '340px' }}>
-            Control total de tu negocio. Bancos, KPIs, inventario, personal y más — todo en un solo lugar.
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9375rem', lineHeight: 1.6, margin: '0 auto', whiteSpace: 'nowrap' }}>
+            Tu negocio, conectado en una sola plataforma.
           </p>
 
           {/* Feature pills */}
@@ -207,11 +205,11 @@ const Login = () => {
         {/* Footer panel */}
         <div style={{
           position: 'absolute', bottom: '2rem', left: 0, right: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
         }}>
-          <img src={logoVDC} alt="Vegen Digital" style={{ height: '20px', opacity: 0.35, filter: 'invert(1)' }} />
-          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Vegen Digital
+          <img src={platformLogo} alt="Vegen Digital" style={{ width: 150, height: 50, objectFit: 'cover', borderRadius: 6 }} />
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.6875rem', fontWeight: 500 }}>
+            Vegen Digital S.L., marca registrada
           </span>
         </div>
       </div>
@@ -230,8 +228,8 @@ const Login = () => {
 
           {/* Logotipo mobile */}
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <img src={logoVDC} alt="Vegen Digital" style={{ height: '52px', objectFit: 'contain', marginBottom: '1.25rem' }} />
-            <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-4)', fontWeight: 500 }}>
+            <img src={platformLogo} alt="Vegen Digital" style={{ width: 220, height: 80, objectFit: 'cover', margin: '0 auto 1.25rem', display: 'block' }} />
+            <p style={{ fontSize: '0.8125rem', color: 'var(--c-text-4)', fontWeight: 500, textAlign: 'center' }}>
               Iniciá sesión para continuar
             </p>
           </div>
