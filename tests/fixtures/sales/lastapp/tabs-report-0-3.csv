@@ -1,0 +1,489 @@
+Ubicación,Código,Nombre,Fuente,Factura nº,Tipo de recogida,Método de pago,Hora de creación,Hora de programación,Hora de activación,Hora estimada de entrega,Nombre del cliente,Dirección del cliente,Teléfono del cliente,Correo electrónico del cliente,Total,Pagado,Costo de envío,Monto reembolsado,Productos,Nombre del mensajero,Descuentos aplicados,Marca virtual
+El Criollo - Palencia,R001,Barra-2,Restaurant,LS2-12295,restaurant,card,2026-09-15T12:20:52.000,,2026-09-15T12:20:52.000,,,,,,17.5,17.5,0,0,"1x Costra de Asada con Piña
+1x CERVEZAS - Modelo Especial
+1x Orden Birria + Caldito",,0,El Criollo - Maravillas
+El Criollo - Palencia,G955,101773929285,Glovo,LS2-12294,delivery,glovo,2026-09-15T13:00:44.000,,2026-09-15T13:00:44.000,,,,,,19.4,19.4,0,0,"1x Perrón
+	1x SALSA - Guacamole
+	1x TACOS - Carnitas
+	1x QUESADILLAS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x Agua de Botella
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Alambre de Pollo
+	1x TACOS - Pastorcito Criollo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R002,Ignacio (M-2),Restaurant,LS2-12296,restaurant,card,2026-09-15T13:40:00.000,,2026-09-15T13:40:00.000,,,,,,132.8,132.8,0,0,"1x GUACAMOLE - Regular
+1x GUACAMOLE - Regular
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x TACOS - Pastorcito Criollo
+	1x REFRESCOS - Aquarius Limón
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x TACOS - Pastorcito Criollo
+	1x Agua de Botella
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x TACOS - Pastorcito Criollo
+	1x REFRESCOS - Aquarius Limón
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x TACOS - Pastorcito Criollo
+	1x Agua de Botella
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x TACOS - Pastorcito Criollo
+	1x Costra de Birria + Caldo
+	1x REFRESCOS - Nestea Limón
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x TACOS - Pastorcito Criollo
+	1x Costra de Birria + Caldo
+	1x REFRESCOS - Coca Cola Lata
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Picadillo
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Tinga de Pollo
+	1x Costra de Asada con Piña
+	1x REFRESCOS - Coca Cola Lata",,0,El Criollo - Maravillas
+El Criollo - Palencia,R003,Conson (M-1),Restaurant,LS2-12297,restaurant,card,2026-09-15T13:50:36.000,,2026-09-15T13:50:36.000,,,,,,9.5,9.5,0,0,"1x Para Llevar
+1x QUESADILLAS - Tinga Pollo
+1x QUESADILLAS - Tinga Pollo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R004,Zac (M-1),Restaurant,LS2-12298,restaurant,card,2026-09-15T13:53:27.000,,2026-09-15T13:53:27.000,,,,,,39.3,39.3,0,0,"1x Costra de Birria + Caldo
+1x GUACAMOLE - Regular
+1x QUESADILLAS - Tinga Pollo
+1x GRIFO - Doble
+1x Costra de Birria + Caldo
+1x Costra de Birria + Caldo
+1x Costra de Birria + Caldo
+1x Jarritos 370ml
+	1x Mandarina",,0,El Criollo - Maravillas
+El Criollo - Palencia,R005,Maria (M-1),Restaurant,LS2-12299,restaurant,card,2026-09-15T14:06:05.000,,2026-09-15T14:06:05.000,,,,,,51.7,51.7,0,0,"1x Perrón
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Picadillo
+	1x AGUAS FRESCAS - Jamaica
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Picadillo
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Cochinita Pibil
+	1x GRIFO - Caña
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x TACOS - Cochinita Pibil
+	1x Jarritos 370ml
+	1x Piña
+1x GUACAMOLE - Regular",,0,El Criollo - Maravillas
+El Criollo - Palencia,R006,Elenmark (M-1),Restaurant,LS2-12300,restaurant,card,2026-09-15T14:28:52.000,,2026-09-15T14:28:52.000,,,,,,9.5,9.5,0,0,"1x Morrito
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Cochinita Pibil
+	1x GRIFO - Caña",,0,El Criollo - Maravillas
+El Criollo - Palencia,R007,Ley (M-1),Restaurant,LS2-12301,restaurant,cash,2026-09-15T14:50:34.000,,2026-09-15T14:50:34.000,,,,,,5,5,0,0,"1x TACOS - Carnitas
+1x REFRESCOS - Coca Cola Lata",,0,El Criollo - Maravillas
+El Criollo - Palencia,R008,Jean Carlo (M-1),Restaurant,LS2-12302,restaurant,cash,2026-09-15T14:56:35.000,,2026-09-15T14:56:35.000,,,,,,32.6,32.6,0,0,"1x REFRESCOS - Aquarius Naranja
+1x REFRESCOS - Aquarius Naranja
+1x Costra de Birria + Caldo
+1x Costra de Birria + Caldo
+1x Orden Birria + Caldito
+1x Orden Birria + Caldito",,0,El Criollo - Maravillas
+El Criollo - Palencia,R009,Tomas (M-1),Restaurant,LS2-12303,restaurant,card,2026-09-15T15:03:09.000,,2026-09-15T15:03:09.000,,,,,,17.8,17.8,0,0,"1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Champiñón
+	1x TACOS - Champiñón
+	1x QUESADILLAS - Nopales
+	1x AGUAS FRESCAS - Horchata",,0,El Criollo - Maravillas
+El Criollo - Palencia,R010,M-2,Restaurant,LS2-12304,restaurant,cash,2026-09-15T15:11:44.000,,2026-09-15T15:11:44.000,,,,,,8.9,8.9,0,0,1x Orden Birria + Caldito,,0,El Criollo - Maravillas
+El Criollo - Palencia,R011,Nicole (Barra-1),Restaurant,LS2-12307,restaurant,cash,2026-09-15T15:26:45.000,,2026-09-15T15:26:45.000,,,,,,21.8,21.8,0,0,"1x Jarritos 370ml
+	1x Mandarina
+1x QUESADILLAS - Asada
+1x MICHELADAS - Chelada
+1x CALDITO de Birria
+1x CALDITO de Birria
+1x QUESADILLAS - Asada",,0,El Criollo - Maravillas
+El Criollo - Palencia,R012,Lenis (V-1),Restaurant,LS2-12305,restaurant,cash,2026-09-15T15:54:14.000,,2026-09-15T15:54:14.000,,,,,,14.4,14.4,0,0,"1x Para Llevar
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x TACOS - Pastorcito Criollo
+	1x AGUAS FRESCAS - Tamarindo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R013,V-1,Restaurant,LS2-12306,restaurant,card,2026-09-15T16:08:35.000,,2026-09-15T16:08:35.000,,,,,,13.4,13.4,0,0,"1x TACOS - Tinga de Pollo
+1x TACOS - Cochinita Pibil
+1x Costra de Birria + Caldo
+1x Jarritos 370ml
+	1x Guayaba",,0,El Criollo - Maravillas
+El Criollo - Palencia,R014,M-1,Restaurant,LS2-12308,restaurant,card,2026-09-15T16:43:20.000,,2026-09-15T16:43:20.000,,,,,,4.5,4.5,0,0,1x MICHELADAS - Chelada,,0,El Criollo - Maravillas
+El Criollo - Palencia,R001,Su (M-3),Restaurant,LS2-12309,restaurant,card,2026-09-15T16:51:33.000,,2026-09-15T16:51:33.000,,,,,,9.5,9.5,0,0,"1x Morrito
+	1x TACOS - Picadillo
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Pastorcito Criollo
+	1x AGUAS FRESCAS - Tamarindo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R002,Barra-2,Restaurant,LS2-12310,restaurant,card,2026-09-15T16:56:28.000,,2026-09-15T16:56:28.000,,,,,,3.5,3.5,0,0,"1x Jarritos 370ml
+	1x Lima Limón",,0,El Criollo - Maravillas
+El Criollo - Palencia,R003,Barra-2,Restaurant,LS2-12311,restaurant,cash,2026-09-15T17:10:16.000,,2026-09-15T17:10:16.000,,,,,,2,2,0,0,1x DULCES - Skwinkles Salsaguetti,,0,El Criollo - Maravillas
+El Criollo - Palencia,R004,Nestor (M-2),Restaurant,LS2-12312,restaurant,card,2026-09-15T17:16:47.000,,2026-09-15T17:16:47.000,,,,,,32.3,32.3,0,0,"1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Picadillo
+	1x TACOS - Nopales
+	1x AGUAS FRESCAS - Horchata
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Picadillo
+	1x Costra de Asada con Piña
+	1x GRIFO - Caña",,0,El Criollo - Maravillas
+El Criollo - Palencia,R005,V-2,Restaurant,LS2-12313,restaurant,card,2026-09-15T17:46:31.000,,2026-09-15T17:46:31.000,,,,,,22.4,22.4,0,0,"1x Morrito
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Pastorcito Criollo
+	1x Costra de Asada con Piña
+	1x AGUAS FRESCAS - Tamarindo
+1x Jarritos 370ml
+	1x Mango
+1x QUESADILLAS - Asada",,0,El Criollo - Maravillas
+El Criollo - Palencia,U001,F4B79,Uber,LS2-12314,delivery,uber,2026-09-15T17:56:35.000,,2026-09-15T17:56:35.000,,,,,,19.05,19.05,0,0,"1x TACOS - Cochinita Pibil
+1x Costra de Asada con Piña
+2x QUESADILLAS - Pastorcito Criollo",,0,El Criollo - Mi Cocina
+El Criollo - Palencia,R006,T5,Restaurant,LS2-12315,restaurant,card,2026-09-15T18:05:53.000,,2026-09-15T18:05:53.000,,,,,,4.9,4.9,0,0,1x QUESADILLAS - Asada,,0,El Criollo - Maravillas
+El Criollo - Palencia,R007,M-2,Restaurant,LS2-12316,restaurant,card,2026-09-15T18:10:43.000,,2026-09-15T18:10:43.000,,,,,,9.5,9.5,0,0,"1x Morrito
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Cochinita Pibil
+	1x GRIFO - Caña",,0,El Criollo - Maravillas
+El Criollo - Palencia,R008,Fam (M-3),Restaurant,LS2-12321,restaurant,card,2026-09-15T18:28:16.000,,2026-09-15T18:28:16.000,,,,,,97,97,0,0,"4x Morrito
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Pastorcito Criollo
+	1x AGUAS FRESCAS - Tamarindo
+1x Morrito
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Cochinita Pibil
+	1x AGUAS FRESCAS - Horchata
+1x Morrito
+	1x TACOS - Carnitas
+	1x TACOS - Carnitas
+	1x TACOS - Carnitas
+	1x Costra de Birria + Caldo
+	1x AGUAS FRESCAS - Horchata
+1x GUACAMOLE - Regular
+1x GUACAMOLE - Regular
+1x CERVEZAS - Pacífico
+1x AGUAS FRESCAS - Tamarindo
+1x AGUAS FRESCAS - Tamarindo
+1x AGUAS FRESCAS - Horchata
+1x AGUAS FRESCAS - Horchata
+1x AGUAS FRESCAS - Horchata
+1x AGUAS FRESCAS - Tamarindo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R009,Regios (V-2),Restaurant,LS2-12317,restaurant,cash,2026-09-15T18:28:49.000,,2026-09-15T18:28:49.000,,,,,,25.9,25.9,0,0,"1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Carnitas
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Pastorcito Criollo
+	1x AGUAS FRESCAS - Horchata
+1x CERVEZAS - Pacífico
+1x GUACAMOLE - Regular",,0,El Criollo - Maravillas
+El Criollo - Palencia,R010,Guillt (V-2),Restaurant,LS2-12339,restaurant,cash,2026-09-15T18:32:00.000,,2026-09-15T18:32:00.000,,,,,,16.4,16.4,0,0,"1x REFRESCOS - Coca Cola Lata
+1x TACOS - Pastorcito Criollo
+1x Orden Asada
+1x TACOS - Pastorcito Criollo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R011,Jose (V-1),Restaurant,LS2-12318,restaurant,card,2026-09-15T18:33:33.000,,2026-09-15T18:33:33.000,,,,,,19.4,19.4,0,0,"1x Orden Asada
+1x TACOS - Pastorcito Criollo
+1x TACOS - Pastorcito Criollo
+1x CALDITO de Birria
+1x Jarritos 370ml
+	1x Mandarina",,0,El Criollo - Maravillas
+El Criollo - Palencia,R012,Milton (V-1),Restaurant,LS2-12319,restaurant,card,2026-09-15T18:34:41.000,,2026-09-15T18:34:41.000,,,,,,19.8,19.8,0,0,"1x Orden Asada
+1x Costra de Asada con Piña
+1x REFRESCOS - Coca Cola Lata
+1x Jarritos 370ml
+	1x Guayaba",,0,El Criollo - Maravillas
+El Criollo - Palencia,R013,V-1,Restaurant,LS2-12320,restaurant,card,2026-09-15T18:50:38.000,,2026-09-15T18:50:38.000,,,,,,11.9,11.9,0,0,"1x Costra de Birria + Caldo
+1x QUESADILLAS - Cochinita Pibil
+1x Agua con Gas",,0,El Criollo - Maravillas
+El Criollo - Palencia,R014,Ana (V-1),Restaurant,LS2-12340,restaurant,card,2026-09-15T19:00:38.000,,2026-09-15T19:00:38.000,,,,,,12.3,12.3,0,0,"1x QUESADILLAS - Asada
+1x QUESADILLAS - Asada
+1x TACOS - Tinga de Pollo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R015,Barra-2,Restaurant,LS2-12322,restaurant,cash,2026-09-15T19:07:37.000,,2026-09-15T19:07:37.000,,,,,,3.2,3.2,0,0,1x CERVEZAS - Aguila Dorada,,0,El Criollo - Maravillas
+El Criollo - Palencia,R016,M-3,Restaurant,LS2-12323,restaurant,cash,2026-09-15T19:11:52.000,,2026-09-15T19:11:52.000,,,,,,12.3,12.3,0,0,"1x QUESADILLAS - Asada
+1x Costra de Birria + Caldo
+1x TACOS - Cochinita Pibil",,0,El Criollo - Maravillas
+El Criollo - Palencia,R017,LLEVAR-1,Restaurant,LS2-12324,restaurant,card,2026-09-15T19:13:19.000,,2026-09-15T19:13:19.000,,,,,,40.9,40.9,0,0,"1x PACK Criollo
+	1x GUISOS - Cochinita Pibil (250 gms)
+	1x GUISOS - Cochinita Pibil (250 gms)
+1x MICHELADAS - Clamato
+1x AGUAS FRESCAS - Jamaica",,0,El Criollo - Maravillas
+El Criollo - Palencia,R018,Mexa (M-3),Restaurant,LS2-12325,restaurant,card,2026-09-15T19:18:17.000,,2026-09-15T19:18:17.000,,,,,,12.3,12.3,0,0,"1x Costra de Birria + Caldo
+1x Costra de Birria + Caldo
+1x AGUAS FRESCAS - Horchata",,0,El Criollo - Maravillas
+El Criollo - Palencia,R019,Angel (M-1),Restaurant,LS2-12326,restaurant,card,2026-09-15T19:20:09.000,,2026-09-15T19:20:09.000,,,,,,12.4,12.4,0,0,"1x Orden Birria + Caldito
+1x Jarritos 370ml
+	1x Mandarina",,0,El Criollo - Maravillas
+El Criollo - Palencia,R020,T5,Restaurant,LS2-12327,restaurant,card,2026-09-15T19:21:19.000,,2026-09-15T19:21:19.000,,,,,,18.3,18.3,0,0,"1x Costra de Asada con Piña
+1x Costra de Asada con Piña
+1x MICHELADAS - Clamato",,0,El Criollo - Maravillas
+El Criollo - Palencia,R021,Moises (M-1),Restaurant,LS2-12328,restaurant,card,2026-09-15T19:25:46.000,,2026-09-15T19:25:46.000,,,,,,15.3,15.3,0,0,"1x Orden Asada
+1x GRIFO - Doble
+1x GRIFO - Doble",,0,El Criollo - Maravillas
+El Criollo - Palencia,R022,Sebas (M-3),Restaurant,LS2-12329,restaurant,card,2026-09-15T19:26:47.000,,2026-09-15T19:26:47.000,,,,,,18.4,18.4,0,0,"1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Carnitas
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Pastorcito Criollo
+	1x Costra de Birria + Caldo
+	1x AGUAS FRESCAS - Horchata",,0,El Criollo - Maravillas
+El Criollo - Palencia,R023,Alex (M-2),Restaurant,LS2-12330,restaurant,card,2026-09-15T19:28:51.000,,2026-09-15T19:28:51.000,,,,,,18,18,0,0,"1x Morrito
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Carnitas
+	1x AGUAS FRESCAS - Tamarindo
+1x MICHELADAS - Clamato",,0,El Criollo - Maravillas
+El Criollo - Palencia,R024,Gue (M-3),Restaurant,LS2-12331,restaurant,card,2026-09-15T19:32:34.000,,2026-09-15T19:32:34.000,,,,,,30.4,30.4,0,0,"1x MICHELADAS - Clamato
+1x CERVEZAS - Corona
+1x Perrón
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x Costra de Birria + Caldo
+	1x AGUAS FRESCAS - Jamaica",,0,El Criollo - Maravillas
+El Criollo - Palencia,R025,Leo (M-3),Restaurant,LS2-12332,restaurant,card,2026-09-15T19:34:27.000,,2026-09-15T19:34:27.000,,,,,,21.5,21.5,0,0,"1x Orden Asada
+1x Orden Birria + Caldito
+1x CERVEZAS - Modelo Especial",,0,El Criollo - Maravillas
+El Criollo - Palencia,R026,Koises (M-3),Restaurant,LS2-12333,restaurant,card,2026-09-15T19:37:15.000,,2026-09-15T19:37:15.000,,,,,,14.8,14.8,0,0,"1x Costra de Birria + Caldo
+1x Costra de Birria + Caldo
+1x TACOS - Tinga de Pollo
+1x TACOS - Tinga de Pollo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R027,Angel (M-2),Restaurant,LS2-12334,restaurant,card,2026-09-15T19:41:21.000,,2026-09-15T19:41:21.000,,,,,,9.4,9.4,0,0,"1x QUESADILLAS - Asada
+1x QUESADILLAS - Pastorcito Criollo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R028,M-2,Restaurant,LS2-12335,restaurant,card,2026-09-15T19:41:55.000,,2026-09-15T19:41:55.000,,,,,,21.4,21.4,0,0,"1x MICHELADAS - Clamato
+1x Boing 340ml
+	1x Mango
+1x QUESADILLAS - Asada
+1x QUESADILLAS - Pastorcito Criollo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R029,Agus (M-2),Restaurant,LS2-12336,restaurant,card,2026-09-15T19:44:15.000,,2026-09-15T19:44:15.000,,,,,,8.4,8.4,0,0,"1x Costra de Birria + Caldo
+1x Boing 340ml
+	1x Guayaba",,0,El Criollo - Maravillas
+El Criollo - Palencia,R030,Barra-2,Restaurant,LS2-12337,restaurant,card,2026-09-15T19:46:32.000,,2026-09-15T19:46:32.000,,,,,,4.9,4.9,0,0,1x Costra de Asada con Piña,,0,El Criollo - Maravillas
+El Criollo - Palencia,R031,M-3,Restaurant,LS2-12338,restaurant,card,2026-09-15T19:52:18.000,,2026-09-15T19:52:18.000,,,,,,8.9,8.9,0,0,1x Orden Asada,,0,El Criollo - Maravillas
+El Criollo - Palencia,U002,7D5CF,Uber,LS2-12341,delivery,uber,2026-09-15T20:08:06.000,,2026-09-15T20:08:06.000,,,,,,15.5,15.5,0,0,"1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Champiñón
+	1x TACOS - Alambre de Pollo
+	1x AGUAS FRESCAS - Limonada
+	1x TACOS - Nopales
+	1x SALSA - Guacamole
+	1x TACOS - Cochinita Pibil",,0,El Criollo - Mi Cocina
+El Criollo - Palencia,R032,Herman (M-3),Restaurant,LS2-12342,restaurant,card,2026-09-15T20:15:48.000,,2026-09-15T20:15:48.000,,,,,,15.5,15.5,0,0,"1x Morrito
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x Costra de Asada con Piña
+	1x Jarritos 370ml
+	1x Piña",,0,El Criollo - Maravillas
+El Criollo - Palencia,R033,Max (V-2),Restaurant,LS2-12343,restaurant,card,2026-09-15T20:17:23.000,,2026-09-15T20:17:23.000,,,,,,12.9,12.9,0,0,"1x QUESADILLAS - Tinga Pollo
+1x Jarritos 370ml
+	1x Piña
+1x Costra de Birria + Caldo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R034,M-2,Restaurant,LS2-12344,restaurant,card,2026-09-15T20:18:01.000,,2026-09-15T20:18:01.000,,,,,,12.9,12.9,0,0,"1x Costra de Birria + Caldo
+1x QUESADILLAS - Cochinita Pibil
+1x CERVEZAS - Pacífico",,0,El Criollo - Maravillas
+El Criollo - Palencia,R035,V-2,Restaurant,LS2-12345,restaurant,cash,2026-09-15T20:19:44.000,,2026-09-15T20:19:44.000,,,,,,9.4,9.4,0,0,"1x Orden Asada
+1x Para Llevar",,0,El Criollo - Maravillas
+El Criollo - Palencia,R036,M-2,Restaurant,LS2-12346,restaurant,card,2026-09-15T20:22:18.000,,2026-09-15T20:22:18.000,,,,,,21.8,21.8,0,0,"1x Costra de Asada con Piña
+1x Costra de Asada con Piña
+1x MICHELADAS - Clamato
+1x Jarritos 370ml
+	1x Guayaba",,0,El Criollo - Maravillas
+El Criollo - Palencia,G148,101774423770,Glovo,LS2-12347,delivery,glovo,2026-09-15T20:30:41.000,,2026-09-15T20:30:41.000,,,,,,29.9,29.9,0,0,"1x PACK Criollo
+	1x GUISOS - Carnitas (250 gms)
+	1x SALSA - Guacamole
+	1x GUISOS - Tinga de Pollo (250 gms)",,0,El Criollo - Maravillas
+El Criollo - Palencia,R037,Memo (M-1),Restaurant,LS2-12348,restaurant,card,2026-09-15T20:34:13.000,,2026-09-15T20:34:13.000,,,,,,19.9,19.9,0,0,"1x Perrón
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Picadillo
+	1x TACOS - Pastorcito Criollo
+	1x Costra de Asada con Piña
+	1x Jarritos 370ml
+	1x Toronja (Pomelo)
+	1x SALSA - Guacamole
+	1x TACOS - Carnitas",,0,El Criollo - Maravillas
+El Criollo - Palencia,R038,Nol (M-2),Restaurant,LS2-12349,restaurant,card,2026-09-15T20:36:31.000,,2026-09-15T20:36:31.000,,,,,,14,14,0,0,"1x Morrito
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Cochinita Pibil
+	1x Costra de Asada con Piña
+	1x AGUAS FRESCAS - Tamarindo",,0,El Criollo - Maravillas
+El Criollo - Palencia,R039,Dana (M-1),Restaurant,LS2-12350,restaurant,card,2026-09-15T20:37:55.000,,2026-09-15T20:37:55.000,,,,,,32.7,32.7,0,0,"1x Morrito
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Tinga de Pollo
+	1x Costra de Asada con Piña
+	1x Jarritos 370ml
+	1x Piña
+1x Costra de Birria + Caldo
+1x Costra de Birria + Caldo
+1x Costra de Birria + Caldo
+1x REFRESCOS - Nestea Limón",,0,El Criollo - Maravillas
+El Criollo - Palencia,R040,Raul (T1),Restaurant,LS2-12351,restaurant,cash,2026-09-15T20:41:00.000,,2026-09-15T20:41:00.000,,,,,,64.7,64.7,0,0,"1x GUACAMOLE - Regular
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Picadillo
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Cochinita Pibil
+	1x Costra de Birria + Caldo
+	1x Agua de Botella
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Picadillo
+	1x Costra de Asada con Piña
+	1x AGUAS FRESCAS - Limonada
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Carnitas
+	1x TACOS - Picadillo
+	1x TACOS - Tinga de Pollo
+	1x Costra de Birria + Caldo
+	1x REFRESCOS - Aquarius Limón",,0,El Criollo - Maravillas
+El Criollo - Palencia,R041,M-2,Restaurant,LS2-12352,restaurant,card,2026-09-15T20:48:00.000,,2026-09-15T20:48:00.000,,,,,,4.5,4.5,0,0,1x QUESADILLAS - Tinga Pollo,,0,El Criollo - Maravillas
+El Criollo - Palencia,R042,Barra-2,Restaurant,LS2-12353,restaurant,card,2026-09-15T20:55:50.000,,2026-09-15T20:55:50.000,,,,,,3.7,3.7,0,0,1x CERVEZAS - Modelo Especial,,0,El Criollo - Maravillas
+El Criollo - Palencia,R043,T2,Restaurant,LS2-12354,restaurant,card,2026-09-15T20:56:24.000,,2026-09-15T20:56:24.000,,João Pedro Santos,,+34662675371,jpsantos42306@gmail.com,35.9,35.9,0,0,"1x Morrito
+	1x TACOS - Picadillo
+	1x TACOS - Picadillo
+	1x TACOS - Picadillo
+	1x Costra de Birria + Caldo
+	1x Jarritos 370ml
+	1x Mango
+1x Costra de Birria + Caldo
+1x GUACAMOLE - Regular
+1x TINTO VERANO - Casera
+1x TINTO VERANO - Casera",,0,El Criollo - Maravillas
+El Criollo - Palencia,R044,Cata (Barra-2),Restaurant,LS2-12355,restaurant,card,2026-09-15T21:01:12.000,,2026-09-15T21:01:12.000,,,,,,21.5,21.5,0,0,"1x MICHELADAS - Chelada
+1x MICHELADAS - Clamato
+1x GUACAMOLE - Regular",,0,El Criollo - Maravillas
+El Criollo - Palencia,R045,Ricardo  (Barra-2),Restaurant,LS2-12356,restaurant,card,2026-09-15T21:03:13.000,,2026-09-15T21:03:13.000,,,,,,20.8,20.8,0,0,"1x TACOS - Carnitas
+1x TACOS - Tinga de Pollo
+1x TACOS - Pastorcito Criollo
+1x GUACAMOLE - Regular
+1x GRIFO - Jarra",,0,El Criollo - Maravillas
+El Criollo - Palencia,R046,M-1,Restaurant,LS2-12357,restaurant,card,2026-09-15T21:12:14.000,,2026-09-15T21:12:14.000,,,,,,9.5,9.5,0,0,"1x Morrito
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Carnitas
+	1x TACOS - Carnitas
+	1x AGUAS FRESCAS - Limonada",,0,El Criollo - Maravillas
+El Criollo - Palencia,R047,M-2,Restaurant,LS2-12358,restaurant,card,2026-09-15T21:26:25.000,,2026-09-15T21:26:25.000,,,,,,40.2,40.2,0,0,"1x Morrito
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Cochinita Pibil
+	1x Costra de Asada con Piña
+	1x AGUAS FRESCAS - Tamarindo
+1x Morrito
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Cochinita Pibil
+	1x Costra de Birria + Caldo
+	1x AGUAS FRESCAS - Tamarindo
+1x GUACAMOLE - Regular
+1x CERVEZAS - Modelo Especial",,0,El Criollo - Maravillas
+El Criollo - Palencia,R048,V-2,Restaurant,LS2-12360,restaurant,card,2026-09-15T21:29:15.000,,2026-09-15T21:29:15.000,,,,,,17.3,17.3,0,0,"1x Costra de Birria + Caldo
+1x Costra de Birria + Caldo
+1x TACOS - Pastorcito Criollo
+1x TACOS - Pastorcito Criollo
+1x TACOS - Cochinita Pibil",,0,El Criollo - Maravillas
+El Criollo - Palencia,R049,B2,Restaurant,LS2-12359,restaurant,card,2026-09-15T21:32:11.000,,2026-09-15T21:32:11.000,,,,,,3.5,3.5,0,0,1x TINTO VERANO - Limón,,0,El Criollo - Maravillas
+El Criollo - Palencia,U003,F9F6B,Uber,LS2-12361,delivery,uber,2026-09-15T21:37:05.000,,2026-09-15T21:37:05.000,,,,,,39.1,39.1,0,0,"1x GUACAMOLE - 1/2 Ración
+1x TACOS - Cochinita Pibil
+1x QUESADILLAS - Cochinita Pibil
+3x TACOS - Carnitas
+1x Costra de Asada con Piña
+1x QUESADILLAS - Carnitas
+1x ADICIONALES - Salsas
+	1x Jalapeño
+1x Costra de Birria + Caldo",,0,El Criollo - Mi Cocina
+El Criollo - Palencia,R050,M-2,Restaurant,LS2-12362,restaurant,card,2026-09-15T21:38:09.000,,2026-09-15T21:38:09.000,,,,,,14.5,14.5,0,0,"1x Morrito
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Cochinita Pibil
+	1x Costra de Asada con Piña
+	1x AGUAS FRESCAS - Tamarindo
+1x Para Llevar",,0,El Criollo - Maravillas
+El Criollo - Palencia,R051,Fabri (M-2),Restaurant,LS2-12363,restaurant,card,2026-09-15T21:42:27.000,,2026-09-15T21:42:27.000,,,,,,44.2,44.2,0,0,"1x Jarritos 370ml
+	1x Mango
+1x GUACAMOLE - Regular
+1x Orden Asada
+1x Costra de Birria + Caldo
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Picadillo
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Cochinita Pibil
+	1x Costra de Birria + Caldo
+	1x Agua de Botella",,0,El Criollo - Maravillas
+El Criollo - Palencia,R052,V-2,Restaurant,LS2-12364,restaurant,cash,2026-09-15T21:46:13.000,,2026-09-15T21:46:13.000,,,,,,13.5,13.5,0,0,"1x Costra de Asada con Piña
+1x Costra de Birria + Caldo
+1x CERVEZAS - Modelo Especial",,0,El Criollo - Maravillas
+El Criollo - Palencia,R053,Emma (Barra-2),Restaurant,LS2-12365,restaurant,card,2026-09-15T21:53:08.000,,2026-09-15T21:53:08.000,,,,,,23.4,23.4,0,0,"1x Morrito
+	1x TACOS - Carnitas
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Pastorcito Criollo
+	1x AGUAS FRESCAS - Limonada
+1x Perrón
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Cochinita Pibil
+	1x TACOS - Cochinita Pibil
+	1x AGUAS FRESCAS - Limonada",,0,El Criollo - Maravillas
+El Criollo - Palencia,R054,Lorena  (M-3),Restaurant,LS2-12366,restaurant,card,2026-09-15T22:08:24.000,,2026-09-15T22:08:24.000,,,,,,25.9,25.9,0,0,"1x GUACAMOLE - Regular
+1x Perrón
+	1x TACOS - Carnitas
+	1x TACOS - Pastorcito Criollo
+	1x TACOS - Picadillo
+	1x TACOS - Tinga de Pollo
+	1x TACOS - Cochinita Pibil
+	1x REFRESCOS - Coca Cola Zero Lata
+1x REFRESCOS - Aquarius Naranja",,0,El Criollo - Maravillas

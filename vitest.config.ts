@@ -7,6 +7,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    env: { VITE_SUPABASE_PUBLISHABLE_KEY: process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_synthetic_tests_only' },
     include: ['tests/**/*.test.{ts,js}'],
     exclude: ['node_modules', 'dist', 'staging', 'labs', 'scratch'],
   },

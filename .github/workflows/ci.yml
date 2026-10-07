@@ -48,5 +48,16 @@ jobs:
       - name: Automated Unit & Integration Tests Gate
         run: npm run test:run
 
+      - name: Isolated CSV Performance Gate (5000 rows, each sample below 5 seconds)
+        run: npm run test:csv-performance
+
+      - name: Preserve CSV Performance Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: csv-performance-evidence
+          path: .local-data/csv-performance/benchmark.json
+          if-no-files-found: warn
+
       - name: Production Bundle Compilation Gate
         run: npm run build

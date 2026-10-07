@@ -1,0 +1,128 @@
+{
+  "id": "01a11703-576e-7029-9519-e29d0baf85ec",
+  "locationId": "f7408208-75c8-4547-8862-f8748e2afac1",
+  "open": false,
+  "creationTime": "2026-10-07T15:37:37.000Z",
+  "closeTime": "2026-10-07T15:37:44.000Z",
+  "virtualBrandId": "a320cae5-7e28-4b2e-80f2-ebf90368edd0",
+  "code": "R003",
+  "activationTime": "2026-10-07T15:37:37.000Z",
+  "products": [
+    {
+      "id": "01a11703-5de1-757e-98c3-9d0baa699dda",
+      "type": "PRODUCT",
+      "catalogProductId": "0cc1d039-dd25-4452-a0d4-e4d06217b226",
+      "price": 200,
+      "quantity": 1,
+      "deleted": false,
+      "modifiers": [],
+      "comboProducts": [],
+      "name": "Sanitized demo product 1"
+    },
+    {
+      "id": "01a11703-5f74-7048-8a04-fb8adfc695e8",
+      "type": "PRODUCT",
+      "catalogProductId": "9a2567ae-e25b-4367-823c-a29dace08221",
+      "price": 210,
+      "quantity": 1,
+      "deleted": false,
+      "modifiers": [],
+      "comboProducts": [],
+      "name": "Sanitized demo product 2"
+    },
+    {
+      "id": "01a11703-61ec-70e3-aeed-13c50c6bc019",
+      "type": "PRODUCT",
+      "catalogProductId": "94895e55-a441-416a-bf44-0c497fc9c9f1",
+      "price": 180,
+      "quantity": 1,
+      "deleted": false,
+      "modifiers": [],
+      "comboProducts": [],
+      "name": "Sanitized demo product 3"
+    },
+    {
+      "id": "01a11703-636c-7348-bcda-694846c42f9d",
+      "type": "PRODUCT",
+      "catalogProductId": "94895e55-a441-416a-bf44-0c497fc9c9f1",
+      "price": 180,
+      "quantity": 1,
+      "deleted": false,
+      "modifiers": [],
+      "comboProducts": [],
+      "name": "Sanitized demo product 4"
+    }
+  ],
+  "bills": [
+    {
+      "id": "01a11703-6d11-7711-890a-88a3b4ab3069",
+      "creationTime": "2026-10-07T15:37:43.000Z",
+      "number": "LS283-3",
+      "rectifiedBillNumber": null,
+      "finalizingTime": "2026-10-07T15:37:44.000Z",
+      "total": 770,
+      "tax": 70,
+      "taxableBase": 700,
+      "taxPercentage": 10,
+      "discountTotal": 0,
+      "deleted": false,
+      "products": [
+        {
+          "id": "01a11703-6d11-7711-890a-784235994a88",
+          "catalogProductId": "0cc1d039-dd25-4452-a0d4-e4d06217b226",
+          "tabProductId": "01a11703-5de1-757e-98c3-9d0baa699dda",
+          "price": 200,
+          "originalPrice": 200,
+          "quantity": 1,
+          "modifiers": [],
+          "comboProducts": [],
+          "name": "Sanitized demo product 1"
+        },
+        {
+          "id": "01a11703-6d11-7711-890a-7f92e5a50068",
+          "catalogProductId": "9a2567ae-e25b-4367-823c-a29dace08221",
+          "tabProductId": "01a11703-5f74-7048-8a04-fb8adfc695e8",
+          "price": 210,
+          "originalPrice": 210,
+          "quantity": 1,
+          "modifiers": [],
+          "comboProducts": [],
+          "name": "Sanitized demo product 2"
+        },
+        {
+          "id": "01a11703-6d11-7711-890a-833852829d4a",
+          "catalogProductId": "94895e55-a441-416a-bf44-0c497fc9c9f1",
+          "tabProductId": "01a11703-61ec-70e3-aeed-13c50c6bc019",
+          "price": 180,
+          "originalPrice": 180,
+          "quantity": 1,
+          "modifiers": [],
+          "comboProducts": [],
+          "name": "Sanitized demo product 3"
+        },
+        {
+          "id": "01a11703-6d11-7711-890a-85b592a9cecc",
+          "catalogProductId": "94895e55-a441-416a-bf44-0c497fc9c9f1",
+          "tabProductId": "01a11703-636c-7348-bcda-694846c42f9d",
+          "price": 180,
+          "originalPrice": 180,
+          "quantity": 1,
+          "modifiers": [],
+          "comboProducts": [],
+          "name": "Sanitized demo product 4"
+        }
+      ],
+      "payments": [
+        {
+          "id": "01a11703-722d-7408-a0be-e84dee1ca2d1",
+          "billId": "01a11703-6d11-7711-890a-88a3b4ab3069",
+          "type": "cash",
+          "amount": 770,
+          "tip": 0,
+          "creationTime": "2026-10-07T15:37:44.000Z",
+          "deleted": false
+        }
+      ]
+    }
+  ]
+}

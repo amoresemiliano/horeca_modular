@@ -29,3 +29,7 @@
 3. **No Secrets**: NEVER print, commit, or log plain-text passwords or secret keys.
 4. **HORECA Test Fixture Standard**: All test fixtures must be explicitly HORECA-owned (`HORECA_TEST_ORG_A`, `HORECA_TEST_ORG_B`, `horeca-security-*@test.invalid`). Zero reuse of unrelated DEV users or MICA artifacts.
 5. **No Scope Creep**: Perform work package tasks strictly within the defined WP boundaries.
+
+## Shared database safety — effective 2026-10-06
+
+HORECA DEV and PROD share Supabase `vmxjqwlfwnphorthhcwu`. **El Criollo REAL DATA MODE is ACTIVE** (`f84168ef-2b78-451b-b0a9-39c1c381e59b`). NEVER load synthetic fixtures into it, globally sanitize/reset it, or target it with automated destructive tests. Future Sales synthetic/hosted tests must target **HORECA DEV LAB** (`HORECA_DEV_LAB`, `f7f6da70-f7dc-4b1a-aa23-f5612174dcbc`), which has separate OWNER membership and Banks-only entitlement until Master enables Sales. Do not apply Sales migrations, configure real Last.app credentials or call live Last.app as part of branch reconciliation. Historical DEV-only infrastructure notes above are superseded by this shared-model rule. See `docs/SALES-DEV-RESYNC.md`.
