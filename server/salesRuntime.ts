@@ -30,6 +30,10 @@ export async function mapping(client: SupabaseClient, org: string, location: str
   const {data,error} = await client.from('sales_location_mappings').select('*')
     .eq('organization_id',org).eq('external_location_id',location).eq('is_active',true).single();
   if (error || !data) throw new Error('LOCATION_NOT_MAPPED');
+  const {data:lifecycle,error:lifecycleError} = await client.from('sales_lastapp_location_lifecycle')
+    .select('review_state').eq('external_location_id',location).maybeSingle();
+  if(lifecycleError)throw new Error('LOCATION_STATE_UNAVAILABLE');
+  if(lifecycle?.review_state==='PAUSED')throw new Error('LOCATION_NOT_MAPPED');
   const {data:unit,error:unitError} = await client.from('eco_operational_units').select('id')
     .eq('id',data.operational_unit_id).eq('organization_id',org).eq('is_active',true).single();
   if (unitError || !unit) throw new Error('LOCATION_NOT_MAPPED');
