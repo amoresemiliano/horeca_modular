@@ -1,4 +1,4 @@
-import { SaleLineItemType } from '../models/SaleLine';
+import { SaleLineItemType } from '../models/SaleLine.js';
 
 export interface ParsedProductLine {
   lineIndex: number;

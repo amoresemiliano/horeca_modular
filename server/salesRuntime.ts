@@ -1,10 +1,10 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { LastAppAdapter } from '../src/infrastructure/sales/lastapp/LastAppAdapter';
-import { TrustedSalesRepository } from '../src/infrastructure/sales/repositories/TrustedSalesRepository';
-import { SyncSalesSourceUseCase } from '../src/application/sales/useCases/SyncSalesSourceUseCase';
-import type { ProductMapping } from '../src/application/sales/services/LastAppSalesMapper';
-import { SupabaseSalesSyncCheckpoint } from '../src/infrastructure/sales/repositories/SupabaseSalesSyncCheckpoint';
-import type { SalesSyncCheckpoint } from '../src/application/sales/ports/SalesSyncCheckpointPort';
+import { LastAppAdapter } from '../src/infrastructure/sales/lastapp/LastAppAdapter.js';
+import { TrustedSalesRepository } from '../src/infrastructure/sales/repositories/TrustedSalesRepository.js';
+import { SyncSalesSourceUseCase } from '../src/application/sales/useCases/SyncSalesSourceUseCase.js';
+import type { ProductMapping } from '../src/application/sales/services/LastAppSalesMapper.js';
+import { SupabaseSalesSyncCheckpoint } from '../src/infrastructure/sales/repositories/SupabaseSalesSyncCheckpoint.js';
+import type { SalesSyncCheckpoint } from '../src/application/sales/ports/SalesSyncCheckpointPort.js';
 
 export interface Request { method?: string; headers: Record<string,string|string[]|undefined>; body?: Record<string,unknown> }
 export interface Response { status(code:number): Response; json(value:unknown): void; end(): void }

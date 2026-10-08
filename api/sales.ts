@@ -1,7 +1,7 @@
-import { authorize, serverClient, synchronize, continueSalesSync, mapping, Request, Response } from '../server/salesRuntime';
-import { IngestSalesCsvUseCase } from '../src/application/sales/useCases/IngestSalesCsvUseCase';
-import { TrustedSalesRepository } from '../src/infrastructure/sales/repositories/TrustedSalesRepository';
-import { SupabaseSalesImportRepository } from '../src/infrastructure/sales/repositories/SupabaseSalesImportRepository';
+import { authorize, serverClient, synchronize, continueSalesSync, mapping, Request, Response } from '../server/salesRuntime.js';
+import { IngestSalesCsvUseCase } from '../src/application/sales/useCases/IngestSalesCsvUseCase.js';
+import { TrustedSalesRepository } from '../src/infrastructure/sales/repositories/TrustedSalesRepository.js';
+import { SupabaseSalesImportRepository } from '../src/infrastructure/sales/repositories/SupabaseSalesImportRepository.js';
 
 export default async function handler(request: Request, response: Response) {
   if (request.method !== 'POST') { response.status(405).json({error:'METHOD_NOT_ALLOWED'}); return; }

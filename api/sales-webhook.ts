@@ -1,5 +1,5 @@
-import { serverClient, Request, Response } from '../server/salesRuntime';
-import { validateLastAppWebhook } from '../src/infrastructure/sales/lastapp/LastAppWebhook';
+import { serverClient, Request, Response } from '../server/salesRuntime.js';
+import { validateLastAppWebhook } from '../src/infrastructure/sales/lastapp/LastAppWebhook.js';
 
 /** Durable receipt only. A trusted worker/manual replay refreshes authoritative Tab state. */
 export default async function handler(request: Request, response: Response) {

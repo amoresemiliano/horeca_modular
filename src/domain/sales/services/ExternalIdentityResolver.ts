@@ -1,4 +1,4 @@
-import { sha256Hex } from '../../../shared/utils/crypto';
+import { sha256Hex } from '../../../shared/utils/crypto.js';
 
 export interface ExternalIdentityResolution {
   identityKey: string;

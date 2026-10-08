@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { ISaleRepository, SaleWithLines, SaleQueryFilters } from '../../../domain/sales/repositories/ISaleRepository';
-import { Sale } from '../../../domain/sales/models/Sale';
-import { SaleLine } from '../../../domain/sales/models/SaleLine';
+import { ISaleRepository, SaleWithLines, SaleQueryFilters } from '../../../domain/sales/repositories/ISaleRepository.js';
+import { Sale } from '../../../domain/sales/models/Sale.js';
+import { SaleLine } from '../../../domain/sales/models/SaleLine.js';
 
 export class SupabaseSaleRepository implements ISaleRepository {
   constructor(private readonly client: SupabaseClient) {}

@@ -1,7 +1,7 @@
-import type { SourceTab, SourceBill, SourceProduct } from '../ports/SalesSourcePort';
-import { Sale } from '../../../domain/sales/models/Sale';
-import { SaleLine, SaleLineItemType } from '../../../domain/sales/models/SaleLine';
-import { generateUuid, sha256Hex } from '../../../shared/utils/crypto';
+import type { SourceTab, SourceBill, SourceProduct } from '../ports/SalesSourcePort.js';
+import { Sale } from '../../../domain/sales/models/Sale.js';
+import { SaleLine, SaleLineItemType } from '../../../domain/sales/models/SaleLine.js';
+import { generateUuid, sha256Hex } from '../../../shared/utils/crypto.js';
 
 export interface ProductMapping { status: 'MAPPED' | 'UNMAPPED' | 'IGNORED'; productId?: string }
 export interface MappingContext {

@@ -1,5 +1,5 @@
-import { Sale } from '../models/Sale';
-import { SaleLine } from '../models/SaleLine';
+import { Sale } from '../models/Sale.js';
+import { SaleLine } from '../models/SaleLine.js';
 
 export interface SaleWithLines {
   sale: Sale;

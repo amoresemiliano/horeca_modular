@@ -1,14 +1,14 @@
 import Papa from 'papaparse';
-import { sha256Hex, generateUuid } from '../../../shared/utils/crypto';
-import { ISaleRepository } from '../../../domain/sales/repositories/ISaleRepository';
-import { ISalesImportRepository } from '../../../domain/sales/repositories/ISalesImportRepository';
-import { Sale } from '../../../domain/sales/models/Sale';
-import { SaleLine } from '../../../domain/sales/models/SaleLine';
-import { SalesImport, SalesImportStatus } from '../../../domain/sales/models/SalesImport';
-import { SpanishNumberParser } from '../../../domain/sales/services/SpanishNumberParser';
-import { ProductLineParser, ParsedProductLine } from '../../../domain/sales/services/ProductLineParser';
-import { SourceClassifier } from '../../../domain/sales/services/SourceClassifier';
-import { ExternalIdentityResolver, RawTicketRow } from '../../../domain/sales/services/ExternalIdentityResolver';
+import { sha256Hex, generateUuid } from '../../../shared/utils/crypto.js';
+import { ISaleRepository } from '../../../domain/sales/repositories/ISaleRepository.js';
+import { ISalesImportRepository } from '../../../domain/sales/repositories/ISalesImportRepository.js';
+import { Sale } from '../../../domain/sales/models/Sale.js';
+import { SaleLine } from '../../../domain/sales/models/SaleLine.js';
+import { SalesImport, SalesImportStatus } from '../../../domain/sales/models/SalesImport.js';
+import { SpanishNumberParser } from '../../../domain/sales/services/SpanishNumberParser.js';
+import { ProductLineParser, ParsedProductLine } from '../../../domain/sales/services/ProductLineParser.js';
+import { SourceClassifier } from '../../../domain/sales/services/SourceClassifier.js';
+import { ExternalIdentityResolver, RawTicketRow } from '../../../domain/sales/services/ExternalIdentityResolver.js';
 
 export interface IngestSalesCsvInput {
   organizationId: string;

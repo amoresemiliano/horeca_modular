@@ -42,4 +42,10 @@ Lint passed with the five accepted warnings; typecheck and build passed with exi
 
 Linux CI exposed a preexisting fixture checkout issue: Git normalized the CSV record CRLF separators to LF, changing the frozen file hashes. The fixtures also contain intentional LF within quoted multiline fields. The deployment follow-up marks these fixtures -text and stores their original reviewed bytes, preserving frozen hash vectors and all parsed records. Adapter, mapper, canonical contracts, CSV ingestion code and Sales migration bodies are unchanged.
 
-PR #6 integration remains conditional on successful CI for this fixture-byte correction. Hosted runtime secrets, if configured, must be scoped exclusively to Preview branch dev. Production/main promotion, real El Criollo mapping/sync and Production integrator activation remain outside this task. Next WP: SALES DEV UAT + REAL EL CRIOLLO ACTIVATION PREP.
+CI passed for the fixture-byte correction and PR #6 was merged into dev at 4ca956308420b8edc132e86b1971216a64244861. The DEV deployment reached READY at that SHA. Server credentials were configured exclusively for Preview branch dev; Production environment values, deployment and main SHA remained unchanged.
+
+An authenticated deployment smoke check then exposed a native Node ESM startup failure: the deployed Sales handler imported server/salesRuntime without a file extension. The follow-up adds explicit .js extensions throughout the two handlers' local TypeScript dependency graph. No adapter, money, ingestion, authorization or canonical business logic changes. A regression transpiles that graph and starts both handlers directly under native Node, with network access forbidden; the anonymous health request must return 403 DENIED. This covers the deployment resolution behavior that Vite/Vitest transformation had masked.
+
+All five quality commands passed again for the runtime correction: lint, typecheck, test:run (45 files, 525 passed, one skipped), build and test:csv-performance. Existing warning counts, CSV hashes and performance budget remain unchanged.
+
+Production/main promotion, real El Criollo mapping/sync and Production integrator activation remain outside this task. Next WP: SALES DEV UAT + REAL EL CRIOLLO ACTIVATION PREP.

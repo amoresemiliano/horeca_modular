@@ -1,8 +1,8 @@
-import { SupabaseSaleRepository } from './SupabaseSaleRepository';
+import { SupabaseSaleRepository } from './SupabaseSaleRepository.js';
 import { SupabaseClient } from '@supabase/supabase-js';
-import type { SaleWithLines } from '../../../domain/sales/repositories/ISaleRepository';
-import { Sale } from '../../../domain/sales/models/Sale';
-import { SaleLine } from '../../../domain/sales/models/SaleLine';
+import type { SaleWithLines } from '../../../domain/sales/repositories/ISaleRepository.js';
+import { Sale } from '../../../domain/sales/models/Sale.js';
+import { SaleLine } from '../../../domain/sales/models/SaleLine.js';
 
 /** Server-only service-role repository. CSV and API use the same atomic canonical write. */
 export class TrustedSalesRepository extends SupabaseSaleRepository {

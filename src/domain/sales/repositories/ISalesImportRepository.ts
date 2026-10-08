@@ -1,4 +1,4 @@
-import { SalesImport } from '../models/SalesImport';
+import { SalesImport } from '../models/SalesImport.js';
 
 export interface ISalesImportRepository {
   save(salesImport: SalesImport): Promise<void>;

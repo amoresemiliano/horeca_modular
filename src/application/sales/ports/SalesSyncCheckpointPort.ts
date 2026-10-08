@@ -1,5 +1,5 @@
-import type { SalesSyncEvidence } from '../useCases/SyncSalesSourceUseCase';
-import type { mapLastAppSale } from '../services/LastAppSalesMapper';
+import type { SalesSyncEvidence } from '../useCases/SyncSalesSourceUseCase.js';
+import type { mapLastAppSale } from '../services/LastAppSalesMapper.js';
 
 export interface SalesSyncCheckpoint extends SalesSyncEvidence {
   id: string; next_offset: number; pending_tab_ids: string[]; source_exhausted: boolean;

@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { ISalesImportRepository } from '../../../domain/sales/repositories/ISalesImportRepository';
-import { SalesImport, SalesImportStatus } from '../../../domain/sales/models/SalesImport';
+import { ISalesImportRepository } from '../../../domain/sales/repositories/ISalesImportRepository.js';
+import { SalesImport, SalesImportStatus } from '../../../domain/sales/models/SalesImport.js';
 
 export class SupabaseSalesImportRepository implements ISalesImportRepository {
   constructor(private readonly client: SupabaseClient) {}

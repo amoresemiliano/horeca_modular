@@ -1,4 +1,4 @@
-import type { SalesSourcePort, SourceTab, SourceBill, SourcePayment, SourceWindow, SourcePage } from '../../../application/sales/ports/SalesSourcePort';
+import type { SalesSourcePort, SourceTab, SourceBill, SourcePayment, SourceWindow, SourcePage } from '../../../application/sales/ports/SalesSourcePort.js';
 
 export class SalesSourceError extends Error {
   constructor(public readonly code: string, public readonly status?: number) { super(code); }

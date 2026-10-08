@@ -1,8 +1,8 @@
-import type { SalesSourcePort, SourceWindow } from '../ports/SalesSourcePort';
-import { mapLastAppSale, MappingContext } from '../services/LastAppSalesMapper';
-import { Sale } from '../../../domain/sales/models/Sale';
-import { SaleLine } from '../../../domain/sales/models/SaleLine';
-import type { SalesSyncCheckpointPort } from '../ports/SalesSyncCheckpointPort';
+import type { SalesSourcePort, SourceWindow } from '../ports/SalesSourcePort.js';
+import { mapLastAppSale, MappingContext } from '../services/LastAppSalesMapper.js';
+import { Sale } from '../../../domain/sales/models/Sale.js';
+import { SaleLine } from '../../../domain/sales/models/SaleLine.js';
+import type { SalesSyncCheckpointPort } from '../ports/SalesSyncCheckpointPort.js';
 
 export interface SalesSyncEvidence {
   pages_fetched: number; records_fetched: number; created: number; updated: number;

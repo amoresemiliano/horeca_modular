@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { SalesSyncCheckpoint, SalesSyncCheckpointPort } from '../../../application/sales/ports/SalesSyncCheckpointPort';
-import type { mapLastAppSale } from '../../../application/sales/services/LastAppSalesMapper';
+import type { SalesSyncCheckpoint, SalesSyncCheckpointPort } from '../../../application/sales/ports/SalesSyncCheckpointPort.js';
+import type { mapLastAppSale } from '../../../application/sales/services/LastAppSalesMapper.js';
 
 export class SupabaseSalesSyncCheckpoint implements SalesSyncCheckpointPort {
   constructor(private readonly client: SupabaseClient,private readonly org: string,private readonly lease: string,public state: SalesSyncCheckpoint) {}
