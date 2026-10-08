@@ -33,6 +33,36 @@ function moneyFacts(bill: SourceBill) {
     creationTime: p.creationTime, deleted: p.deleted}));
   return facts;
 }
+function paymentTimestamp(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const parts = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/);
+  if (!parts || !Number.isFinite(Date.parse(value))) return false;
+  const [year, month, day, hour, minute, second] = parts.slice(1, 7).map(Number);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return month >= 1 && month <= 12 && day >= 1 && day <= days[month - 1] && hour < 24 && minute < 60 && second < 60;
+}
+function validatePayments(bills: SourceBill[]) {
+  const seen = new Set<string>();
+  for (const bill of bills) {
+    if (!Array.isArray(bill.payments)) throw new Error('INVALID_SOURCE_PAYMENTS');
+    for (const payment of bill.payments) {
+      if (!payment || typeof payment.id !== 'string' || !payment.id.trim() || payment.id.length > 200 ||
+        payment.id !== payment.id.trim() || seen.has(payment.id) ||
+        typeof payment.billId !== 'string' || payment.billId !== bill.id ||
+        typeof payment.type !== 'string' || !payment.type.trim() || payment.type.length > 100 ||
+        !paymentTimestamp(payment.creationTime) || typeof payment.deleted !== 'boolean') {
+        throw new Error('INVALID_SOURCE_PAYMENTS');
+      }
+      sourceMoney(payment.amount);
+      if (payment.tip !== undefined) {
+        sourceMoney(payment.tip);
+        if (payment.tip < 0) throw new Error('INVALID_SOURCE_PAYMENTS');
+      }
+      seen.add(payment.id);
+    }
+  }
+}
 export function mapLastAppSale(tab: SourceTab, ctx: MappingContext) {
   if (!ctx.organizationId || !ctx.operationalUnitId || tab.locationId !== ctx.externalLocationId || !tab.id) throw new Error('SOURCE_SCOPE_MISMATCH');
   if (ctx.currency !== 'EUR') throw new Error('UNSUPPORTED_SOURCE_CURRENCY');
@@ -43,9 +73,10 @@ export function mapLastAppSale(tab: SourceTab, ctx: MappingContext) {
     if (!bill.id || seenBills.has(bill.id)) throw new Error('INVALID_SOURCE_BILLS');
     seenBills.add(bill.id);
   }
+  validatePayments(tab.bills);
   const billFacts = tab.bills.map(moneyFacts);
   const totalMinor = tab.bills.reduce((sum, b) => { sourceMoney(b.total); return sum + b.total; }, 0);
-  const paidMinor = tab.bills.flatMap(b => b.payments ?? []).filter(p => !p.deleted)
+  const paidMinor = tab.bills.flatMap(b => b.payments ?? []).filter(p => p.deleted === false)
     .reduce((sum, p) => { sourceMoney(p.amount); return sum + p.amount; }, 0);
   const lines: SaleLine[] = [];
   let unmappedProducts = 0;

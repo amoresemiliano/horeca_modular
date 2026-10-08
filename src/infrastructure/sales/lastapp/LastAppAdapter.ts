@@ -1,31 +1,39 @@
 import type { SalesSourcePort, SourceTab, SourceBill, SourcePayment, SourceWindow, SourcePage } from '../../../application/sales/ports/SalesSourcePort.js';
+import type { LastAppRateLimiter } from './LastAppRateLimiter.js';
+import { RateBudgetError } from './LastAppRateLimiter.js';
 
 export class SalesSourceError extends Error {
   constructor(public readonly code: string, public readonly status?: number) { super(code); }
 }
 export interface LastAppOptions {
-  token: string; fetch?: typeof fetch; sleep?: (ms: number) => Promise<void>;
+  token: string; rateLimiter: LastAppRateLimiter; fetch?: typeof fetch; sleep?: (ms: number) => Promise<void>;
+  now?: () => number; deadline?: number; signal?: AbortSignal;
   timeoutMs?: number; maxAttempts?: number; maxPages?: number;
 }
 /** Server composition only. Never import this adapter from a client module. */
 export class LastAppAdapter implements SalesSourcePort {
-  private readonly options: Required<LastAppOptions>;
+  private readonly options: Required<Omit<LastAppOptions, 'deadline' | 'signal'>> & Pick<LastAppOptions, 'deadline' | 'signal'>;
   constructor(options: LastAppOptions) {
     if (!options.token?.trim()) throw new SalesSourceError('LAST_APP_NOT_CONFIGURED');
+    if (!options.rateLimiter) throw new SalesSourceError('LAST_APP_RATE_CONTROL_NOT_CONFIGURED');
     this.options = { fetch: globalThis.fetch, sleep: ms => new Promise(resolve => setTimeout(resolve, ms)),
-      timeoutMs: 10000, maxAttempts: 3, maxPages: 100, ...options };
+      timeoutMs: 10000, maxAttempts: 3, maxPages: 100, now: () => performance.now(), ...options };
     if (this.options.maxAttempts < 1 || this.options.maxAttempts > 5 || this.options.timeoutMs <= 0) {
       throw new SalesSourceError('INVALID_TRANSPORT_BOUNDS');
     }
   }
   private async read<T>(path: string, context?: {LocationID?: string; OrganizationID?: string}): Promise<T> {
+    const deadline = this.options.deadline ?? this.options.now() + 30000;
     for (let attempt = 0; attempt < this.options.maxAttempts; attempt++) {
+      // Every attempt, including retries, must acquire a fresh distributed permit.
+      const permit = await this.options.rateLimiter.acquire(this.options.token, context, deadline, this.options.signal);
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), this.options.timeoutMs);
+      const timer = setTimeout(() => controller.abort(), Math.min(this.options.timeoutMs, deadline - this.options.now()));
       let waitMs = 500 * 2 ** attempt;
       try {
+        permit.assertFresh();
         const response = await this.options.fetch(`https://api.last.app/v2${path}`, {
-          method: 'GET', redirect: 'error', signal: controller.signal,
+          method: 'GET', redirect: 'error', signal: this.options.signal ? AbortSignal.any([controller.signal, this.options.signal]) : controller.signal,
           headers: { Authorization: `Bearer ${this.options.token}`, ...context },
         });
         if (response.ok) return await response.json() as T;
@@ -42,9 +50,11 @@ export class LastAppAdapter implements SalesSourcePort {
           throw new SalesSourceError(response.status === 429 ? 'SOURCE_RATE_LIMITED' : 'SOURCE_UNAVAILABLE', response.status);
         }
       } catch (error) {
+        if (error instanceof RateBudgetError) throw new SalesSourceError(error.message);
         if (error instanceof SalesSourceError) throw error;
         if (attempt === this.options.maxAttempts - 1) throw new SalesSourceError(controller.signal.aborted ? 'SOURCE_TIMEOUT' : 'SOURCE_TRANSPORT_ERROR');
       } finally { clearTimeout(timer); }
+      if (this.options.now() + waitMs >= deadline || this.options.signal?.aborted) throw new SalesSourceError('SOURCE_RATE_DEADLINE');
       await this.options.sleep(waitMs);
     }
     throw new SalesSourceError('SOURCE_UNAVAILABLE');

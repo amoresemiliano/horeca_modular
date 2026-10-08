@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { LastAppAdapter } from '../../../src/infrastructure/sales/lastapp/LastAppAdapter';
+import { LastAppRateLimiter } from '../../../src/infrastructure/sales/lastapp/LastAppRateLimiter';
+// Transport tests isolate HTTP behavior; distributed budget behavior has its own suite.
+const rateLimiter = new LastAppRateLimiter({reserve:async()=>({allowed:true,retry_after_ms:0})});
 import { mapLastAppSale, sourceMoney, MappingContext } from '../../../src/application/sales/services/LastAppSalesMapper';
 import { validateLastAppWebhook } from '../../../src/infrastructure/sales/lastapp/LastAppWebhook';
 import type { SourceTab } from '../../../src/application/sales/ports/SalesSourcePort';
@@ -19,21 +22,21 @@ export function fixture(): SourceTab {
       total:2200,tax:200,taxableBase:2000,taxPercentage:10,discountTotal:100,deliveryFee:200,minimumBasketSurcharge:100,terraceSurcharge:50,
       products:[{id:'bill-product-1',tabProductId:'product-1',catalogProductId:'catalog-1',name:'Burger',quantity:2,price:1000,originalPrice:1100}],
       payments:[{id:'payment-1',billId:'60000000-0000-0000-0000-000000000001',type:'card',amount:2200,tip:100,deleted:false,creationTime:'2026-10-01T11:00:00Z'},
-        {id:'payment-deleted',type:'cash',amount:2200,deleted:true,creationTime:'2026-10-01T10:00:00Z'}]}]};
+        {id:'payment-deleted',billId:'60000000-0000-0000-0000-000000000001',type:'cash',amount:2200,deleted:true,creationTime:'2026-10-01T10:00:00Z'}]}]};
 }
 const window = {locationId:context.externalLocationId,startDate:'2026-10-01T00:00:00Z',endDate:'2026-10-02T00:00:00Z',limit:5};
 describe('Last.app v2 safe read adapter', () => {
-  it('rejects missing credentials',()=>expect(()=>new LastAppAdapter({token:''})).toThrow('LAST_APP_NOT_CONFIGURED'));
+  it('rejects missing credentials',()=>expect(()=>new LastAppAdapter({token:'',rateLimiter})).toThrow('LAST_APP_NOT_CONFIGURED'));
   it.each([401,403,400,404])('normalizes HTTP %i without leaking bodies',async status=>{
     const http=vi.fn().mockResolvedValue(new Response('private source payload',{status}));
-    const adapter=new LastAppAdapter({token:'sanitized-test-token',fetch:http});
+    const adapter=new LastAppAdapter({token:'sanitized-test-token',fetch:http,rateLimiter});
     await expect(adapter.getTab('location','tab')).rejects.toThrow(status===401||status===403?'SOURCE_AUTH_FAILED':'SOURCE_HTTP_ERROR');
     expect(http).toHaveBeenCalledTimes(1);
   });
   it('paginates array responses, passes documented context and uses only GET',async()=>{
     const http=vi.fn().mockResolvedValueOnce(Response.json(Array.from({length:5},(_,i)=>({id:String(i)}))))
       .mockResolvedValueOnce(Response.json([{id:'6'}]));
-    const adapter=new LastAppAdapter({token:'sanitized-test-token',fetch:http});
+    const adapter=new LastAppAdapter({token:'sanitized-test-token',fetch:http,rateLimiter});
     const pages=[]; for await(const page of adapter.listTabs(window))pages.push(page);
     expect(pages.map(p=>p.records.length)).toEqual([5,1]);
     expect(http.mock.calls[1][0]).toContain('offset=5');
@@ -42,30 +45,30 @@ describe('Last.app v2 safe read adapter', () => {
   it('honors Retry-After and succeeds after 429',async()=>{
     const sleep=vi.fn().mockResolvedValue(undefined);
     const http=vi.fn().mockResolvedValueOnce(new Response(null,{status:429,headers:{'Retry-After':'2'}})).mockResolvedValueOnce(Response.json([]));
-    await new LastAppAdapter({token:'test',fetch:http,sleep}).listOrganizations();
+    await new LastAppAdapter({token:'test',fetch:http,sleep,rateLimiter}).listOrganizations();
     expect(sleep).toHaveBeenCalledWith(2000);
   });
   it('never retries earlier than an excessive Retry-After',async()=>{
     const sleep=vi.fn(); const http=vi.fn().mockResolvedValue(new Response(null,{status:429,headers:{'Retry-After':'60'}}));
-    await expect(new LastAppAdapter({token:'test',fetch:http,sleep}).listOrganizations()).rejects.toThrow('SOURCE_RATE_LIMITED');
+    await expect(new LastAppAdapter({token:'test',fetch:http,sleep,rateLimiter}).listOrganizations()).rejects.toThrow('SOURCE_RATE_LIMITED');
     expect(http).toHaveBeenCalledTimes(1); expect(sleep).not.toHaveBeenCalled();
   });
   it.each([429,500,503])('bounds retry on %i',async status=>{
     const http=vi.fn().mockResolvedValue(new Response(null,{status}));
-    await expect(new LastAppAdapter({token:'test',fetch:http,sleep:async()=>{}}).listOrganizations()).rejects.toThrow();
+    await expect(new LastAppAdapter({token:'test',fetch:http,sleep:async()=>{},rateLimiter}).listOrganizations()).rejects.toThrow();
     expect(http).toHaveBeenCalledTimes(3);
   });
   it('bounds network failure and strips its sensitive exception',async()=>{
     const http=vi.fn().mockRejectedValue(new Error('token-secret'));
-    await expect(new LastAppAdapter({token:'test',fetch:http,sleep:async()=>{}}).listOrganizations()).rejects.toThrow('SOURCE_TRANSPORT_ERROR');
+    await expect(new LastAppAdapter({token:'test',fetch:http,sleep:async()=>{},rateLimiter}).listOrganizations()).rejects.toThrow('SOURCE_TRANSPORT_ERROR');
     expect(http).toHaveBeenCalledTimes(3);
   });
   it('aborts timed-out reads',async()=>{
     const http=vi.fn((_url,init)=>new Promise<Response>((_resolve,reject)=>init.signal.addEventListener('abort',()=>reject(new Error('aborted')))));
-    await expect(new LastAppAdapter({token:'test',fetch:http as typeof fetch,timeoutMs:5,maxAttempts:1}).listOrganizations()).rejects.toThrow('SOURCE_TIMEOUT');
+    await expect(new LastAppAdapter({token:'test',fetch:http as typeof fetch,timeoutMs:5,maxAttempts:1,rateLimiter}).listOrganizations()).rejects.toThrow('SOURCE_TIMEOUT');
   });
   it('enforces window and page bounds',async()=>{
-    const adapter=new LastAppAdapter({token:'test',fetch:vi.fn().mockResolvedValue(Response.json(Array(5).fill({id:'tab'}))),maxPages:1});
+    const adapter=new LastAppAdapter({token:'test',fetch:vi.fn().mockResolvedValue(Response.json(Array(5).fill({id:'tab'}))),maxPages:1,rateLimiter});
     await expect((async()=>{for await(const page of adapter.listTabs(window))void page;})()).rejects.toThrow('SOURCE_PAGE_BUDGET_EXCEEDED');
     await expect((async()=>{for await(const page of adapter.listTabs({...window,limit:101}))void page;})()).rejects.toThrow('INVALID_SOURCE_WINDOW');
   });
