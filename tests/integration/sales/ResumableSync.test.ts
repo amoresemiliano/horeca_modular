@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { SyncSalesSourceUseCase } from '../../../src/application/sales/useCases/SyncSalesSourceUseCase';
 import { SupabaseSalesSyncCheckpoint } from '../../../src/infrastructure/sales/repositories/SupabaseSalesSyncCheckpoint';
 import { LastAppAdapter } from '../../../src/infrastructure/sales/lastapp/LastAppAdapter';
+import { LastAppRateLimiter } from '../../../src/infrastructure/sales/lastapp/LastAppRateLimiter';
 import { continueSalesSyncUntilSettled } from '../../../src/application/sales/services/ContinueSalesSync';
 import { mapLastAppSale } from '../../../src/application/sales/services/LastAppSalesMapper';
 import { SaleLine } from '../../../src/domain/sales/models/SaleLine';
@@ -25,7 +26,8 @@ describe('resumable source windows with real PostgreSQL checkpoints and canonica
     if(id===failId)throw new Error('sanitized transport interruption');
     return Response.json({id,locationId:location,creationTime:'2026-10-01T10:00:00Z',closeTime:'2026-10-01T11:00:00Z',products:[],bills:[]});
   });
-  const source=new LastAppAdapter({token:'synthetic-test-token',fetch:http,maxAttempts:1});
+  const source=new LastAppAdapter({token:'synthetic-test-token',fetch:http,maxAttempts:1,
+    rateLimiter:new LastAppRateLimiter({reserve:async()=>({allowed:true,retry_after_ms:0})})});
   const window={locationId:location,startDate:'2026-10-01T00:00:00Z',endDate:'2026-10-02T00:00:00Z'};
   const rpcClient={rpc:async(name:string,args:Record<string,unknown>)=>{
     try{

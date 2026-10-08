@@ -2,7 +2,7 @@
 
 Date: 2026-10-08, Europe/Madrid. Project/product: HORECA Modular, not MICA. Domain: Sales & Revenue. Role: Sales Domain Lead / Integration Compliance Reviewer. Audited module/sales SHA: 7a74a04f0b09f66abb0a2adb957f6ec6848ddcb7; deployed DEV/code baseline: efcb7c4544979c22107371099032ea9804412a65. This WP changes documentation only.
 
-**Audit complete; Production approval request not ready. BLOCKING GAPS: 3. READY_TO_REQUEST_LASTAPP_PRODUCTION = NO.** Passing tests are evidence for existing behavior, not proof that missing safeguards or portal configuration are compliant.
+**Updated by [WP-SALES-006](WP-SALES-006-LASTAPP-HARDENING.md): B1 = CLOSED; B2 = CLOSED; B3 = OPEN. BLOCKING GAPS: 1. READY_TO_REQUEST_LASTAPP_PRODUCTION = NO.** B1/B2 closure describes the tested branch implementation. Master must deploy the prepared coordinator migration before activating this code; no hosted deployment is claimed. The original audit findings below remain historical evidence unless explicitly updated.
 
 ## Current official contract and reproducibility
 
@@ -15,7 +15,7 @@ Contract facts were checked directly against securitySchemes, paths, component s
 | Authentication | HTTP Bearer; one v2 integrator token covers its integrated organizations | Adapter sends Authorization: Bearer; credentials stay server-side |
 | Context | /organizations uses Bearer alone; /locations also requires organizationID plus organizationId query; location/reporting detail uses locationID | HTTP header case is insensitive; code uses OrganizationID/LocationID appropriately |
 | Hierarchy | Organization → Location → Brand → Catalog | HORECA routes Location UUID to tenant/unit; locationBrandId and catalog product references remain distinct |
-| Limits | 15 requests/second and 1,500/10 minutes per token/entity; /organizations additionally 1/second per token | Preventive throttling missing: B1 |
+| Limits | 15 requests/second and 1,500/10 minutes per token/entity; /organizations additionally 1/second per token | B1 closed by WP-SALES-006 preventive shared coordinator; Master deployment pending |
 | Reporting | GET /tabs, /tabs/{tabId}, /bills, /bills/{billId}, /payments, /payments/{paymentId} | Read-only adapter and existing live TEST evidence |
 | Pagination | Offset ≥0; limit 5–100, default 20; maximum interval 365 days | Adapter uses integer offsets/limits and max 365 days; defaults limit 100; server sync window ≤31 days |
 | Tab filters | locationId/startDate/endDate required; optional open, tabName, tableId/tableName/customerId | Runtime requests all lifecycle states; no undocumented updated-since filter |
@@ -54,12 +54,12 @@ PASS is limited to the stated implemented path and available evidence. A GAP is 
 | Area | Result | Evidence and limit |
 | --- | --- | --- |
 | AUTH | PASS | Bearer/context code; prior live 200s; invalid credential/missing-token tests fail closed; exact-token history scan clean |
-| RATE LIMITS | GAP | B1: sequential requests/retries are bounded, but there is no preventive token/entity rate scheduler |
+| RATE LIMITS | PASS | B1 CLOSED: shared PostgreSQL preventive admission for every attempt; conservative token/entity pacing meets 15/s, 1,500/rolling 10min and organizations 1/s. Controlled-clock SQL regressions; Master deployment prerequisite documented in WP-SALES-006 |
 | ORG/LOCATION | PASS | WP-SALES-004 GET organizations/list/detail all 200; distinct IDs and tenant routing verified. getLocation detail lives in the secure discovery helper, not a production adapter method |
 | LIST/DETAIL | PASS | Mandatory authoritative Tab/Bill detail refresh; paymentList embeds the complete payment schema, so a second Payment detail GET is not assumed necessary for canonical sync |
 | TABS | PASS | Correct context/query/offset/limit/window in normal UI sync; all states intentionally read; no invented updated-since semantics |
 | BILLS | PASS | UUID checks, parent Tab.bills relationship, duplicate Bill rejection and required complete products/payments arrays; mapped fields detailed below |
-| PAYMENTS | GAP | B2: documented valid/deleted/partial/multiple payments work, but duplicate IDs, foreign billId and absent deletion state are accepted |
+| PAYMENTS | PASS | B2 CLOSED: duplicate IDs, foreign billId, invalid identity/type/time/money and absent/nonboolean deleted reject the whole observation before persistence. Valid deleted/partial/multiple payments preserved; WP-SALES-006 |
 | MONEY | PASS | VERIFIED_MINOR for R003/LS283-3 total/base/tax/payment; safe-integer conversion; no /100 change |
 | IDENTITIES/IDEMPOTENCY | PASS | tenant + LAST_APP + Location UUID + Tab UUID; two hosted observations produced one stable Sale/change; Bill lines do not double sold quantities |
 | PAGINATION/RESUME | PASS | 100 records/2 pages per slice, offsets/pending IDs/exhaustion, continuation versions, lease fencing and durable checkpoint tests |
@@ -71,7 +71,7 @@ PASS is limited to the stated implemented path and available evidence. A GAP is 
 | CANONICAL WRITE SAFETY | PASS | Existing bounded DEV LAB ingestion/correction/checkpoint atomicity evidence; no downstream Inventory/Finance writes; Analytics-facing change facts only |
 | SECURITY | PASS | Core authorization precedes user-triggered service-role operations; browser privileged RPCs denied; RLS authority; server-only credentials and clean bundle scan |
 | TEST ENVIRONMENT | PASS | Independently validated Developer Portal dummy pair, installed integration/live GETs/TEST POS; no real access or Production token use claimed |
-| PRODUCTION SUBMISSION | GAP | B1–B3 unresolved; no approval email, status change or Production webhook registration |
+| PRODUCTION SUBMISSION | GAP | B3 remains open; B1/B2 implementation closed, coordinator deployment reserved for Master. No approval email, status change or Production webhook registration |
 
 ## Bill, Payment and money detail
 
@@ -108,8 +108,8 @@ Location lifecycle events are **RECOMMENDED_BEFORE_PRODUCTION** because they sup
 
 | ID | Category | Required closure / acceptance evidence |
 | --- | --- | --- |
-| B1 | BLOCKING | Add preventive rate control for every attempt, shared by concurrent runs/instances per token/entity, with 15/s, 1,500/10min and /organizations 1/s budgets. Demonstrate burst and sustained compliance without live rate-limit probing; preserve Retry-After and resumability |
-| B2 | BLOCKING | Validate and deduplicate source payments before canonical paid totals: stable ID, containing Bill relationship, explicit boolean deletion state, type/timestamp shape. Reject conflicting duplicates/relations rather than silently inflating totals. Add regressions for the demonstrated failures and preserve valid partial/deleted/multiple payments |
+| B1 | CLOSED — WP-SALES-006 | Every attempt requires shared atomic admission; deterministic burst/sustained/concurrent/retry tests pass. Prepared migration must be deployed by Master before hosted activation |
+| B2 | CLOSED — WP-SALES-006 | Stable ID, containing Bill relationship, explicit boolean deletion, type/time/money validated before totals; all duplicate IDs reject. Regression tests assert no persistence begins |
 | B3 | BLOCKING | Supply/verify Integrator ID, exact selected capabilities, enabled event names, callback URL and profile metadata. Ensure unsupported unrelated capabilities/events are disabled or separately implemented. For selected notifications verify the real envelope and publicly reachable authorized callback; DEV Preview protection is not evidence of provider delivery. If using polling only, verify subscriptions are actually disabled |
 | R1 | RECOMMENDED | Implement and verify safe location:integrated/location:desintegrated onboarding receipt before enabling them; not a documented universal approval requirement |
 | R2 | RECOMMENDED | Review the first Sales-open auth/context navigation reset from WP-SALES-004 before user UAT; no Core change in this audit |
@@ -119,7 +119,7 @@ Location lifecycle events are **RECOMMENDED_BEFORE_PRODUCTION** because they sup
 
 Synthetic B2 evidence, using the sanitized TEST fixture solely in memory: missing deleted accepted with paid=7.70; foreign billId accepted with paid=7.70; repeated same payment accepted with paid=15.40. No canonical row was written by these probes. Sale identity/idempotency is separately correct; it does not repair invalid payment facts.
 
-Do **not** email Last.app requesting Production approval until all three blocking items close. Then submit the verified Integrator ID(s) to the documented integrations contact with the Reporting-only scope and truthful checklist. Last.app makes the approval decision. El Criollo's missing provider installation/real UUIDs and missing Core OperationalUnit remain separate **restaurant activation gates**, not invented mandatory prerequisites to the provider's integrator review.
+Do **not** email Last.app requesting Production approval until B3 closes and Master deploys/integrates the prepared safeguards. B1/B2 implementation closed in WP-SALES-006; the original negative probes are historical. Then submit the verified Integrator ID(s) to the documented integrations contact with the Reporting-only scope and truthful checklist. Last.app makes the approval decision. El Criollo's missing provider installation/real UUIDs and missing Core OperationalUnit remain separate **restaurant activation gates**, not invented mandatory prerequisites to the provider's integrator review.
 
 ## Provider-facing checklist — draft, not ready to send
 
@@ -131,8 +131,8 @@ Do **not** email Last.app requesting Production approval until all three blockin
 - ✓ Tenant isolation and operational data minimization validated.
 - ✓ Token remains server-side; invalid authentication fails closed.
 - ✓ Bounded retries, timeouts and Retry-After behavior tested.
-- Pending: preventive burst/sustained rate-limit enforcement.
-- Pending: payment relationship/deletion/duplicate validation safeguards.
+- Implemented/tested: preventive burst/sustained enforcement; Master coordinator deployment required before hosted activation.
+- Implemented/tested: payment relationship/deletion/duplicate safeguards and pre-persistence rejection.
 - Pending: exact portal scope, Integrator ID and profile verification.
 - Pending if subscribed: webhook delivery/envelope/callback verification; location lifecycle events are not enabled by this audit.
 

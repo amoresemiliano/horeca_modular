@@ -1,5 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { LastAppAdapter } from '../src/infrastructure/sales/lastapp/LastAppAdapter.js';
+import { LastAppRateLimiter } from '../src/infrastructure/sales/lastapp/LastAppRateLimiter.js';
+import { SupabaseLastAppRateBudget } from '../src/infrastructure/sales/lastapp/SupabaseLastAppRateBudget.js';
 import { TrustedSalesRepository } from '../src/infrastructure/sales/repositories/TrustedSalesRepository.js';
 import { SyncSalesSourceUseCase } from '../src/application/sales/useCases/SyncSalesSourceUseCase.js';
 import type { ProductMapping } from '../src/application/sales/services/LastAppSalesMapper.js';
@@ -35,7 +37,8 @@ export async function mapping(client: SupabaseClient, org: string, location: str
 }
 export async function synchronize(client: SupabaseClient, input: {organizationId:string; externalLocationId:string;
   startDate:string; endDate:string; mode:'BACKFILL'|'RECONCILIATION'|'WEBHOOK'; tabId?:string; eventId?:string}) {
-  const source = new LastAppAdapter({token:process.env.LAST_APP_TOKEN ?? '',timeoutMs:4000,maxAttempts:2});
+  const source = new LastAppAdapter({token:process.env.LAST_APP_TOKEN ?? '',timeoutMs:4000,maxAttempts:2,
+    rateLimiter:new LastAppRateLimiter(new SupabaseLastAppRateBudget(client)),deadline:performance.now()+40000});
   const config = await mapping(client,input.organizationId,input.externalLocationId);
   const {data:products,error:productError} = await client.from('sales_product_mappings').select('*')
     .eq('organization_id',input.organizationId).eq('external_location_id',input.externalLocationId);
@@ -83,7 +86,8 @@ export async function continueSalesSync(client: SupabaseClient,input:{organizati
   if(!claim.claimed)return {...syncResult(claim.run),retryAfterMs:claim.run.status==='PROCESSING'?5000:0};
   const checkpoint=new SupabaseSalesSyncCheckpoint(client,input.organizationId,claim.run.slice_lease,claim.run);
   try {
-    const source=new LastAppAdapter({token:process.env.LAST_APP_TOKEN??'',timeoutMs:4000,maxAttempts:2});
+    const source=new LastAppAdapter({token:process.env.LAST_APP_TOKEN??'',timeoutMs:4000,maxAttempts:2,
+      rateLimiter:new LastAppRateLimiter(new SupabaseLastAppRateBudget(client)),deadline:performance.now()+30000});
     const {data:products,error:productError}=await client.from('sales_product_mappings').select('*')
       .eq('organization_id',input.organizationId).eq('external_location_id',run.external_location_id);
     if(productError)throw new Error('MAPPING_READ_FAILED');
