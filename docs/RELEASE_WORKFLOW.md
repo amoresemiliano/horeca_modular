@@ -19,7 +19,7 @@ gitGraph
 ```
 
 - **`dev` branch**: Target branch for all active Work Packages. Pushes automatically build to Vercel Preview environment (`https://horecamodular-git-dev-vegen-s-projects.vercel.app/`). Required Supabase target: `vmxjqwlfwnphorthhcwu` (`horeca_modular_staging`). Local configuration is verified; hosted Preview environment variables require separate verification. See [DEV rebaseline](DEV_SUPABASE_REBASELINE.md).
-- **`main` branch**: Production release branch. Pushes deploy to Vercel Production domain (`https://horecamodular.vercel.app/`). Connected to Supabase Production instance.
+- **`main` branch**: Production release branch. Pushes deploy to Vercel Production domain (`https://horecamodular.vercel.app/`). DEV and PROD intentionally share canonical Supabase `vmxjqwlfwnphorthhcwu`. El Criollo is REAL PRODUCTION ONLY. DEV/UAT fixtures and destructive tests must target HORECA DEV LAB or another explicitly disposable tenant. See [production state](PRODUCTION_STATE.md) and [operating rules](SHARED-PRODUCTION-OPERATING-RULES.md).
 
 ## 2. Work Package Execution Protocol
 1. **Dedicated Feature Branch**: Created from `dev` for every Work Package (e.g. `feature/wp-001-auth-hardening`).

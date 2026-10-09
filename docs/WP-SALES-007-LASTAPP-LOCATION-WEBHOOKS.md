@@ -1,5 +1,7 @@
 # WP-SALES-007 — Last.app location lifecycle webhooks
 
+Master update (2026-10-09): lifecycle migration applied exactly once; hosted schema/security and rollback-only pause checks pass. Subsequent DEV/Production promotion is controlled by the [Master deployment record](MASTER-LASTAPP-WEBHOOK-DEPLOYMENT.md). The original no-deployment statements below describe the module WP scope.
+
 Date: 2026-10-08. Project: HORECA Modular, Sales & Revenue. Branch: `module/sales`. Verified remote Sales starting SHA: `349a7d98abf80689251810b73b6055efbfa9eaac`; resynced by fast-forward to DEV `04704f3f21575d8675b062c6a75e89d0cf643990` before implementation. Main baseline: `4ba2a1e1daec27339ec608dd8bc97511000cae38`. Shared project: `vmxjqwlfwnphorthhcwu`. No shared migration or deployment performed here.
 
 ## Supported events and official contract

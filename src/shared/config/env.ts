@@ -48,9 +48,8 @@ function resolveEnv(): RawEnv {
     throw AppError.validation(`Invalid application environment configuration: ${errorDetails}`);
   }
 
-  if (parseResult.data.VITE_APP_ENV === 'development' &&
-      new URL(parseResult.data.VITE_SUPABASE_URL).origin !== 'https://vmxjqwlfwnphorthhcwu.supabase.co') {
-    throw AppError.validation('HORECA DEV must use project vmxjqwlfwnphorthhcwu');
+  if (new URL(parseResult.data.VITE_SUPABASE_URL).origin !== 'https://vmxjqwlfwnphorthhcwu.supabase.co') {
+    throw AppError.validation('HORECA DEV and PROD must use project vmxjqwlfwnphorthhcwu');
   }
 
   return parseResult.data;

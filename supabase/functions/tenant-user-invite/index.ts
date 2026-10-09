@@ -1,11 +1,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.100.0';
+import { invitationOrigin } from './origins.ts';
 
 // Secret key stays exclusively in the Edge runtime. Auth verifies the bearer token;
 // database RPCs authorize both the request and the final membership transaction.
 Deno.serve(async (request: Request) => {
-  const origin = Deno.env.get('ADMIN_APP_ORIGIN');
+  const origin = invitationOrigin(request.headers.get('Origin'));
   const headers = { 'Access-Control-Allow-Origin': origin || '', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info', 'Vary': 'Origin' };
-  if (!origin || (request.headers.get('Origin') && request.headers.get('Origin') !== origin)) return new Response('Origin denied', { status: 403 });
+  if (!origin) return new Response('Origin denied', { status: 403 });
   if (request.method === 'OPTIONS') return new Response('ok', { headers });
   if (request.method !== 'POST') return new Response('Method denied', { status: 405, headers });
   const response = (body: object, status = 200) => Response.json(body, { status, headers });

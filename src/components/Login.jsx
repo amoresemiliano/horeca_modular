@@ -23,7 +23,9 @@ const Login = () => {
   } = useAuth();
 
   // Flag controlling whether DEV password authentication UI is enabled
-  const isDevPasswordAuthEnabled = import.meta.env.VITE_DEV_PASSWORD_AUTH === 'true';
+  const isProduction = import.meta.env.VITE_APP_ENV === 'production';
+  const isDevPasswordAuthEnabled = !isProduction && import.meta.env.VITE_DEV_PASSWORD_AUTH === 'true';
+  const isPasswordAuthEnabled = isDevPasswordAuthEnabled || (isProduction && import.meta.env.VITE_PASSWORD_AUTH === 'true');
 
   const handleOAuthLogin = async (provider) => {
     setStatus(`loading_${provider}`);
@@ -311,7 +313,7 @@ const Login = () => {
                   {status === 'loading_update' ? 'Guardando contraseña…' : 'Guardar nueva contraseña'}
                 </button>
               </form>
-            ) : isDevPasswordAuthEnabled ? (
+            ) : isPasswordAuthEnabled ? (
               /* CASE 2: ENTORNOS DEV CON BANDERA VITE_DEV_PASSWORD_AUTH=true (SOLO EMAIL Y CONTRASEÑA) */
               <form onSubmit={handlePasswordSubmit}>
                 <div style={{
@@ -327,7 +329,7 @@ const Login = () => {
                   marginBottom: '1.25rem',
                   textAlign: 'center',
                 }}>
-                  🛠️ Acceso de Desarrollo (DEV-ONLY)
+                  {isProduction ? 'Acceso con email y contraseña' : '🛠️ Acceso de Desarrollo (DEV-ONLY)'}
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
