@@ -1,0 +1,647 @@
+[
+  {
+    "path": "inventory-app/api/api.php",
+    "bytes": 3620,
+    "sha256": "c92ee8b0cd13d84aac7db6bddb1b264bdda7264c9c3d951f8d5cb17a07321945"
+  },
+  {
+    "path": "inventory-app/api/db.php",
+    "bytes": 634,
+    "sha256": "aa6218b199f60b60586554a1aca776131d23a3d25beebaf28935f1bc2296899d"
+  },
+  {
+    "path": "inventory-app/api/login.php",
+    "bytes": 1053,
+    "sha256": "c15d90c2ac1f21fba57deee2065dfaf3605408ab18914857461b449e7b3dd638"
+  },
+  {
+    "path": "inventory-app/api/upload.php",
+    "bytes": 2910,
+    "sha256": "2a691b8266eda96ac11f6f3aed867410bd670a7765976aac3fcb19fbadb24206"
+  },
+  {
+    "path": "inventory-app/api/usuarios.php",
+    "bytes": 3075,
+    "sha256": "6088d5066991d8da9dcf606f901d4bbf522b6d70d287e03a18c6d4df601517c5"
+  },
+  {
+    "path": "inventory-app/dist/assets/index-Cc7KgsLE.js",
+    "bytes": 546715,
+    "sha256": "3879918fba1170e5592f63874962ef006da52ca4ae4db4a19e72e48e49b3958b"
+  },
+  {
+    "path": "inventory-app/dist/assets/index-DoufQ0Rl.css",
+    "bytes": 17155,
+    "sha256": "c1e3d9123dd3de5dd157da7aa195b564674877c70870f122a4fdcf94a290179d"
+  },
+  {
+    "path": "inventory-app/dist/index.html",
+    "bytes": 544,
+    "sha256": "85ecbab603626928da10fd298a8872221cc6bf10aef5eba4facf386d8b7965c0"
+  },
+  {
+    "path": "inventory-app/index.html",
+    "bytes": 443,
+    "sha256": "10991b5b0949b7ee09ff1b2f8677babd876068647980a94863cc4c6742031fdf"
+  },
+  {
+    "path": "inventory-app/package.json",
+    "bytes": 798,
+    "sha256": "e12b339b3650219133a9545e52266f84c268f998436969781daacc5c2309fe09"
+  },
+  {
+    "path": "inventory-app/src/App.jsx",
+    "bytes": 2589,
+    "sha256": "4623fdd6c9979612b8eb0ab9a0d806c96d9eba89a86cb21c6e17d10d99828d59"
+  },
+  {
+    "path": "inventory-app/src/components/charts/ProductionLineChart.jsx",
+    "bytes": 5055,
+    "sha256": "06fb76f311343be72cd53f0f0208ef90dad49c46a65f4b38c6b7d1ecaf3c3b34"
+  },
+  {
+    "path": "inventory-app/src/components/charts/StockBarChart.jsx",
+    "bytes": 3449,
+    "sha256": "73f9a95ebf8a71778981bf8786d503850a4f42ccd853451018f9e945ee7775a6"
+  },
+  {
+    "path": "inventory-app/src/components/common/AdminFilteredView.jsx",
+    "bytes": 3627,
+    "sha256": "583febac150c2cddd0c71cf7302f001ea2f2168824daa828ec7d82fe0404ce57"
+  },
+  {
+    "path": "inventory-app/src/components/common/Filters.jsx",
+    "bytes": 2279,
+    "sha256": "77d6482dcb80ccd566437ba02a63123bd4203248905a837978a05e7e401a5250"
+  },
+  {
+    "path": "inventory-app/src/components/common/Icons.jsx",
+    "bytes": 1596,
+    "sha256": "d6db454c95051f9cb85a99f296e592cc01bb5ee6759755f0a706716d07d0e1d4"
+  },
+  {
+    "path": "inventory-app/src/components/common/Modal.jsx",
+    "bytes": 616,
+    "sha256": "eeb3366b7ac39ed8bf46b5df8fc18a5a1376eeb6bc1bc6cbc545c0ebf78350c9"
+  },
+  {
+    "path": "inventory-app/src/components/Header.jsx",
+    "bytes": 3761,
+    "sha256": "0b9fe99b4c875da4ca72488b3e6d1cac2fc9f3a32b0e31d6332ef010166a7ead"
+  },
+  {
+    "path": "inventory-app/src/components/Icons.jsx",
+    "bytes": 1817,
+    "sha256": "c0d39ad6ccd967f737d93f77be4360ceec6cd42b9b5281e0f22ce43d12360d62"
+  },
+  {
+    "path": "inventory-app/src/components/modals/ManageGenericModal.jsx",
+    "bytes": 1547,
+    "sha256": "c393356c6746b33c498bdc052a05e7fcd0718f2c2f342d681ef376e2a6f574c7"
+  },
+  {
+    "path": "inventory-app/src/components/modals/ManageUsersModal.jsx",
+    "bytes": 14436,
+    "sha256": "e7cf0feeaeb15a82873e61c1a3be6753263c44199581d9b5118c5b23e7a2b864"
+  },
+  {
+    "path": "inventory-app/src/components/modals/Modal.jsx",
+    "bytes": 623,
+    "sha256": "6c2ffeb0abc98d7bc7e1c0eb38eb313df7f239bf52971c11a8af3887fe10a9fe"
+  },
+  {
+    "path": "inventory-app/src/components/modals/RegisterMovementModal.jsx",
+    "bytes": 5957,
+    "sha256": "588efd44c71f9af9c683e7020d2c02575d87e8ce63afab7d4b7ce5cd254a8963"
+  },
+  {
+    "path": "inventory-app/src/constants.js",
+    "bytes": 514,
+    "sha256": "f8a52c5f955ca4bfd8b5ac3e2d628af14e9c4b5db445d836899d282a06b651e5"
+  },
+  {
+    "path": "inventory-app/src/index.css",
+    "bytes": 24176,
+    "sha256": "42284ace8da19ef88ada0de848aa748fb39e526808c156f32c35ec4a2302ddb5"
+  },
+  {
+    "path": "inventory-app/src/main.jsx",
+    "bytes": 243,
+    "sha256": "79e9a233d845c21c04cc8d9275950948d06128f768188eba687f69680659066a"
+  },
+  {
+    "path": "inventory-app/src/store/store.jsx",
+    "bytes": 9128,
+    "sha256": "7964a8acad0b88562d70cddbe99ee0b1f2696863edbcfdc3ce3f367942f128ba"
+  },
+  {
+    "path": "inventory-app/src/views/AdminDashboard.jsx",
+    "bytes": 4794,
+    "sha256": "6548625e96f6f164de7cde31417b386f29bb12c0c4db0bf638bdc4c0c641cfcc"
+  },
+  {
+    "path": "inventory-app/src/views/InventoryView.jsx",
+    "bytes": 2423,
+    "sha256": "aa4eee882fc90d7162717e3cddda34190ed6b86256fb9b964dce268918bdea10"
+  },
+  {
+    "path": "inventory-app/src/views/LoginView.jsx",
+    "bytes": 3157,
+    "sha256": "af4056694ca30ed33bc13e61cd0c70ade44719ac735f4f5bf9279c41a31b6420"
+  },
+  {
+    "path": "inventory-app/src/views/MovementsView.jsx",
+    "bytes": 1577,
+    "sha256": "571196af731f63ae1ef01d0ecee0adaf5603e82a16dc1bb215a5e89e9778071d"
+  },
+  {
+    "path": "inventory-app/src/views/PlanningView.jsx",
+    "bytes": 3605,
+    "sha256": "6fe414ac413d6cab67f0ab42444cae206e9547d64f47406f4da2101af4921796"
+  },
+  {
+    "path": "inventory-app/src/views/ProductionView.jsx",
+    "bytes": 1444,
+    "sha256": "452d9b2de879f4ecb5061cb2487ef159618a962cf21f3004e2905121dbea3d0b"
+  },
+  {
+    "path": "inventory-app/src/views/SettingsView.jsx",
+    "bytes": 2164,
+    "sha256": "e68bb88a2845ccd396c3073bf1a14b857a96b1df91c25f22294b92c23a02246b"
+  },
+  {
+    "path": "inventory-app/src/views/UserDashboard.jsx",
+    "bytes": 4073,
+    "sha256": "272fb3356e5a89466db624ddaaf6cfb1c68399a17383be5d2fa1ed0915748a7f"
+  },
+  {
+    "path": "inventory-app/vite.config.js",
+    "bytes": 183,
+    "sha256": "f14f5ba955d01e4e8c85420c8569c99edf9690077410c7487d6778b3bb631977"
+  },
+  {
+    "path": "Lista ajustes Jules.odt",
+    "bytes": 26664,
+    "sha256": "5fd4af8a37d01a9faab10c3bab78f1a242e689218eb881a266157ac16aac844a"
+  },
+  {
+    "path": "v12/api/check_session.php",
+    "bytes": 466,
+    "sha256": "05828a80db7036668a166c6a6619e20ff22d72f6cd823a3b95a7871f7e819eba"
+  },
+  {
+    "path": "v12/api/db.php",
+    "bytes": 624,
+    "sha256": "5a63aa4ddfe58974e62514c66709634e6671a43781aa530e25683cdb55ca0a3d"
+  },
+  {
+    "path": "v12/api/hash_passwords.php",
+    "bytes": 871,
+    "sha256": "ff04522fe6ef2b886dfcd3327e7de447f4c5b8d4b33a2fa689733d09010b6756"
+  },
+  {
+    "path": "v12/api/login.php",
+    "bytes": 1916,
+    "sha256": "da0e82cad8ee446ce130e13c1a4f11fdff4acfd01c7c489578b4e0d38f333a29"
+  },
+  {
+    "path": "v12/api/logout.php",
+    "bytes": 643,
+    "sha256": "d3790ec81a9acdfe8f10a31513622210adcb70d235020635e1f8fbf2e7ff5979"
+  },
+  {
+    "path": "v12/index.html",
+    "bytes": 821,
+    "sha256": "c051235226ca94c3a7938c195fe61a15a943b12c644b856564a3910df0e3bcc5"
+  },
+  {
+    "path": "v12/main.js",
+    "bytes": 7018,
+    "sha256": "aff7046367d4de9d566af610ab4b13020c4cedc4bff4a8e56bb87d1030260747"
+  },
+  {
+    "path": "v12/style.css",
+    "bytes": 17012,
+    "sha256": "99b4740eeead5133e0d493e925f8b88f6772f5f9429144935991612cb36a662d"
+  },
+  {
+    "path": "v13/api/check_session.php",
+    "bytes": 466,
+    "sha256": "05828a80db7036668a166c6a6619e20ff22d72f6cd823a3b95a7871f7e819eba"
+  },
+  {
+    "path": "v13/api/db.php",
+    "bytes": 1734,
+    "sha256": "3e3c23835fc1faaa2ca72b811a6d9faf202c2acce37f6ed78fdbbaa370c952c4"
+  },
+  {
+    "path": "v13/api/hash_passwords.php",
+    "bytes": 871,
+    "sha256": "ff04522fe6ef2b886dfcd3327e7de447f4c5b8d4b33a2fa689733d09010b6756"
+  },
+  {
+    "path": "v13/api/login.php",
+    "bytes": 1916,
+    "sha256": "da0e82cad8ee446ce130e13c1a4f11fdff4acfd01c7c489578b4e0d38f333a29"
+  },
+  {
+    "path": "v13/api/logout.php",
+    "bytes": 643,
+    "sha256": "d3790ec81a9acdfe8f10a31513622210adcb70d235020635e1f8fbf2e7ff5979"
+  },
+  {
+    "path": "v13/app.js",
+    "bytes": 48329,
+    "sha256": "54be42e49a17552a3135ab7380e69b2457abc44e161487eaa73db065e34b7135"
+  },
+  {
+    "path": "v13/index.html",
+    "bytes": 854,
+    "sha256": "348cd65b2ee5feef4931631a2043777697781949064efd5b9b97dc0f559891c0"
+  },
+  {
+    "path": "v13/style.css",
+    "bytes": 17830,
+    "sha256": "a94278d9dbbd4e05f63f26d717b913eee0c73d32838e611be4c09fe182c494c8"
+  },
+  {
+    "path": "v14/api/check_session.php",
+    "bytes": 466,
+    "sha256": "05828a80db7036668a166c6a6619e20ff22d72f6cd823a3b95a7871f7e819eba"
+  },
+  {
+    "path": "v14/api/db.php",
+    "bytes": 1734,
+    "sha256": "3e3c23835fc1faaa2ca72b811a6d9faf202c2acce37f6ed78fdbbaa370c952c4"
+  },
+  {
+    "path": "v14/api/hash_passwords.php",
+    "bytes": 871,
+    "sha256": "ff04522fe6ef2b886dfcd3327e7de447f4c5b8d4b33a2fa689733d09010b6756"
+  },
+  {
+    "path": "v14/api/login.php",
+    "bytes": 1916,
+    "sha256": "da0e82cad8ee446ce130e13c1a4f11fdff4acfd01c7c489578b4e0d38f333a29"
+  },
+  {
+    "path": "v14/api/logout.php",
+    "bytes": 643,
+    "sha256": "d3790ec81a9acdfe8f10a31513622210adcb70d235020635e1f8fbf2e7ff5979"
+  },
+  {
+    "path": "v14/app.js",
+    "bytes": 53815,
+    "sha256": "0f843fe952f58e0d670fc8e012df7616b74b4b2e19ce301d82ddc10d740d5911"
+  },
+  {
+    "path": "v14/index.html",
+    "bytes": 854,
+    "sha256": "348cd65b2ee5feef4931631a2043777697781949064efd5b9b97dc0f559891c0"
+  },
+  {
+    "path": "v14/style.css",
+    "bytes": 18770,
+    "sha256": "853594a6c6857b09f2cf7b4cafb7c0371e9ed769067edbca3b91166102bd850d"
+  },
+  {
+    "path": "warehouse_v1/app.js",
+    "bytes": 8222,
+    "sha256": "6943ae5ab4a69de19ec12031e99c88258c7255aafbd99f092d63659c8605a4b0"
+  },
+  {
+    "path": "warehouse_v1/estilos.css",
+    "bytes": 3804,
+    "sha256": "f0b0328393a75d999c9a1d213d4b124bae18c14456b586714542c96ffb20c214"
+  },
+  {
+    "path": "warehouse_v1/index.html",
+    "bytes": 6762,
+    "sha256": "aa9d4630f376a9b823eb052b290dffd74ed2089796cdecdd2ddbcbd9b7cc4c91"
+  },
+  {
+    "path": "warehouse_v10/api/add_movement.php",
+    "bytes": 4093,
+    "sha256": "c5e1c59cbedfce42d987ab884a1f3598ad52cc3134381bb83e2fe9054a147b0e"
+  },
+  {
+    "path": "warehouse_v10/api/add_product.php",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "warehouse_v10/api/check_session.php",
+    "bytes": 214,
+    "sha256": "75f67ee1b265cbf0904f0150502a0249e24e6412ea12d3b1440de31268738251"
+  },
+  {
+    "path": "warehouse_v10/api/db.php",
+    "bytes": 1335,
+    "sha256": "3d49b8315969538fa54c96df7582cd606a26debe3ce364b3c036ab8766681ced"
+  },
+  {
+    "path": "warehouse_v10/api/delete_product.php",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "warehouse_v10/api/get_catalogs.php",
+    "bytes": 818,
+    "sha256": "e154e03f308bbe89df73df7235a743b274e0f6a76782bf100933d80921007562"
+  },
+  {
+    "path": "warehouse_v10/api/get_movements.php",
+    "bytes": 1374,
+    "sha256": "d466afe7b45720e12d33483673c250bedca528f3e18cd43c46e2b8c6923273ca"
+  },
+  {
+    "path": "warehouse_v10/api/login.php",
+    "bytes": 1075,
+    "sha256": "9e0fc4f4990eab9729ea29433cee60b52f028dc6ee296c625e48ca9b59e9fd78"
+  },
+  {
+    "path": "warehouse_v10/api/logout.php",
+    "bytes": 402,
+    "sha256": "4a573702dd9ddb7a9465318b11548b0008f3240ecd0ad9e1bb48ffb4c99d6de7"
+  },
+  {
+    "path": "warehouse_v10/api/update_product.php",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "warehouse_v10/app.v1.4.js",
+    "bytes": 40655,
+    "sha256": "70c1f080232abb37ab6e97a8740bd73944ccd061ee57c8def42619cc6d9a7bac"
+  },
+  {
+    "path": "warehouse_v10/index.html",
+    "bytes": 833,
+    "sha256": "9aed5a3ea85bd7c275a9cd61620bdb2ac54e5b6c216f32a25b893e6ddcfbeb68"
+  },
+  {
+    "path": "warehouse_v10/style.v1.4.css",
+    "bytes": 17331,
+    "sha256": "cc20fbf538241b6451ea748ed5d3e0fe418dd7c711f9cbd5172376f1d7ccb995"
+  },
+  {
+    "path": "warehouse_v11/api/add_movement.php",
+    "bytes": 4093,
+    "sha256": "c5e1c59cbedfce42d987ab884a1f3598ad52cc3134381bb83e2fe9054a147b0e"
+  },
+  {
+    "path": "warehouse_v11/api/add_product.php",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "warehouse_v11/api/check_session.php",
+    "bytes": 214,
+    "sha256": "75f67ee1b265cbf0904f0150502a0249e24e6412ea12d3b1440de31268738251"
+  },
+  {
+    "path": "warehouse_v11/api/db.php",
+    "bytes": 1335,
+    "sha256": "3d49b8315969538fa54c96df7582cd606a26debe3ce364b3c036ab8766681ced"
+  },
+  {
+    "path": "warehouse_v11/api/delete_product.php",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "warehouse_v11/api/get_catalogs.php",
+    "bytes": 1102,
+    "sha256": "e065abd562d0e963a5d38f3e7bb70fdfade802bb7675379c55a9566e66f01eb4"
+  },
+  {
+    "path": "warehouse_v11/api/get_movements.php",
+    "bytes": 1374,
+    "sha256": "d466afe7b45720e12d33483673c250bedca528f3e18cd43c46e2b8c6923273ca"
+  },
+  {
+    "path": "warehouse_v11/api/get_users.php",
+    "bytes": 591,
+    "sha256": "f556c9ee711aee5454864a4250ab6bbf5b97beaf2b7d76fe733e26f37d5131c5"
+  },
+  {
+    "path": "warehouse_v11/api/login.php",
+    "bytes": 1075,
+    "sha256": "9e0fc4f4990eab9729ea29433cee60b52f028dc6ee296c625e48ca9b59e9fd78"
+  },
+  {
+    "path": "warehouse_v11/api/logout.php",
+    "bytes": 402,
+    "sha256": "4a573702dd9ddb7a9465318b11548b0008f3240ecd0ad9e1bb48ffb4c99d6de7"
+  },
+  {
+    "path": "warehouse_v11/api/manage_catalog.php",
+    "bytes": 2458,
+    "sha256": "e99dcde7389a9f918f9c900325eea7dda5e9ddb651bb868fcceb73d8767677a7"
+  },
+  {
+    "path": "warehouse_v11/api/manage_movements.php",
+    "bytes": 3016,
+    "sha256": "c22e77bfb7347619885878768e6b471028a660189f6e913ddcf3836ba32928df"
+  },
+  {
+    "path": "warehouse_v11/api/manage_users.php",
+    "bytes": 3810,
+    "sha256": "c01fbe5f7bee791972e2c4a1cdf2d0b737c1e0e8f9598dbd70b966cf86582b11"
+  },
+  {
+    "path": "warehouse_v11/api/update_product.php",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "warehouse_v11/api/update_stock.php",
+    "bytes": 4008,
+    "sha256": "1ac53b3f834503eb5b86f1e3f8e73494d2ad6e6af0631bac98ad6bdedafc0edf"
+  },
+  {
+    "path": "warehouse_v11/app.v1.4.js",
+    "bytes": 66520,
+    "sha256": "0a6b32d67b066dac0d0de631dd596319fb46c77e41f6aafa29b78f5291ea6a0b"
+  },
+  {
+    "path": "warehouse_v11/index.html",
+    "bytes": 833,
+    "sha256": "9aed5a3ea85bd7c275a9cd61620bdb2ac54e5b6c216f32a25b893e6ddcfbeb68"
+  },
+  {
+    "path": "warehouse_v11/style.v1.4.css",
+    "bytes": 16609,
+    "sha256": "981203e4a05f6c5ce286d3d2e6415aca8f436518408f9d769ab4e09af7c93006"
+  },
+  {
+    "path": "warehouse_v2/app.js",
+    "bytes": 11724,
+    "sha256": "83785dfaf3ce8f31e4375669f85f572bc7dac9cc90856291a393a698ea17dfa8"
+  },
+  {
+    "path": "warehouse_v2/estilos.css",
+    "bytes": 5416,
+    "sha256": "5570dcd097d6429b9794cdbf2547966c399705631bbf10f52a519f35ea3b1d00"
+  },
+  {
+    "path": "warehouse_v2/index.html",
+    "bytes": 23350,
+    "sha256": "3a6ebd1cb71b13b567275f58e55b21a0616d812b2e15bf3b76eb7f2f1adb1bf9"
+  },
+  {
+    "path": "warehouse_v3/app.js",
+    "bytes": 10877,
+    "sha256": "78ffbe04cb05d87a3ee6601847ec80f6a0e1118958f3c0857175d121f8b98f58"
+  },
+  {
+    "path": "warehouse_v3/estilos.css",
+    "bytes": 5641,
+    "sha256": "30954c9f6d90cf1c0b39ed9e34ba908ba753e0b478fee8481c1f11e7b13a5198"
+  },
+  {
+    "path": "warehouse_v3/index.html",
+    "bytes": 7028,
+    "sha256": "6ad98fd2b35551c04605444547aec3835553f55cf1b9a25403976f0596ad4fe3"
+  },
+  {
+    "path": "warehouse_v4/app.js",
+    "bytes": 36584,
+    "sha256": "57f666e66e467bbedbc232daf122d9a1d394806d55f4f62508ef34e1242e48f4"
+  },
+  {
+    "path": "warehouse_v4/index.html",
+    "bytes": 803,
+    "sha256": "feeca69476c4028f84001921849193e1e64f23d4e308ec0da8d293c1c779ba5b"
+  },
+  {
+    "path": "warehouse_v4/style.css",
+    "bytes": 10221,
+    "sha256": "dbd03926f3fb1eee05b63ed7e098c40b508e02a3dccefb5b952120dafd170daf"
+  },
+  {
+    "path": "warehouse_v5/app.js",
+    "bytes": 36584,
+    "sha256": "57f666e66e467bbedbc232daf122d9a1d394806d55f4f62508ef34e1242e48f4"
+  },
+  {
+    "path": "warehouse_v5/index.html",
+    "bytes": 807,
+    "sha256": "a031f56f45299841c2f62ba4e3747006331b28f348ef9a0d52542ba8a97c56cc"
+  },
+  {
+    "path": "warehouse_v5/style.css",
+    "bytes": 10221,
+    "sha256": "dbd03926f3fb1eee05b63ed7e098c40b508e02a3dccefb5b952120dafd170daf"
+  },
+  {
+    "path": "warehouse_v6/app.js",
+    "bytes": 41685,
+    "sha256": "403d4b4cd890d4b6966e73308ae7c02f4ec0c2b104781050143b515ec188b4a0"
+  },
+  {
+    "path": "warehouse_v6/index.html",
+    "bytes": 809,
+    "sha256": "aa5d491c001fced9a89bd4eb72c23863dad766f6816033e4635862fea6db17e3"
+  },
+  {
+    "path": "warehouse_v6/style.css",
+    "bytes": 16251,
+    "sha256": "288bff3c4e8f1dccd5651a11e6f299f2f8d7bb0bc4a2b08e36019ae6f3a13bc6"
+  },
+  {
+    "path": "warehouse_v7/app.js",
+    "bytes": 47131,
+    "sha256": "9248012e60dceabdf0744b159647cb16c9a057294d66a5abbe50343d8111120e"
+  },
+  {
+    "path": "warehouse_v7/index.html",
+    "bytes": 836,
+    "sha256": "6a7a912982d27842c87c4d4b8d148ba85aabfbff4a79c9d852d4d77ebc9a4da2"
+  },
+  {
+    "path": "warehouse_v7/style.css",
+    "bytes": 16912,
+    "sha256": "38b15b404db7f8bc8d154830176ad2f0e54fa482185c6b60f76edd639a05e9f0"
+  },
+  {
+    "path": "warehouse_v8/api/check_session.php",
+    "bytes": 466,
+    "sha256": "05828a80db7036668a166c6a6619e20ff22d72f6cd823a3b95a7871f7e819eba"
+  },
+  {
+    "path": "warehouse_v8/api/db.php",
+    "bytes": 1734,
+    "sha256": "3e3c23835fc1faaa2ca72b811a6d9faf202c2acce37f6ed78fdbbaa370c952c4"
+  },
+  {
+    "path": "warehouse_v8/api/hash_passwords.php",
+    "bytes": 871,
+    "sha256": "ff04522fe6ef2b886dfcd3327e7de447f4c5b8d4b33a2fa689733d09010b6756"
+  },
+  {
+    "path": "warehouse_v8/api/login.php",
+    "bytes": 1916,
+    "sha256": "da0e82cad8ee446ce130e13c1a4f11fdff4acfd01c7c489578b4e0d38f333a29"
+  },
+  {
+    "path": "warehouse_v8/api/logout.php",
+    "bytes": 643,
+    "sha256": "d3790ec81a9acdfe8f10a31513622210adcb70d235020635e1f8fbf2e7ff5979"
+  },
+  {
+    "path": "warehouse_v8/app.js",
+    "bytes": 43592,
+    "sha256": "0365d0318975f9ac6c4818aa781a79731104662c090f385cf72419ceeaaa47e2"
+  },
+  {
+    "path": "warehouse_v8/index.html",
+    "bytes": 854,
+    "sha256": "348cd65b2ee5feef4931631a2043777697781949064efd5b9b97dc0f559891c0"
+  },
+  {
+    "path": "warehouse_v8/style.css",
+    "bytes": 17012,
+    "sha256": "99b4740eeead5133e0d493e925f8b88f6772f5f9429144935991612cb36a662d"
+  },
+  {
+    "path": "warehouse_v9/api/check_session.php",
+    "bytes": 214,
+    "sha256": "75f67ee1b265cbf0904f0150502a0249e24e6412ea12d3b1440de31268738251"
+  },
+  {
+    "path": "warehouse_v9/api/db.php",
+    "bytes": 761,
+    "sha256": "05950eae7febdfc40c0f1938a928ab75457f52eed985e584de25d52f82484aef"
+  },
+  {
+    "path": "warehouse_v9/api/get_movements.php",
+    "bytes": 1247,
+    "sha256": "60be64fff302fdee9bb77d9b345384671a629ee31434bc96b7ee89e406043b69"
+  },
+  {
+    "path": "warehouse_v9/api/login.php",
+    "bytes": 957,
+    "sha256": "417c4865c642c457356b5b6bf03be9b9810ae18019877ea1c2290cfcd7b7ee2f"
+  },
+  {
+    "path": "warehouse_v9/api/logout.php",
+    "bytes": 138,
+    "sha256": "6aae68ae3932190b36d25fb82e8f829c3addc0f2cc06d83fef20926f124141af"
+  },
+  {
+    "path": "warehouse_v9/app.v1.3.js",
+    "bytes": 37437,
+    "sha256": "950d5a0e25eb373dca7d54f3c9e62d0916561f09a30ba942472f4d6894d0519b"
+  },
+  {
+    "path": "warehouse_v9/index.html",
+    "bytes": 833,
+    "sha256": "1622ec85813a26dbeb8e804837b7e29bfd03a68dfbb17cef0cd17073a4bc05e3"
+  },
+  {
+    "path": "warehouse_v9/style.v1.3.css",
+    "bytes": 17012,
+    "sha256": "99b4740eeead5133e0d493e925f8b88f6772f5f9429144935991612cb36a662d"
+  }
+]
