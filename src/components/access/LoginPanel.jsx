@@ -6,7 +6,7 @@ export default function LoginPanel({ title, description, children }) {
       <div className="access-panel-inner">
         <header className="access-panel-header"><VegenBrand leaf /><h2 id="access-panel-title">{title}</h2><p>{description}</p></header>
         <div className="access-card">{children}</div>
-        <p className="access-panel-footer">Vegen Digital SL ™</p>
+        <div className="access-panel-footer"><p>HORECA Modular · Portal Seguro</p><p>Uso restringido a operadores y personal autorizado</p></div>
       </div>
     </section>
   );
