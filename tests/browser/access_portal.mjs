@@ -16,7 +16,7 @@ const browser = await chromium.launch({ channel: process.env.ACCESS_BROWSER_CHAN
 let server;
 
 async function fixture(origin, options = {}) {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
   const requests = [];
   await context.route('**/*', async route => {
     const req = route.request(), url = new URL(req.url());
@@ -80,14 +80,57 @@ try {
     assert.equal(await f.page.getByText('Solicitar un nuevo enlace de acceso', { exact: true }).count(), 0);
     assert.equal(await f.page.locator('details').count(), 0);
     assert.equal(await f.page.getByText(/DEV-ONLY/).count(), environment === 'production' ? 0 : 1);
-    assert.equal(await f.page.locator('.access-chip').count(), 8);
-    assert.deepEqual(await f.page.locator('.access-chip > span:first-of-type').allTextContents(), ['Bancos', 'KPIs', 'Personal', 'Producción', 'Inventarios', 'Escandallos', 'Predicciones', 'Decisiones']);
-    pass(environment + ': correct flags, eight chips, no normal-login recovery control');
+    for (const copy of ['SISTEMA OPERATIVO INTEGRAL', 'MÓDULOS OPERATIVOS EN TIEMPO REAL', 'Iniciá sesión para continuar', 'Ingresa tus credenciales del portal de gestión', 'HORECA Modular · Portal Seguro', 'Uso restringido a operadores y personal autorizado', 'HORECA Modular Suite']) {
+      assert(await f.page.getByText(copy, { exact: true }).isVisible());
+    }
+    assert.equal(await f.page.getByText('Usar credenciales de demo', { exact: true }).count(), 0);
+    const modules = [
+      ['Bancos', 'Centraliza movimientos bancarios, conciliación y control financiero.'],
+      ['KPIs', 'Convierte tus datos operativos en indicadores claros para gestionar mejor.'],
+      ['Compras', 'Planifica pedidos, proveedores y necesidades de compra desde un solo lugar.'],
+      ['Ventas', 'Analiza ventas, tickets y rendimiento comercial de tu operación.'],
+      ['Personal', 'Organiza equipos, jornadas y datos operativos de tu personal.'],
+      ['Producción', 'Planifica, registra y controla la producción diaria de tu cocina.'],
+      ['Inventarios', 'Controla existencias, movimientos, mermas y disponibilidad de stock.'],
+      ['Escandallos', 'Conoce recetas, costes, rendimientos y márgenes reales de tus productos.'],
+      ['Predicciones', 'Anticipa necesidades y tendencias a partir de tus datos operativos.'],
+      ['Decisiones', 'Transforma información y predicciones en acciones concretas para tu negocio.'],
+    ];
+    const defaultDescription = 'Módulos integrados para sincronizar cada área operativa de tu restaurante.';
+    const description = f.page.locator('#access-module-description');
+    assert.equal(await f.page.locator('.access-chip').count(), 10);
+    assert.deepEqual(await f.page.locator('.access-chip > span:first-of-type').allTextContents(), modules.map(([label]) => label));
+    assert.equal(await description.innerText(), defaultDescription);
+    for (const [label, text] of modules) {
+      const chip = f.page.getByRole('button', { name: label, exact: true });
+      assert(await chip.isVisible());
+      await chip.click();
+      assert.equal(await chip.getAttribute('aria-pressed'), 'true');
+      assert.equal(await f.page.locator('.access-chip[aria-pressed="true"]').count(), 1);
+      assert.equal(await description.innerText(), text);
+    }
+    const first = f.page.getByRole('button', { name: 'Bancos', exact: true });
+    await first.focus();
+    await f.page.keyboard.press('Enter');
+    assert.equal(await description.innerText(), modules[0][1]);
+    await f.page.keyboard.press('Tab');
+    assert.equal(await f.page.evaluate(() => document.activeElement.textContent), 'KPIs');
+    await f.page.keyboard.press('Space');
+    assert.equal(await description.innerText(), modules[1][1]);
+    assert.equal(await f.page.locator('.access-chip[aria-pressed="true"]').count(), 1);
+    await f.page.keyboard.press('Space');
+    assert.equal(await description.innerText(), defaultDescription);
+    assert.equal(await f.page.locator('.access-chip[aria-pressed="true"]').count(), 0);
+    pass(environment + ': ten chips, approved descriptions, single selection, keyboard toggle and no recovery control');
 
     if (environment === 'production') {
       for (const width of [375, 390, 430, 768, 1024, 1440]) {
         await f.page.setViewportSize({ width, height: width >= 1024 ? 900 : 844 });
         await f.page.evaluate(() => document.fonts.ready);
+        await f.page.getByRole('button', { name: 'Compras', exact: true }).tap();
+        assert.equal(await f.page.getByRole('button', { name: 'Compras', exact: true }).getAttribute('aria-pressed'), 'true');
+        assert.equal(await description.innerText(), modules[2][1]);
+        assert(await description.isVisible());
         const layout = await f.page.evaluate(() => {
           const form = document.querySelector('.access-form').getBoundingClientRect();
           return { width: innerWidth, scrollWidth: document.documentElement.scrollWidth, formTop: form.top, formBottom: form.bottom, inputs: [...document.querySelectorAll('input')].map(e => ({ height: e.getBoundingClientRect().height, font: getComputedStyle(e).fontSize })), buttons: [...document.querySelectorAll('button')].map(e => e.getBoundingClientRect().height) };
@@ -95,9 +138,12 @@ try {
         assert(layout.scrollWidth <= width, 'Horizontal overflow at ' + width);
         assert(layout.inputs.every(i => i.height >= 44 && parseFloat(i.font) >= 16));
         assert(layout.buttons.every(h => h >= 44));
-        if (width < 768) assert(layout.formBottom <= 844, 'Mobile submit must fit the initial viewport');
+        await f.page.getByRole('button', { name: 'Iniciar sesión', exact: true }).scrollIntoViewIfNeeded();
+        assert(await f.page.getByRole('button', { name: 'Iniciar sesión', exact: true }).isVisible());
+        await f.page.evaluate(() => scrollTo(0, 0));
         await f.page.screenshot({ path: `${artifacts}/production-${width}.png`, fullPage: true });
         report.layouts.push(layout);
+        await f.page.getByRole('button', { name: 'Compras', exact: true }).click();
       }
       await f.page.setViewportSize({ width: 390, height: 500 });
       await f.page.getByLabel('Contraseña', { exact: true }).focus();

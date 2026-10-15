@@ -1,13 +1,13 @@
 {
   "checks": [
-    "development: correct flags, eight chips, no normal-login recovery control",
+    "development: ten chips, approved descriptions, single selection, keyboard toggle and no recovery control",
     "development: real auth password path, session restore, logout and missing-profile denial",
     "development: controlled recovery retains same-origin redirect and expired-link handling",
     "development: PKCE recovery callback exchanges the browser-held verifier",
     "development: recovery callback uses real token/session and password-update runtime",
     "development: invite callback uses real token/session and password-update runtime",
     "development: invalid credentials and recovery errors stay accessible and sanitized",
-    "production: correct flags, eight chips, no normal-login recovery control",
+    "production: ten chips, approved descriptions, single selection, keyboard toggle and no recovery control",
     "Six responsive targets, touch sizes, 16px inputs, reduced-height keyboard reachability",
     "production: real auth password path, session restore, logout and missing-profile denial",
     "production: controlled recovery retains same-origin redirect and expired-link handling",
@@ -21,8 +21,8 @@
     {
       "width": 375,
       "scrollWidth": 375,
-      "formTop": 533.09375,
-      "formBottom": 774.09375,
+      "formTop": 645.09375,
+      "formBottom": 886.09375,
       "inputs": [
         {
           "height": 50,
@@ -34,14 +34,24 @@
         }
       ],
       "buttons": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
         48
       ]
     },
     {
       "width": 390,
       "scrollWidth": 390,
-      "formTop": 533.09375,
-      "formBottom": 774.09375,
+      "formTop": 645.09375,
+      "formBottom": 886.09375,
       "inputs": [
         {
           "height": 50,
@@ -53,14 +63,24 @@
         }
       ],
       "buttons": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
         48
       ]
     },
     {
       "width": 430,
       "scrollWidth": 430,
-      "formTop": 533.09375,
-      "formBottom": 774.09375,
+      "formTop": 618.09375,
+      "formBottom": 859.09375,
       "inputs": [
         {
           "height": 50,
@@ -72,14 +92,24 @@
         }
       ],
       "buttons": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
         48
       ]
     },
     {
       "width": 768,
       "scrollWidth": 768,
-      "formTop": 638.5625,
-      "formBottom": 879.5625,
+      "formTop": 672.5625,
+      "formBottom": 913.5625,
       "inputs": [
         {
           "height": 50,
@@ -91,14 +121,24 @@
         }
       ],
       "buttons": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
         48
       ]
     },
     {
       "width": 1024,
       "scrollWidth": 1024,
-      "formTop": 351.296875,
-      "formBottom": 592.296875,
+      "formTop": 339.796875,
+      "formBottom": 580.796875,
       "inputs": [
         {
           "height": 50,
@@ -110,14 +150,24 @@
         }
       ],
       "buttons": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
         48
       ]
     },
     {
       "width": 1440,
       "scrollWidth": 1440,
-      "formTop": 351.296875,
-      "formBottom": 592.296875,
+      "formTop": 339.796875,
+      "formBottom": 580.796875,
       "inputs": [
         {
           "height": 50,
@@ -129,6 +179,16 @@
         }
       ],
       "buttons": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44,
         48
       ]
     }

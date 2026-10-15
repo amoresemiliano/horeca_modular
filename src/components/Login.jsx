@@ -106,8 +106,8 @@ const Login = () => {
     }
   };
 
-  const title = isPasswordRecovery ? 'Configura tu contraseña' : isRecoveryRequest ? 'Recupera tu acceso' : 'Inicia sesión para continuar';
-  const description = isPasswordRecovery ? 'Elige una contraseña para tu cuenta.' : isRecoveryRequest ? 'Recibe un enlace seguro en tu correo.' : 'Accede a tu espacio de gestión.';
+  const title = isPasswordRecovery ? 'Configura tu contraseña' : isRecoveryRequest ? 'Recupera tu acceso' : 'Iniciá sesión para continuar';
+  const description = isPasswordRecovery ? 'Elige una contraseña para tu cuenta.' : isRecoveryRequest ? 'Recibe un enlace seguro en tu correo.' : 'Ingresa tus credenciales del portal de gestión';
 
   return (
     <main className="access-portal">
