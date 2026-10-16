@@ -1,4 +1,6 @@
 -- CORE-OWNED PROPOSAL: READY FOR MASTER REVIEW. Not in the auto-apply chain.
+-- Approved implementation: migrations/20261015090000_core_production_capabilities.sql.
+-- Historical proposal only; never apply this file separately.
 -- Apply only after approval; no tenant provisioning or entitlement enablement.
 BEGIN;
 DO $$ BEGIN

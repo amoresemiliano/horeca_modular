@@ -1,8 +1,8 @@
 # CCR-PROD-001 — Scoped Production execution gates
 
-Status: READY_FOR_MASTER. Owner: Core. Requesting stream: Production / WP-PROD-001. No shared deployment authorized by this request.
+Status: APPROVED by Master for the 2026-10-16 foundation integration. Owner: Core. Requesting stream: Production / WP-PROD-001. Deployment is authorized by the separate Master integration request; no tenant enablement is authorized.
 
-Review the isolated SQL proposal at `supabase/ccr/CCR-PROD-001.sql`. It uses the existing Core registry and role bundle pattern; it does not replace the authorization evaluator or provision tenants. All seven Production capabilities require `produccion` entitlement and OPERATIONAL_UNIT scope. Existing log grants remain unchanged.
+The isolated proposal `supabase/ccr/CCR-PROD-001.sql` is retained as review history and must not be applied independently. The approved canonical implementation is `supabase/migrations/20261015090000_core_production_capabilities.sql`. It validates prerequisites and rejects unexpected preexisting capabilities before adding the approved grants. All seven Production capabilities require `produccion` entitlement and OPERATIONAL_UNIT scope. Existing log grants remain unchanged.
 
 | Proposed code | Proposed role grants |
 | --- | --- |
@@ -12,8 +12,8 @@ Review the isolated SQL proposal at `supabase/ccr/CCR-PROD-001.sql`. It uses the
 | production.batch.correct | OWNER, MANAGER |
 | production.waste.confirm | OWNER, MANAGER |
 
-Core must approve this matrix, preserve explicit member revoke precedence, and schedule a Core-owned forward migration separately from the Production schema. No platform/holding role grants are proposed. Confirm and correct remain separate capabilities even where a reviewed supervisor role receives both.
+Master approves this matrix as least privilege for the foundation. Member revoke precedence and the SQL evaluator remain unchanged. No platform/holding role grants are added. Confirm and correct remain separate capabilities even where a supervisor role receives both.
 
-Core source follow-up after approval: add the five constants to `src/domain/tenancy/authorization/capabilities.ts` and align `src/application/tenancy/accessNavigation.js` so `production.view` enables read-only Production navigation in the selected operational unit. Current navigation only checks batch/waste logging; consultants must not be granted write permissions to make navigation visible. Align role metadata and associated Core tests with the approved matrix. These protected Core files were deliberately not edited by Production.
+Master/Core adds the five constants to `src/domain/tenancy/authorization/capabilities.ts`, aligns role metadata, and includes `production.view` in navigation. Consultants receive no Production logging/confirmation authority. The client evaluator now requires explicit Production entitlement and selected unit, with organization-wide membership or an explicit matching unit scope. The server SQL evaluator remains authoritative. Core alignment is covered by `tests/unit/core_production_capabilities.test.ts` and the canonical migration is exercised by the embedded Production integration suite.
 
-Embedded Production tests apply the proposal only inside a disposable PostgreSQL instance and use the actual canonical Core evaluator to prove operator logging cannot confirm, waste logging cannot confirm, entitlement and revoke denials, unit scope and platform isolation. Hosted enablement, grant approval and navigation activation remain Master responsibilities. The Production schema fails closed if the proposed capabilities are absent.
+Hosted verification uses `tests/integration/production_hosted_authorization.sql` under Master control and always rolls back. No owner adapter is supplied and no Production facts are seeded. See `MASTER-PRODUCTION-FOUNDATION-INTEGRATION.md` for deployment evidence and remaining operational gates.

@@ -3,7 +3,7 @@ export const MODULE_ACCESS = {
   Dashboard: ['reporting', 'reporting.operational.view'], Bancos: ['bancos', ...Object.values(BANKS_SECTIONS)],
   Ventas: ['ventas', 'sales.view', 'sales.tickets.read'], KPI: ['reporting', 'reporting.operational.view', 'reporting.pnl.view'],
   Inventario: ['inventario', 'inventory.stock.view', 'inventory.count.run'], Escandallos: ['escandallos', 'recipes.view', 'costsheets.view'],
-  Compras: ['compras', 'purchases.order.create', 'purchases.invoices.manage'], 'Producción': ['produccion', 'production.batch.log', 'production.waste.log'],
+  Compras: ['compras', 'purchases.order.create', 'purchases.invoices.manage'], 'Producción': ['produccion', 'production.view', 'production.batch.log', 'production.waste.log'],
   Personal: ['personal', 'personnel.employees.manage', 'personnel.fichajes.write'], 'Predicción': ['prediccion', 'reporting.operational.view'],
 };
 export const TENANT_ADMIN_CAPS = ['membership.users.invite', 'membership.roles.assign', 'membership.users.remove', 'org.config.write'];

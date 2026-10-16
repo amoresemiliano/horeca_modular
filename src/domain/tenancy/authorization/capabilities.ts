@@ -39,8 +39,13 @@ export const Capability = {
   COSTSHEETS_EDIT: 'costsheets.edit',
 
   // 8. Production
+  PRODUCTION_VIEW: 'production.view',
+  PRODUCTION_PLAN_MANAGE: 'production.plan.manage',
   PRODUCTION_BATCH_LOG: 'production.batch.log',
+  PRODUCTION_BATCH_CONFIRM: 'production.batch.confirm',
+  PRODUCTION_BATCH_CORRECT: 'production.batch.correct',
   PRODUCTION_WASTE_LOG: 'production.waste.log',
+  PRODUCTION_WASTE_CONFIRM: 'production.waste.confirm',
 
   // 9. Inventory & Stock
   INVENTORY_STOCK_VIEW: 'inventory.stock.view',

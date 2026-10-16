@@ -54,6 +54,13 @@ export function can(ctx: AuthorizationEvaluationContext): AuthorizationDecision 
   }
 
   // 2. Module Entitlement Check
+  if (ctx.requiredCapability.startsWith('production.') && (
+    !ctx.organizationId || ctx.moduleEntitlement?.moduleKey !== 'produccion' ||
+    ctx.moduleEntitlement.isEnabled !== true || ctx.targetScope?.scopeType !== ScopeType.OPERATIONAL_UNIT ||
+    !ctx.targetScope.operationalUnitId
+  )) {
+    return { allowed: false, reason: 'Production requires explicit entitlement and operational unit scope', evaluatedAt };
+  }
   if (ctx.requiredCapability === Capability.STATEMENTS_IMPORT_CONFIRM && (
     !ctx.organizationId || ctx.moduleEntitlement?.moduleKey !== 'bancos' ||
     ctx.moduleEntitlement.isEnabled !== true || ctx.membership?.isOrganizationWide !== true ||
@@ -127,6 +134,10 @@ export function can(ctx: AuthorizationEvaluationContext): AuthorizationDecision 
     const targetUnitId = ctx.targetScope.operationalUnitId;
     if (targetUnitId) {
       const allowedUnits = ctx.membership.operationalUnitScopes;
+      if (ctx.requiredCapability.startsWith('production.') && ctx.membership.isOrganizationWide !== true &&
+          !allowedUnits?.includes(targetUnitId)) {
+        return { allowed: false, reason: 'Production membership does not include the operational unit', evaluatedAt };
+      }
       // If user has restricted operational scopes, targetUnit must be in allowed list
       if (allowedUnits && allowedUnits.length > 0 && !allowedUnits.includes(targetUnitId)) {
         return {

@@ -23,7 +23,7 @@ describe('Production canonical commands, immutable facts and real PostgreSQL RLS
    GRANT USAGE ON SCHEMA auth TO authenticated,anon;`);
   for(const file of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql','20261002030000_core_module_entitlement_registry.sql'])
    await db.exec(readFileSync('supabase/migrations/'+file,'utf8').replace('REFERENCES auth.users(id)','REFERENCES test_auth.identities(id)'));
-  await db.exec(readFileSync('supabase/ccr/CCR-PROD-001.sql','utf8'));
+  await db.exec(readFileSync('supabase/migrations/20261015090000_core_production_capabilities.sql','utf8'));
   await db.exec(readFileSync('supabase/migrations/20261015100000_production_execution_foundation.sql','utf8'));
   // Owner adapter is replaced only inside this ephemeral test DB. Not a master migration.
   await db.exec(`CREATE SCHEMA test_owner; CREATE TABLE test_owner.refs(id uuid, kind text, version uuid, payload jsonb);

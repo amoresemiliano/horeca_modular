@@ -110,6 +110,11 @@ export const DEFAULT_ROLE_CAPABILITIES: Record<RoleTemplate, readonly Capability
     Capability.DATA_RECORDS_RESTORE,
     Capability.SENSITIVEDATA_SALARIES_READ,
     Capability.SENSITIVEDATA_BANKING_READ,
+    Capability.PRODUCTION_VIEW,
+    Capability.PRODUCTION_PLAN_MANAGE,
+    Capability.PRODUCTION_BATCH_CONFIRM,
+    Capability.PRODUCTION_BATCH_CORRECT,
+    Capability.PRODUCTION_WASTE_CONFIRM,
   ],
   MANAGER: [
     Capability.ORG_CONFIG_READ,
@@ -141,6 +146,11 @@ export const DEFAULT_ROLE_CAPABILITIES: Record<RoleTemplate, readonly Capability
     Capability.PERSONNEL_INCIDENCIAS_MANAGE,
     Capability.REPORTING_OPERATIONAL_VIEW,
     Capability.DATA_RECORDS_DELETE_SOFT,
+    Capability.PRODUCTION_VIEW,
+    Capability.PRODUCTION_PLAN_MANAGE,
+    Capability.PRODUCTION_BATCH_CONFIRM,
+    Capability.PRODUCTION_BATCH_CORRECT,
+    Capability.PRODUCTION_WASTE_CONFIRM,
   ],
   ADMINISTRATIVE: [
     Capability.ORG_CONFIG_READ,
@@ -186,6 +196,7 @@ export const DEFAULT_ROLE_CAPABILITIES: Record<RoleTemplate, readonly Capability
     Capability.PRODUCTION_WASTE_LOG,
     Capability.INVENTORY_COUNT_RUN,
     Capability.PERSONNEL_FICHAJES_WRITE,
+    Capability.PRODUCTION_VIEW,
   ],
   COOK_COST_SHEET_MANAGER: [
     Capability.CATALOG_PRODUCTS_READ,
@@ -199,6 +210,8 @@ export const DEFAULT_ROLE_CAPABILITIES: Record<RoleTemplate, readonly Capability
     Capability.INVENTORY_STOCK_VIEW,
     Capability.PERSONNEL_FICHAJES_WRITE,
     Capability.REPORTING_OPERATIONAL_VIEW,
+    Capability.PRODUCTION_VIEW,
+    Capability.PRODUCTION_PLAN_MANAGE,
   ],
   HR_PERSONNEL: [
     Capability.PERSONNEL_EMPLOYEES_MANAGE,
@@ -230,5 +243,6 @@ export const DEFAULT_ROLE_CAPABILITIES: Record<RoleTemplate, readonly Capability
     Capability.COSTSHEETS_VIEW,
     Capability.INVENTORY_STOCK_VIEW,
     Capability.REPORTING_OPERATIONAL_VIEW,
+    Capability.PRODUCTION_VIEW,
   ],
 };
