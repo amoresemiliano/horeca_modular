@@ -13,12 +13,14 @@ const capabilities = [
   ['Decisiones', Compass, 'green', 'Transforma información y predicciones en acciones concretas para tu negocio.'],
 ];
 
-export default function CapabilityChips({ selected, onSelect }) {
+export default function CapabilityChips({ selected, onSelect, onPreview }) {
   return (
     <ul className="access-chips" aria-label="Áreas de gestión HORECA">
       {capabilities.map(([label, Icon, accent, description]) => (
         <li key={label}>
-          <button type="button" className={`access-chip access-chip--${accent}`} aria-pressed={selected === label} aria-controls="access-module-description" onClick={() => onSelect({ label, description })}>
+          <button type="button" className={`access-chip access-chip--${accent}`} aria-pressed={selected === label} aria-controls="access-module-description" onPointerEnter={event => {
+            if (event.pointerType === 'mouse' && window.matchMedia('(hover: hover) and (pointer: fine)').matches) onPreview({ label, description });
+          }} onPointerLeave={() => onPreview(null)} onFocus={() => onPreview({ label, description })} onBlur={() => onPreview(null)} onClick={() => { onPreview(null); onSelect({ label, description }); }}>
             <Icon size={16} aria-hidden="true" /><span>{label}</span><span className="access-chip-dot" aria-hidden="true" />
           </button>
         </li>
