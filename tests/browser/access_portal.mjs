@@ -16,7 +16,7 @@ const browser = await chromium.launch({ channel: process.env.ACCESS_BROWSER_CHAN
 let server;
 
 async function fixture(origin, options = {}) {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, ...options.device });
   const requests = [];
   await context.route('**/*', async route => {
     const req = route.request(), url = new URL(req.url());
@@ -109,6 +109,34 @@ try {
       assert.equal(await f.page.locator('.access-chip[aria-pressed="true"]').count(), 1);
       assert.equal(await description.innerText(), text);
     }
+    const desktop = await fixture(origin, { device: { viewport: { width: 1440, height: 900 }, hasTouch: false } });
+    await open(desktop.page, origin);
+    const desktopDescription = desktop.page.locator('#access-module-description');
+    for (const [label, text] of modules) {
+      await desktop.page.getByRole('button', { name: label, exact: true }).hover();
+      assert.equal(await desktopDescription.innerText(), text);
+      assert.equal(await desktop.page.locator('.access-chip[aria-pressed="true"]').count(), 0);
+    }
+    await desktop.page.mouse.move(0, 0);
+    assert.equal(await desktopDescription.innerText(), defaultDescription);
+    await desktop.page.getByRole('button', { name: 'Bancos', exact: true }).click();
+    for (const [label, text] of modules.slice(1)) {
+      await desktop.page.getByRole('button', { name: label, exact: true }).hover();
+      assert.equal(await desktopDescription.innerText(), text);
+    }
+    await desktop.page.mouse.move(0, 0);
+    assert.equal(await desktopDescription.innerText(), modules[0][1]);
+    const keyboardChip = desktop.page.getByRole('button', { name: 'KPIs', exact: true });
+    await keyboardChip.focus();
+    assert.equal(await desktopDescription.innerText(), modules[1][1]);
+    await desktop.page.keyboard.press('Enter');
+    await desktop.page.getByLabel('Email', { exact: true }).focus();
+    assert.equal(await desktopDescription.innerText(), modules[1][1]);
+    await keyboardChip.focus();
+    await desktop.page.keyboard.press('Space');
+    assert.equal(await desktopDescription.innerText(), defaultDescription);
+    pass(environment + ': desktop hover for every module, transitions, default/persistent restoration, focus and keyboard');
+    await desktop.context.close();
     const first = f.page.getByRole('button', { name: 'Bancos', exact: true });
     await first.focus();
     await f.page.keyboard.press('Enter');
@@ -133,8 +161,10 @@ try {
         assert(await description.isVisible());
         const layout = await f.page.evaluate(() => {
           const form = document.querySelector('.access-form').getBoundingClientRect();
-          return { width: innerWidth, scrollWidth: document.documentElement.scrollWidth, formTop: form.top, formBottom: form.bottom, inputs: [...document.querySelectorAll('input')].map(e => ({ height: e.getBoundingClientRect().height, font: getComputedStyle(e).fontSize })), buttons: [...document.querySelectorAll('button')].map(e => e.getBoundingClientRect().height) };
+          return { width: innerWidth, scrollWidth: document.documentElement.scrollWidth, formTop: form.top, formBottom: form.bottom, inputs: [...document.querySelectorAll('input')].map(e => ({ height: e.getBoundingClientRect().height, font: getComputedStyle(e).fontSize })), chipRows: [...new Set([...document.querySelectorAll('.access-chip')].map(e => Math.round(e.getBoundingClientRect().top)))], chipWidths: [...document.querySelectorAll('.access-chip')].map(e => ({ width: e.clientWidth, scroll: e.scrollWidth })), buttons: [...document.querySelectorAll('button')].map(e => e.getBoundingClientRect().height) };
         });
+        if (width >= 768) assert.equal(layout.chipRows.length, 2, 'Module rows at ' + width);
+        assert(layout.chipWidths.every(c => c.scroll <= c.width), 'Chip content overflow at ' + width);
         assert(layout.scrollWidth <= width, 'Horizontal overflow at ' + width);
         assert(layout.inputs.every(i => i.height >= 44 && parseFloat(i.font) >= 16));
         assert(layout.buttons.every(h => h >= 44));

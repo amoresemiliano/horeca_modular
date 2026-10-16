@@ -5,6 +5,7 @@ import CapabilityChips from './CapabilityChips';
 
 export default function LoginHero() {
   const [selected, setSelected] = useState(null);
+  const [hovered, setHovered] = useState(null);
   const selectCapability = (capability) => setSelected(current => current?.label === capability.label ? null : capability);
   return (
     <section className="access-hero" aria-labelledby="access-title">
@@ -16,9 +17,9 @@ export default function LoginHero() {
           <h1 id="access-title">Plataforma de gestión <span>HORECA</span></h1>
           <p className="access-tagline">Tu negocio, conectado en un solo lugar.</p>
           <h2 className="access-modules-heading">MÓDULOS OPERATIVOS EN TIEMPO REAL</h2>
-          <CapabilityChips selected={selected?.label} onSelect={selectCapability} />
+          <CapabilityChips selected={selected?.label} onSelect={selectCapability} onPreview={setHovered} />
         </div>
-        <footer className="access-hero-footer"><p id="access-module-description" aria-live="polite" aria-atomic="true"><Layers size={16} aria-hidden="true" /><span>{selected?.description || 'Módulos integrados para sincronizar cada área operativa de tu restaurante.'}</span></p><span>Vegen Digital SL ™</span></footer>
+        <footer className="access-hero-footer"><p id="access-module-description" aria-live="polite" aria-atomic="true"><Layers size={16} aria-hidden="true" /><span>{hovered?.description || selected?.description || 'Módulos integrados para sincronizar cada área operativa de tu restaurante.'}</span></p><span>Vegen Digital SL ™</span></footer>
       </div>
     </section>
   );

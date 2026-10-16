@@ -124,3 +124,9 @@
   .access-hero-security { display: flex; align-items: center; gap: 6px; color: #b5c0d2; font-size: 11px; }
   .access-hero-security svg { color: #89dfb5; }
 }
+
+/* Five columns preserve the approved module order in two rows. */
+@media (min-width: 768px) {
+  .access-chips { display: grid; grid-template-columns: repeat(5, max-content); gap: 8px 6px; max-width: 100%; }
+  .access-chip { width: 100%; white-space: nowrap; font-size: clamp(11px, 1vw, 12px); gap: 5px; padding-inline: clamp(5px, calc(2vw - 15px), 13px); }
+}
