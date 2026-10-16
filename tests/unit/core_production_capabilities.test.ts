@@ -48,6 +48,7 @@ describe('Core approved Production capability alignment',()=>{
       expect(can({...context,membership:{...context.membership!,...override}}).allowed).toBe(false);
     expect(can({...context,isPlatformAdmin:true,membership:undefined}).allowed).toBe(false);
     expect(can({...context,membership:{...context.membership!,isOrganizationWide:true,operationalUnitScopes:[]}}).allowed).toBe(true);
+    expect(can({...context,membership:{...context.membership!,isOrganizationWide:true,operationalUnitScopes:['other']}}).allowed).toBe(true);
   });
   it('explicit revoke wins over both role and grant',()=>{
     expect(can({...context,membership:{...context.membership!,capabilityOverrides:{granted:[Capability.PRODUCTION_BATCH_CONFIRM],revoked:[Capability.PRODUCTION_BATCH_CONFIRM]}}}).allowed).toBe(false);

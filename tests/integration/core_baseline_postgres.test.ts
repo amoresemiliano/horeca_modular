@@ -17,6 +17,7 @@ describe('Consolidated HORECA baseline in embedded PostgreSQL (not hosted Auth)'
       INSERT INTO public.categorias VALUES(1,'HORECA legacy sentinel');`);
     await db.exec(readFileSync('supabase/migrations/20260926000000_horeca_core_baseline.sql','utf8'));
     await db.exec(readFileSync('supabase/migrations/20260927000000_ccr_fin_001_core_authorization.sql','utf8'));
+    await db.exec(readFileSync('supabase/migrations/20261015090000_core_production_capabilities.sql','utf8'));
   }, 60000);
   afterAll(async () => { await db?.close(); });
 
@@ -25,7 +26,7 @@ describe('Consolidated HORECA baseline in embedded PostgreSQL (not hosted Auth)'
   });
   it('matches the exact current canonical wire registry and role defaults', async () => {
     const caps = await db.query<{code:string}>('SELECT code FROM public.eco_capabilities');
-    // Historical baseline: WP-CORE-003 additions are validated by the full-chain suite.
+    // Core registry-only CCRs are included; Banks additions remain in the full-chain suite.
     expect(caps.rows.map(r=>r.code).sort()).toEqual(Object.values(Capability).filter(c=>!c.startsWith('banks.')).sort());
     const roles = await db.query<{code:string}>('SELECT code FROM public.eco_role_templates');
     expect(roles.rows.map(r=>r.code).sort()).toEqual(Object.values(RoleTemplate).sort());

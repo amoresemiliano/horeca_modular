@@ -1,0 +1,530 @@
+{
+  "date": "2026-10-16",
+  "project": "vmxjqwlfwnphorthhcwu",
+  "sourceSha": "61ddc8f29a9ee6847243ff3193bf0d6d0c78a168",
+  "requestedDevBase": "6c36175a69a43efb5b25e14c23b12e3d8d0acb0b",
+  "reconciledDevHead": "980e41ac61588d75e571eda94a5aa97926aa43fa",
+  "coreApprovalCommit": "c0338a2",
+  "migrations": [
+    {
+      "file": "20261015090000_core_production_capabilities.sql",
+      "sha256": "38d4b8ad3c8552df2e95deccf2e04f80837049708fb90e09d61cd189d45d622b"
+    },
+    {
+      "file": "20261015100000_production_execution_foundation.sql",
+      "sha256": "ad37c6b0d6501acc1c0bc4d8a9d56b244268670e952f26301f20d3ed07c9c05f"
+    }
+  ],
+  "historyBefore": [
+    {
+      "name": "horeca_core_baseline",
+      "version": "20260926000000"
+    },
+    {
+      "name": "ccr_fin_001_core_authorization",
+      "version": "20260927000000"
+    },
+    {
+      "name": "finance_atomic_bank_import",
+      "version": "20260928010000"
+    },
+    {
+      "name": "finance_classification_workflow",
+      "version": "20261001000000"
+    },
+    {
+      "name": "core_tenant_administration",
+      "version": "20261002000000"
+    },
+    {
+      "name": "core_secure_provisioning",
+      "version": "20261002010000"
+    },
+    {
+      "name": "core_legacy_fail_closed",
+      "version": "20261002020000"
+    },
+    {
+      "name": "core_module_entitlement_registry",
+      "version": "20261002030000"
+    },
+    {
+      "name": "core_saas_ux",
+      "version": "20261003000000"
+    },
+    {
+      "name": "canonical_sales_schema",
+      "version": "20261003100000"
+    },
+    {
+      "name": "lastapp_sales_ingestion",
+      "version": "20261003110000"
+    },
+    {
+      "name": "sales_resumable_sync",
+      "version": "20261003120000"
+    },
+    {
+      "name": "lastapp_request_budgets",
+      "version": "20261008100000"
+    },
+    {
+      "name": "lastapp_location_lifecycle",
+      "version": "20261008110000"
+    }
+  ],
+  "historyAfter": [
+    {
+      "name": "horeca_core_baseline",
+      "version": "20260926000000"
+    },
+    {
+      "name": "ccr_fin_001_core_authorization",
+      "version": "20260927000000"
+    },
+    {
+      "name": "finance_atomic_bank_import",
+      "version": "20260928010000"
+    },
+    {
+      "name": "finance_classification_workflow",
+      "version": "20261001000000"
+    },
+    {
+      "name": "core_tenant_administration",
+      "version": "20261002000000"
+    },
+    {
+      "name": "core_secure_provisioning",
+      "version": "20261002010000"
+    },
+    {
+      "name": "core_legacy_fail_closed",
+      "version": "20261002020000"
+    },
+    {
+      "name": "core_module_entitlement_registry",
+      "version": "20261002030000"
+    },
+    {
+      "name": "core_saas_ux",
+      "version": "20261003000000"
+    },
+    {
+      "name": "canonical_sales_schema",
+      "version": "20261003100000"
+    },
+    {
+      "name": "lastapp_sales_ingestion",
+      "version": "20261003110000"
+    },
+    {
+      "name": "sales_resumable_sync",
+      "version": "20261003120000"
+    },
+    {
+      "name": "lastapp_request_budgets",
+      "version": "20261008100000"
+    },
+    {
+      "name": "lastapp_location_lifecycle",
+      "version": "20261008110000"
+    },
+    {
+      "name": "core_production_capabilities",
+      "version": "20261015090000"
+    },
+    {
+      "name": "production_execution_foundation",
+      "version": "20261015100000"
+    }
+  ],
+  "hosted": {
+    "rlsTables": 10,
+    "authorizationChecks": 68,
+    "authorization": [
+      {
+        "name": "authorized_owner_contract_fail_closed",
+        "result": "PASS"
+      },
+      {
+        "name": "CONSULTANT:production.batch.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "CONSULTANT:production.batch.correct",
+        "result": "PASS"
+      },
+      {
+        "name": "CONSULTANT:production.batch.log",
+        "result": "PASS"
+      },
+      {
+        "name": "CONSULTANT:production.plan.manage",
+        "result": "PASS"
+      },
+      {
+        "name": "CONSULTANT:production.view",
+        "result": "PASS"
+      },
+      {
+        "name": "CONSULTANT:production.waste.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "CONSULTANT:production.waste.log",
+        "result": "PASS"
+      },
+      {
+        "name": "COOK_COST_SHEET_MANAGER:production.batch.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "COOK_COST_SHEET_MANAGER:production.batch.correct",
+        "result": "PASS"
+      },
+      {
+        "name": "COOK_COST_SHEET_MANAGER:production.batch.log",
+        "result": "PASS"
+      },
+      {
+        "name": "COOK_COST_SHEET_MANAGER:production.plan.manage",
+        "result": "PASS"
+      },
+      {
+        "name": "COOK_COST_SHEET_MANAGER:production.view",
+        "result": "PASS"
+      },
+      {
+        "name": "COOK_COST_SHEET_MANAGER:production.waste.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "COOK_COST_SHEET_MANAGER:production.waste.log",
+        "result": "PASS"
+      },
+      {
+        "name": "explicit_revoke_over_grant",
+        "result": "PASS"
+      },
+      {
+        "name": "foreign_tenant",
+        "result": "PASS"
+      },
+      {
+        "name": "foreign_tenant_command_denied",
+        "result": "PASS"
+      },
+      {
+        "name": "inactive_membership",
+        "result": "PASS"
+      },
+      {
+        "name": "inactive_profile",
+        "result": "PASS"
+      },
+      {
+        "name": "inactive_unit",
+        "result": "PASS"
+      },
+      {
+        "name": "MANAGER:production.batch.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "MANAGER:production.batch.correct",
+        "result": "PASS"
+      },
+      {
+        "name": "MANAGER:production.batch.log",
+        "result": "PASS"
+      },
+      {
+        "name": "MANAGER:production.plan.manage",
+        "result": "PASS"
+      },
+      {
+        "name": "MANAGER:production.view",
+        "result": "PASS"
+      },
+      {
+        "name": "MANAGER:production.waste.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "MANAGER:production.waste.log",
+        "result": "PASS"
+      },
+      {
+        "name": "missing_entitlement",
+        "result": "PASS"
+      },
+      {
+        "name": "missing_entitlement_command_denied",
+        "result": "PASS"
+      },
+      {
+        "name": "missing_unit",
+        "result": "PASS"
+      },
+      {
+        "name": "operator_confirmation_denied",
+        "result": "PASS"
+      },
+      {
+        "name": "operator_log_contract_fail_closed",
+        "result": "PASS"
+      },
+      {
+        "name": "OWNER:production.batch.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "OWNER:production.batch.correct",
+        "result": "PASS"
+      },
+      {
+        "name": "OWNER:production.batch.log",
+        "result": "PASS"
+      },
+      {
+        "name": "OWNER:production.plan.manage",
+        "result": "PASS"
+      },
+      {
+        "name": "OWNER:production.view",
+        "result": "PASS"
+      },
+      {
+        "name": "OWNER:production.waste.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "OWNER:production.waste.log",
+        "result": "PASS"
+      },
+      {
+        "name": "platform_only_command_denied",
+        "result": "PASS"
+      },
+      {
+        "name": "PRODUCTION:production.batch.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "PRODUCTION:production.batch.correct",
+        "result": "PASS"
+      },
+      {
+        "name": "PRODUCTION:production.batch.log",
+        "result": "PASS"
+      },
+      {
+        "name": "PRODUCTION:production.plan.manage",
+        "result": "PASS"
+      },
+      {
+        "name": "PRODUCTION:production.view",
+        "result": "PASS"
+      },
+      {
+        "name": "PRODUCTION:production.waste.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "PRODUCTION:production.waste.log",
+        "result": "PASS"
+      },
+      {
+        "name": "revoked_command_denied",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_actions",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_batches",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_commands",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_consumptions",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_executions",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_outbox",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_outputs",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_policies",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_waste_confirmations",
+        "result": "PASS"
+      },
+      {
+        "name": "RLS_and_browser_grants:eco_production_wastes",
+        "result": "PASS"
+      },
+      {
+        "name": "VEGEN_PLATFORM_ADMIN:production.batch.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "VEGEN_PLATFORM_ADMIN:production.batch.correct",
+        "result": "PASS"
+      },
+      {
+        "name": "VEGEN_PLATFORM_ADMIN:production.batch.log",
+        "result": "PASS"
+      },
+      {
+        "name": "VEGEN_PLATFORM_ADMIN:production.plan.manage",
+        "result": "PASS"
+      },
+      {
+        "name": "VEGEN_PLATFORM_ADMIN:production.view",
+        "result": "PASS"
+      },
+      {
+        "name": "VEGEN_PLATFORM_ADMIN:production.waste.confirm",
+        "result": "PASS"
+      },
+      {
+        "name": "VEGEN_PLATFORM_ADMIN:production.waste.log",
+        "result": "PASS"
+      },
+      {
+        "name": "wrong_unit",
+        "result": "PASS"
+      },
+      {
+        "name": "wrong_unit_command_denied",
+        "result": "PASS"
+      }
+    ],
+    "anonymous": {
+      "status": "PASS",
+      "read": "DENIED",
+      "rpc": "DENIED"
+    },
+    "ownerAdapter": "FAIL_CLOSED",
+    "ownerExecution": "BLOCKED_AS_DESIGNED",
+    "authUsers": "UNCHANGED",
+    "productionRows": 0,
+    "protectedTableCount": 44,
+    "protectedSnapshotDigest": "16bd59ee5796fb61cdaa64d3ec826876fbabb6fc8ccef3c0c1ec51ec209bd431",
+    "protectedData": "UNCHANGED",
+    "existingLoggingGrants": "UNCHANGED",
+    "productionEntitlementEnabledForElCriollo": false
+  },
+  "capabilityMatrix": [
+    {
+      "code": "production.batch.confirm",
+      "required_module_key": "produccion",
+      "roles": [
+        "MANAGER",
+        "OWNER"
+      ],
+      "scope": "OPERATIONAL_UNIT"
+    },
+    {
+      "code": "production.batch.correct",
+      "required_module_key": "produccion",
+      "roles": [
+        "MANAGER",
+        "OWNER"
+      ],
+      "scope": "OPERATIONAL_UNIT"
+    },
+    {
+      "code": "production.batch.log",
+      "required_module_key": "produccion",
+      "roles": [
+        "COOK_COST_SHEET_MANAGER",
+        "MANAGER",
+        "OWNER",
+        "PRODUCTION"
+      ],
+      "scope": "OPERATIONAL_UNIT"
+    },
+    {
+      "code": "production.plan.manage",
+      "required_module_key": "produccion",
+      "roles": [
+        "COOK_COST_SHEET_MANAGER",
+        "MANAGER",
+        "OWNER"
+      ],
+      "scope": "OPERATIONAL_UNIT"
+    },
+    {
+      "code": "production.view",
+      "required_module_key": "produccion",
+      "roles": [
+        "CONSULTANT",
+        "COOK_COST_SHEET_MANAGER",
+        "MANAGER",
+        "OWNER",
+        "PRODUCTION"
+      ],
+      "scope": "OPERATIONAL_UNIT"
+    },
+    {
+      "code": "production.waste.confirm",
+      "required_module_key": "produccion",
+      "roles": [
+        "MANAGER",
+        "OWNER"
+      ],
+      "scope": "OPERATIONAL_UNIT"
+    },
+    {
+      "code": "production.waste.log",
+      "required_module_key": "produccion",
+      "roles": [
+        "COOK_COST_SHEET_MANAGER",
+        "MANAGER",
+        "OWNER",
+        "PRODUCTION"
+      ],
+      "scope": "OPERATIONAL_UNIT"
+    }
+  ],
+  "inventoryWrites": 0,
+  "outboxDelivery": "NOT_IMPLEMENTED",
+  "multiBackendConcurrency": "PENDING FOR HOSTED HARDENING",
+  "quality": {
+    "lint": "PASS_WITH_5_EXISTING_WARNINGS",
+    "typecheck": "PASS",
+    "suite": {
+      "files": 52,
+      "passed": 681,
+      "skipped": 1,
+      "durationSeconds": 165.27
+    },
+    "build": "PASS_WITH_BASELINE_AND_PLUGIN_TIMING_WARNINGS",
+    "csvPerformance": {
+      "passed": 1,
+      "skipped": 1,
+      "unchangedBudget": true
+    }
+  },
+  "initialRunFailures": [
+    "Two existing Sales timeouts; unchanged budgets passed on full rerun",
+    "Core registry fixture omitted new canonical CCR; fixed and full rerun passed"
+  ]
+}

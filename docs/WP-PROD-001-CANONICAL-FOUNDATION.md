@@ -2,6 +2,8 @@
 
 Date: 2026-10-15. Branch: `module/production`. Implementation for module review only; no hosted deployment or Inventory posting.
 
+Master integration update (2026-10-16): the module-only deployment restrictions and CCR proposal status below describe the original handoff. The separate authorized integration applied the canonical Core capability migration and this Production migration while retaining fail-closed owner references and zero Production facts. See [the Master integration record](MASTER-PRODUCTION-FOUNDATION-INTEGRATION.md) for current approval, hosted evidence and remaining gates.
+
 ## Source and resync
 
 The three October audit documents are preserved from audit commit `2f9506b9b4e9a60c5038b8a7e81592aa90de0f90`. Origin was fetched and verified: DEV `89abfb07c8d0fb2c45e6865da64515669c2d1057`, remote Production `b710bb9c89d2f2e9ca6573a88a2cbac23dae3b36`. The local branch had already fast-forwarded to the approved DEV base before this execution; reflog confirms that resync. Existing untracked foundation work was preserved and reviewed. No merge to DEV or main.

@@ -139,7 +139,8 @@ export function can(ctx: AuthorizationEvaluationContext): AuthorizationDecision 
         return { allowed: false, reason: 'Production membership does not include the operational unit', evaluatedAt };
       }
       // If user has restricted operational scopes, targetUnit must be in allowed list
-      if (allowedUnits && allowedUnits.length > 0 && !allowedUnits.includes(targetUnitId)) {
+      if (allowedUnits && allowedUnits.length > 0 && !allowedUnits.includes(targetUnitId) &&
+          !(ctx.requiredCapability.startsWith('production.') && ctx.membership.isOrganizationWide === true)) {
         return {
           allowed: false,
           reason: `User operational scope does not include operational unit '${targetUnitId}'`,
