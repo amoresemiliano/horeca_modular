@@ -35,6 +35,6 @@ describe('Production RPC boundary', () => {
   });
   it('does not surface internal database errors', async () => {
     const service = new ProductionService({rpc:async()=>({data:null,error:{code:'42501',message:'Private details'}})});
-    await expect(service.execute({} as ProductionCommand)).rejects.toThrow('42501');
+    await expect(service.execute({} as ProductionCommand)).rejects.toThrow('PRODUCTION_ACCESS_DENIED');
   });
 });

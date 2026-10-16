@@ -1,0 +1,38 @@
+{
+  "checks": [
+    "Missing access denies module entry",
+    "Read-only detail is immutable and hides mutation actions",
+    "Unavailable owners block entry without fake references or stock",
+    "Unknown conversion fails closed",
+    "Mobile draft create/edit/date/conversion, single submit, operator gate and stale revision",
+    "Deliberate confirm, immutable correction/reversal, three waste classes, pending posting and scope switch",
+    "Planning equality boundaries and UNKNOWN presentation",
+    "Read failure is understandable and retriable without fabricated data",
+    "320/390/768/1440 layouts have no horizontal overflow and 44px controls"
+  ],
+  "layouts": [
+    {
+      "viewport": 320,
+      "width": 320,
+      "touchTargets": true
+    },
+    {
+      "viewport": 390,
+      "width": 390,
+      "touchTargets": true
+    },
+    {
+      "viewport": 768,
+      "width": 768,
+      "touchTargets": true
+    },
+    {
+      "viewport": 1440,
+      "width": 1440,
+      "touchTargets": true
+    }
+  ],
+  "pageErrors": [],
+  "externalRequests": 0,
+  "status": "PASS"
+}

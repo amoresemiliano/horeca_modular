@@ -6,6 +6,6 @@ export function evaluateRequirement(minimum: string, maximum: string, actual: st
   if (actual === null) return { state: 'UNKNOWN' as const, suggestedQuantity: null };
   const stock = decimalAtoms(actual);
   // Compare four times the amount to avoid rounding a fractional boundary.
-  const state = stock < min ? 'CRITICAL' : stock * 4n < min * 3n + max ? 'NECESSARY' : stock > max ? 'EXCESS' : 'OPTIMAL';
+  const state: 'CRITICAL' | 'NECESSARY' | 'OPTIMAL' | 'EXCESS' = stock < min ? 'CRITICAL' : stock * 4n < min * 3n + max ? 'NECESSARY' : stock > max ? 'EXCESS' : 'OPTIMAL';
   return { state, suggestedQuantity: state === 'CRITICAL' || state === 'NECESSARY' ? decimalString(max - stock) : '0.000000' };
 }
