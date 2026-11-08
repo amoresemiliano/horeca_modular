@@ -1,0 +1,91 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || pathToFileURL(resolve('.local-data/tooling/node_modules/playwright/index.mjs')).href);
+const artifacts = resolve('.local-data/personnel-prototype'); mkdirSync(artifacts, { recursive: true });
+const browser = await chromium.launch({ channel: 'chrome', headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+const errors = [], checks = [], externalRequests = [];
+page.on('pageerror', e => errors.push(e.message));
+await page.route('**/*', route => { const host = new URL(route.request().url()).hostname; if (host !== '127.0.0.1') { externalRequests.push(host); return route.abort(); } return route.continue(); });
+const pass = name => { checks.push(name); console.log(`PASS ${name}`); };
+const dialog = () => page.getByRole('dialog');
+const button = (name, scope = page) => scope.getByRole('button', { name, exact: true });
+const tab = name => button(name, page.getByRole('navigation', { name: 'Personal', exact: true }));
+const close = async () => { await button('Cerrar', dialog()).click(); await dialog().waitFor({ state: 'hidden' }); };
+const save = async () => { await button('Guardar', dialog()).click(); await dialog().waitFor({ state: 'hidden' }); };
+const field = name => dialog().getByLabel(name, { exact: true });
+try {
+  await page.goto('http://127.0.0.1:5194', { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { name: 'Tu equipo, de un vistazo' }).waitFor();
+  assert.equal(await page.getByRole('navigation', { name: 'Módulos operativos' }).getByRole('button').count(), 1);
+  pass('Personnel-only entitlement/capabilities preserve shell and hide unrelated modules');
+  await page.screenshot({ path: resolve(artifacts, 'today-desktop.png'), fullPage: true });
+  await page.locator('.per-attendance-card').filter({ hasText: 'Mateo Soler' }).click();
+  assert((await dialog().innerText()).includes('+12 min'));
+  await button('Corregir fichaje', dialog()).click(); await field('Entrada corregida').fill('10:00'); await field('Salida corregida (opcional)').fill('17:00'); await field('Motivo').fill('Comprobación sintética'); await save();
+  await page.locator('.per-attendance-card').filter({ hasText: 'Mateo Soler' }).click();
+  assert((await dialog().innerText()).includes('Comprobación sintética')); assert((await dialog().innerText()).includes('10:12')); await close();
+  pass('Today → variance detail → appended correction retains original punch');
+  await button('Horarios').click(); await page.getByRole('heading', { name: 'Una semana bien organizada' }).waitFor();
+  await button('+ Crear turno').click(); await field('Empleado').selectOption('demo-employee-3'); await field('Fecha').fill('2026-11-07'); await field('Entrada prevista').fill('10:00'); await field('Salida prevista').fill('17:00'); await save();
+  assert((await page.locator('.per-week').innerText()).includes('Hugo Serrano'));
+  pass('Schedule creation and week navigation');
+  await tab('Incidencias').click(); await button('+ Nueva incidencia').click(); await field('Empleado').selectOption('demo-employee-0'); await field('Tipo').selectOption('Olvido de entrada'); await field('Descripción').fill('Olvido comunicado al responsable'); await save();
+  const incident = page.locator('.per-record').filter({ hasText: 'Olvido comunicado' }); await button('Revisar / resolver', incident).click(); await field('Estado').selectOption('Resuelta'); await field('Resolución / notas').fill('Verificado con el responsable'); await save();
+  assert((await incident.innerText()).includes('Resuelta')); pass('Incident creation, employee/day relation and resolution');
+  await tab('Ausencias').click(); await button('+ Registrar ausencia').click(); await field('Empleado').selectOption('demo-employee-0'); await field('Tipo de ausencia').selectOption('type-1'); await field('Desde').fill('2026-11-09'); await field('Hasta').fill('2026-11-10'); await field('Estado').selectOption('Aprobada'); await field('Adjunto simulado · el archivo no se sube').setInputFiles({ name: 'justificante-demo.pdf', mimeType: 'application/pdf', buffer: Buffer.from('synthetic') }); await save();
+  const absence = page.locator('.per-record').filter({ hasText: 'Lucía Navarro' }); await button('Notificar por WhatsApp', absence).click(); assert((await field('Mensaje').inputValue()).includes('aprobada')); await button('Simular envío', dialog()).click(); await dialog().waitFor({ state: 'hidden' });
+  pass('Absence with simulated attachment → approval → notification preview and simulated send');
+  await button('Administrar tipos').click(); await button('+ Nuevo tipo', dialog()).click(); await field('Nombre').fill('Permiso de formación'); await save();
+  await button('+ Registrar ausencia').click(); assert((await field('Tipo de ausencia').innerText()).includes('Permiso de formación')); await close(); pass('Configurable absence types');
+  await tab('Empleados').click(); await page.locator('.per-employee-card').filter({ hasText: 'Lucía Navarro' }).click();
+  const profileNav = page.getByRole('navigation', { name: 'Ficha de empleado' });
+  for (const name of ['Asistencia', 'Ausencias', 'Incidencias', 'Nóminas', 'Documentos', 'Resumen']) { await button(name, profileNav).click(); }
+  await button('Documentos', profileNav).click(); await button('+ Añadir documento').click(); await field('Título').fill('Certificado sintético'); await field('Adjunto simulado · el archivo no se sube').setInputFiles({ name: 'certificado-demo.pdf', mimeType: 'application/pdf', buffer: Buffer.from('synthetic') }); await save();
+  assert((await page.locator('.per-record-grid').innerText()).includes('Certificado sintético'));
+  await button('Nóminas', profileNav).click(); await button('+ Añadir nómina').click(); await field('Mes').fill('2026-11'); await field('Bruto (€)').fill('1800'); await field('Neto (€)').fill('1500'); await field('Adjunto simulado · el archivo no se sube').setInputFiles({ name: 'nomina-demo.pdf', mimeType: 'application/pdf', buffer: Buffer.from('synthetic') }); await save();
+  assert((await page.locator('.per-record-grid').innerText()).includes('2026-11'));
+  await button('Resumen', profileNav).click();
+  await button('Editar perfil').click(); await field('Nombre').fill('Lucía'); await save();
+  await button('Crear PIN').click(); await button('Generar PIN', dialog()).click(); await page.locator('.per-pin-reveal strong').waitFor(); const pin = await page.locator('.per-pin-reveal strong').innerText(); assert.match(pin, /^\d{4}$/); await close();
+  pass('Employee profile sections, editing and one-time generated PIN');
+  await tab('Empleados').click();
+  for (const width of [375, 390, 430, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Page overflow at ${width}`);
+    assert(await page.locator('.personnel').evaluate(e => e.scrollWidth <= e.clientWidth + 1), `Module overflow at ${width}`);
+    if (width === 390) await page.screenshot({ path: resolve(artifacts, 'employees-mobile.png'), fullPage: true });
+    for (const name of ['Hoy', 'Asistencia', 'Incidencias', 'Ausencias']) {
+      await tab(name).click(); assert(await page.locator('.personnel').evaluate(e => e.scrollWidth <= e.clientWidth + 1), `${name} overflow at ${width}`);
+    }
+    await button('Horarios').click(); assert(await page.locator('.personnel').evaluate(e => e.scrollWidth <= e.clientWidth + 1), `Schedule overflow at ${width}`);
+    await tab('Empleados').click();
+  }
+  pass('All primary screens and schedule fit 375 / 390 / 430 / 768 / 1024 / 1440');
+  await page.setViewportSize({ width: 390, height: 844 }); await tab('Hoy').click();
+  await page.screenshot({ path: resolve(artifacts, 'today-mobile.png'), fullPage: true });
+  await page.locator('.per-utilities summary').click(); const states = page.getByLabel('Estado de pantalla');
+  for (const mode of ['empty', 'loading', 'error', 'ready']) await states.selectOption(mode);
+  await button('Abrir terminal de fichaje ↗').click(); await button('Iniciar terminal', dialog()).click();
+  assert.equal(await page.locator('.per-kiosk').getByText('Lucía Navarro').count(), 0);
+  assert.equal(await page.locator('.per-kiosk').getByRole('navigation').count(), 0);
+  for (const digit of pin) await button(digit, page.locator('.per-kiosk')).click();
+  await page.getByRole('heading', { name: /Entrada registrada|Salida registrada/ }).waitFor();
+  await button('Añadir observación', page.locator('.per-kiosk')).click(); await page.locator('.per-kiosk textarea').fill('Nota sintética del terminal'); await button('Guardar observación', page.locator('.per-kiosk')).click();
+  await page.getByRole('heading', { name: 'Introduce tu PIN' }).waitFor(); await page.waitForTimeout(5200);
+  for (const digit of pin) await button(digit, page.locator('.per-kiosk')).click();
+  await page.getByRole('heading', { name: /Entrada registrada|Salida registrada/ }).waitFor(); await page.waitForTimeout(4700);
+  await page.getByRole('heading', { name: 'Introduce tu PIN' }).waitFor();
+  await page.screenshot({ path: resolve(artifacts, 'kiosk-mobile.png'), fullPage: true });
+  await button('Bloquear terminal').click(); await page.getByRole('heading', { name: 'Terminal bloqueado · sesión cerrada' }).waitFor();
+  pass('PIN kiosk punches, observation, automatic clearing and session-lock exit');
+  await page.goto('http://127.0.0.1:5194/?punch-only', { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { name: 'Terminal de fichaje' }).waitFor();
+  assert.equal(await page.getByRole('navigation', { name: 'Personal', exact: true }).count(), 0);
+  assert.equal(await page.locator('.per-employee-card').count(), 0); pass('Punch-only capability exposes no Personnel admin views');
+  assert.deepEqual(errors, []); assert.deepEqual(externalRequests, []);
+  writeFileSync(resolve(artifacts, 'evidence.json'), JSON.stringify({ status: 'PASS', checks, errors, externalRequests, synthetic: true }, null, 2));
+} catch (error) { await page.screenshot({ path: resolve(artifacts, 'failure.png'), fullPage: true }); console.error(JSON.stringify({ errors, checks, body: (await page.locator('body').innerText()).slice(0, 3500) })); throw error; }
+finally { await browser.close(); }

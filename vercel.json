@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "module/personnel": false
+    }
+  },
   "functions": {
     "api/sales.ts": {
       "maxDuration": 60

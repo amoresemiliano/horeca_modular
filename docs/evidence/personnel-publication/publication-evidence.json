@@ -1,0 +1,240 @@
+{
+  "date": "2026-11-08",
+  "timezone": "Europe/Madrid",
+  "repository": "https://github.com/amoresemiliano/horeca_modular",
+  "branch": "module/personnel",
+  "devBaseSha": "e9423023a656244fb2d30b65920c6091fd48784f",
+  "initialRemoteDevSha": "e9423023a656244fb2d30b65920c6091fd48784f",
+  "initialRemoteMainSha": "04cfc8238c0a7a2cf310e3bbccdd565bd9d072b3",
+  "remoteBranchInitiallyAbsent": true,
+  "originalCheckout": {
+    "branch": "main",
+    "head": "04cfc8238c0a7a2cf310e3bbccdd565bd9d072b3",
+    "preserved": true,
+    "initialStatus": [
+      " M .env.example",
+      " M src/components/MainLayout.jsx",
+      "?? docs/CCR-ESC-001.md",
+      "?? docs/ESCANDALLOS-CANONICAL-DOMAIN.md",
+      "?? docs/ESCANDALLOS-IMPORT-STRATEGY.md",
+      "?? docs/ESCANDALLOS-SOURCE-AUDIT.md",
+      "?? docs/ESCANDALLOS-SOURCE-TO-TARGET-MAP.md",
+      "?? docs/WP-ESC-001-PROPOSAL.md",
+      "?? src/modules/personal/",
+      "?? tests/personal/",
+      "?? tests/unit/personnel_prototype.test.js"
+    ]
+  },
+  "transfer": {
+    "method": "Separate worktree from exact origin/dev; allowlisted copy with SHA-256 integrity checks",
+    "files": [
+      {
+        "path": ".env.example",
+        "sha256": "0f229336cee3e78ea21052f1b6230eb1138af6fd7eb0a7267a96d8f61e2377a5"
+      },
+      {
+        "path": "src/components/MainLayout.jsx",
+        "sha256": "0ec7bbb637a0f7df6406ebcd577890eeef79d07953edb2d26f2445900bb4adc7"
+      },
+      {
+        "path": "tests/unit/personnel_prototype.test.js",
+        "sha256": "71860ef4cef66fec90d2c8ccf105e524a8c1db7776626bc45bc504a7d54ae893"
+      },
+      {
+        "path": "src/modules/personal/Attendance.jsx",
+        "sha256": "85a84e2a2fb85c31345842d5677813b22e2d58cd1672f4777e25a0c3402a0793"
+      },
+      {
+        "path": "src/modules/personal/domain.js",
+        "sha256": "2b555b947e71a072022cc30d272feb12a497d6ee825bcd8c0aa44a01abc352f8"
+      },
+      {
+        "path": "src/modules/personal/Editors.jsx",
+        "sha256": "a3da98162814e5245956e6834733e14157f264143281f2b99e570b41315016b6"
+      },
+      {
+        "path": "src/modules/personal/EmployeeProfile.jsx",
+        "sha256": "dc32f43db43cb45c9f1b93253039b0ef1a0f96608b207473b4f3beb7996483c9"
+      },
+      {
+        "path": "src/modules/personal/fixtures.js",
+        "sha256": "a14c021d476e5f820ab495ad18fbec3773c78ae32b70c51b6838fb7e7256ab98"
+      },
+      {
+        "path": "src/modules/personal/Kiosk.jsx",
+        "sha256": "c972f0b3e0c90eab76a26b02a5fda157c1c6b59cde935f92ff7d075f882be622"
+      },
+      {
+        "path": "src/modules/personal/personal.css",
+        "sha256": "1c0ec056d4412ca37f9354e19556d2a6eede4478e471d1dfc27efff6b9e8d169"
+      },
+      {
+        "path": "src/modules/personal/PersonnelApp.jsx",
+        "sha256": "11d5437fce58e76484a83df7c2a309228682f995f6f011e3364a1f8795dfe9ab"
+      },
+      {
+        "path": "src/modules/personal/README.md",
+        "sha256": "0ff2d6a3f4fccd806dc31dfdceb5fbae84a58a662493e3d57d7a752f7ce3fa1d"
+      },
+      {
+        "path": "src/modules/personal/Records.jsx",
+        "sha256": "7796f792fc1a758159a1b073819a8cd7c0c4b98fa936783c2f3ccb3fe474135c"
+      },
+      {
+        "path": "src/modules/personal/services.js",
+        "sha256": "2216d7aa61df708e6d6903196832ce9144f9e1572421e1c54239838b0e602a84"
+      },
+      {
+        "path": "src/modules/personal/ui.jsx",
+        "sha256": "6fbd3ace4d843cce2816f6947969bf5460a22f5e2714f3858d8d853550f88810"
+      },
+      {
+        "path": "tests/personal/auth.jsx",
+        "sha256": "4e4be97e0cad3cf6c1c4eefcde3bb1582b0c925c9df380afa715590bdedd8351"
+      },
+      {
+        "path": "tests/personal/browser.mjs",
+        "sha256": "d6bd3c3b2dbdfe6103391a6e811c7a6d0310a66a95a5b3bbf8b2862f3290b57a"
+      },
+      {
+        "path": "tests/personal/index.html",
+        "sha256": "99ccd22ba7ff341f5fadbe1b45f97b243f55abcc2d5a624377123b367ee65071"
+      },
+      {
+        "path": "tests/personal/main.jsx",
+        "sha256": "ac11dad84cf7cb9ad953f15fd9913ef42ae0681dca836f258c99cec64026e531"
+      },
+      {
+        "path": "tests/personal/vite.config.mjs",
+        "sha256": "95154a8e4fd330962bb40e32a45bb32592e8d70f438ce6ca010d1022a19c99a0"
+      }
+    ],
+    "allPrototypeBytesUnchanged": true,
+    "excludedUnrelatedLocalDocuments": [
+      {
+        "path": "docs/CCR-ESC-001.md",
+        "sha256": "968b0e6deb100d6e8048e3ae716e254302874db58bec76f0d5426a3ed522f3aa"
+      },
+      {
+        "path": "docs/ESCANDALLOS-CANONICAL-DOMAIN.md",
+        "sha256": "6c3853760b0a1f3d11d2ef95da03d4bcb511d783b0c87e88c6fb757b82af3c90"
+      },
+      {
+        "path": "docs/ESCANDALLOS-IMPORT-STRATEGY.md",
+        "sha256": "4a297b2d725bdf031268ca26aebc7ef1efd95cfbdc0752c2d6cbefc7cc61221d"
+      },
+      {
+        "path": "docs/ESCANDALLOS-SOURCE-AUDIT.md",
+        "sha256": "2dd5ff78fa37529712b78b135fa07c0ae53f4fc9ca4000cabb1a8db727a3983e"
+      },
+      {
+        "path": "docs/ESCANDALLOS-SOURCE-TO-TARGET-MAP.md",
+        "sha256": "60fd3b0fdd7d82bfc177f13cfea7ed8219c6e0ec3ab9aefb51fcef4c01eee0ac"
+      },
+      {
+        "path": "docs/WP-ESC-001-PROPOSAL.md",
+        "sha256": "f39ecbc6b7a8d8eecdf61ed8b5882ad6e2ab049b45ab676f2afbb6026e463e2c"
+      }
+    ]
+  },
+  "scope": [
+    "Hoy",
+    "Asistencia",
+    "Horarios",
+    "Fichaje PIN",
+    "Incidencias",
+    "Ausencias",
+    "Empleados",
+    "Nominas",
+    "Documentos",
+    "Simulated notifications",
+    "Existing shell and Core integration",
+    "Responsive CSS",
+    "Personnel README",
+    "Unit tests and browser harness"
+  ],
+  "quality": {
+    "npm run lint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 6,
+      "devBaselineWarnings": 5,
+      "preservedPrototypeWarnings": 1,
+      "note": "Existing prototype ui.jsx effect cleanup warning retained to preserve the implementation exactly; unrelated dev warnings not fixed."
+    },
+    "npm run typecheck": {
+      "exitCode": 0
+    },
+    "npm run test -- --run": {
+      "exitCode": 0,
+      "filesPassed": 53,
+      "testsPassed": 689,
+      "testsSkipped": 1,
+      "hostedTestsEnabled": false,
+      "databaseTests": "Disposable in-memory PGlite fixtures only; no shared Supabase SQL applied."
+    },
+    "npm run build": {
+      "exitCode": 0,
+      "warnings": [
+        "Existing stale Browserslist database",
+        "Chunk larger than 500 kB",
+        "Plugin timing diagnostics"
+      ],
+      "deploymentPerformed": false
+    },
+    "node tests/personal/browser.mjs": {
+      "exitCode": 0,
+      "checksPassed": 10,
+      "externalRequests": [],
+      "pageErrors": [],
+      "viewports": [
+        375,
+        390,
+        430,
+        768,
+        1024,
+        1440
+      ]
+    }
+  },
+  "environment": {
+    "dependencies": "Ignored node_modules junction reuses original checkout installation; package files unchanged against dev",
+    "realEnvCopied": false,
+    "browser": "Existing Playwright installation and headless Chrome; synthetic test-only auth adapter"
+  },
+  "publicationSafety": {
+    "additionalFiles": [
+      "vercel.json",
+      "docs/evidence/personnel-publication/"
+    ],
+    "vercelGuard": {
+      "git.deploymentEnabled": {
+        "module/personnel": false
+      }
+    },
+    "vercelGuardReference": "https://vercel.com/docs/project-configuration/git-configuration#git.deploymentenabled",
+    "ciAudit": ".github/workflows/ci.yml has no push trigger for module/personnel and no deployment jobs; unchanged.",
+    "pushPlan": "Explicit HEAD:refs/heads/module/personnel, no force, no dev/main refspecs; verify remote SHA after push.",
+    "noMerge": true,
+    "noDeploymentCommand": true,
+    "noRealData": true,
+    "noSharedDatabaseChanges": true,
+    "noPersonnelMigrations": true,
+    "noRlsChanges": true
+  },
+  "logs": [
+    "docs/evidence/personnel-publication/lint-dev-baseline.txt",
+    "docs/evidence/personnel-publication/lint.txt",
+    "docs/evidence/personnel-publication/typecheck.txt",
+    "docs/evidence/personnel-publication/test.txt",
+    "docs/evidence/personnel-publication/build.txt",
+    "docs/evidence/personnel-publication/browser.txt"
+  ],
+  "screenshots": [
+    "docs/evidence/personnel-publication/today-desktop.png",
+    "docs/evidence/personnel-publication/today-mobile.png",
+    "docs/evidence/personnel-publication/employees-mobile.png",
+    "docs/evidence/personnel-publication/kiosk-mobile.png"
+  ],
+  "reviewReadiness": "READY_FOR_DOMAIN_REVIEW; synthetic frontend prototype only, not backend/production approval"
+}

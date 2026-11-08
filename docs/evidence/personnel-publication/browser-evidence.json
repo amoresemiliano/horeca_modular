@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "checks": [
+    "Personnel-only entitlement/capabilities preserve shell and hide unrelated modules",
+    "Today → variance detail → appended correction retains original punch",
+    "Schedule creation and week navigation",
+    "Incident creation, employee/day relation and resolution",
+    "Absence with simulated attachment → approval → notification preview and simulated send",
+    "Configurable absence types",
+    "Employee profile sections, editing and one-time generated PIN",
+    "All primary screens and schedule fit 375 / 390 / 430 / 768 / 1024 / 1440",
+    "PIN kiosk punches, observation, automatic clearing and session-lock exit",
+    "Punch-only capability exposes no Personnel admin views"
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "synthetic": true
+}

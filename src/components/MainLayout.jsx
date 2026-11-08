@@ -6,6 +6,7 @@ import KpisApp        from '../modules/kpis/KpisApp';
 import PrediccionApp  from '../modules/prediccion/PrediccionApp';
 import EscandallosApp from '../modules/escandallos/EscandallosApp';
 import HorariosApp    from '../modules/horarios/HorariosApp';
+import PersonnelApp, { PERSONNEL_PROTOTYPE } from '../modules/personal/PersonnelApp';
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
 import TenantAdministration from '../modules/administration/TenantAdministration';
 import { navigationAllowed, banksSectionAllowed, visibleModules } from '../application/tenancy/accessNavigation';
@@ -25,7 +26,7 @@ const MODULOS = {
   Escandallos: { icon: '🥘', label: 'Escandallos',  tabs: ['Preparación', 'Platos', 'Productos'],                                  group: 'operaciones'},
   Compras:     { icon: '🛒', label: 'Compras',      tabs: ['Orden', 'Historial'],                                                  group: 'operaciones'},
   Producción:  { icon: '🍳', label: 'Producción',   tabs: ['Registro', 'Historial', 'Resumen'],                                    group: 'operaciones'},
-  Personal:    { icon: '👤', label: 'Personal',     tabs: ['Fichajes', 'Incidencias', 'Empleados', 'Informes'],                     group: 'rrhh'       },
+  Personal:    { icon: '👤', label: 'Personal',     tabs: PERSONNEL_PROTOTYPE ? ['Hoy', 'Asistencia', 'Incidencias', 'Ausencias', 'Empleados'] : ['Fichajes', 'Incidencias', 'Empleados', 'Informes'],                     group: 'rrhh'       },
   Predicción:  { icon: '🔮', label: 'Predicción',   tabs: ['Carga', 'Stock', 'Predicciones'],                                       group: 'analytics' },
   PlatformAdmin: { icon: '⚙', label: 'Plataforma', tabs: ['Tenants'], group: 'sistema' },
   Config:      { icon: '⚙',  label: 'Organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
@@ -41,7 +42,7 @@ const GRUPOS = {
 };
 
 /* ─── RENDER DE CONTENIDO ────────────────────────────────────────────────── */
-const renderModulo = (modulo, tab, user) => {
+const renderModulo = (modulo, tab, user, onPersonnelNavigate) => {
   switch (modulo) {
     case 'Bancos':      return <ExtractosApp    tabActiva={tab} />;
     case 'Inventario':  return <InventarioApp   tabActiva={tab} />;
@@ -50,7 +51,7 @@ const renderModulo = (modulo, tab, user) => {
     case 'KPI':         return <KpisApp         tabActiva={tab} />;
     case 'Predicción':  return <PrediccionApp   tabActiva={tab} />;
     case 'Escandallos': return <EscandallosApp  tabActiva={tab} />;
-    case 'Personal':    return <HorariosApp     tabActiva={tab} />;
+    case 'Personal':    return PERSONNEL_PROTOTYPE ? <PersonnelApp tabActiva={tab} onNavigate={onPersonnelNavigate} /> : <HorariosApp tabActiva={tab} />;
     case 'Producción':  return <ProduccionApp   tabActiva={tab} />;
     case 'Config':      return <TenantAdministration />;
     case 'PlatformAdmin': return <TenantAdministration platform />;
@@ -153,7 +154,7 @@ const MainLayout = ({ user: propsUser }) => {
   const tabActual = MODULOS[moduloActivo];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--c-bg)', fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
+    <div className={moduloActivo === 'Personal' && PERSONNEL_PROTOTYPE ? 'shell-personnel-prototype' : undefined} style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--c-bg)', fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
 
       {/* ══════════════════════════════════════════════════
           TOPBAR
@@ -515,7 +516,7 @@ const MainLayout = ({ user: propsUser }) => {
               {moduloActivo !== 'PlatformAdmin' && !activeOrganization ? <div role="status"><h2 className="heading-section">Selecciona una organización</h2><p>Elige un tenant en el selector para abrir {MODULOS[moduloActivo]?.label || 'sus módulos'}. El contexto de plataforma no concede acceso a sus datos.</p></div>
                 : (!navigationAllowed(moduloActivo, can, isModuleEnabled, platformCan) || (moduloActivo === 'Bancos' && !banksSectionAllowed(tabActiva, can)))
                 ? <AccesoRestringido modulo={moduloActivo} />
-                : renderModulo(moduloActivo, tabActiva, user)
+                : renderModulo(moduloActivo, tabActiva, user, setTabActiva)
               }
             </div>
           </div>
