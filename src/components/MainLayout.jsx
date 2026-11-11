@@ -7,6 +7,8 @@ import PrediccionApp  from '../modules/prediccion/PrediccionApp';
 import EscandallosApp from '../modules/escandallos/EscandallosApp';
 import HorariosApp    from '../modules/horarios/HorariosApp';
 import PersonnelApp, { PERSONNEL_PROTOTYPE } from '../modules/personal/PersonnelApp';
+import ProductionPersonnelApp from '../modules/personnel-live/ProductionPersonnelApp';
+import { PERSONNEL_ATTENDANCE_ENABLED } from '../modules/personnel-live/config';
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
 import TenantAdministration from '../modules/administration/TenantAdministration';
 import { navigationAllowed, banksSectionAllowed, visibleModules } from '../application/tenancy/accessNavigation';
@@ -26,7 +28,7 @@ const MODULOS = {
   Escandallos: { icon: '🥘', label: 'Escandallos',  tabs: ['Preparación', 'Platos', 'Productos'],                                  group: 'operaciones'},
   Compras:     { icon: '🛒', label: 'Compras',      tabs: ['Orden', 'Historial'],                                                  group: 'operaciones'},
   Producción:  { icon: '🍳', label: 'Producción',   tabs: ['Registro', 'Historial', 'Resumen'],                                    group: 'operaciones'},
-  Personal:    { icon: '👤', label: 'Personal',     tabs: PERSONNEL_PROTOTYPE ? ['Hoy', 'Asistencia', 'Incidencias', 'Ausencias', 'Empleados'] : ['Fichajes', 'Incidencias', 'Empleados', 'Informes'],                     group: 'rrhh'       },
+  Personal:    { icon: '👤', label: 'Personal',     tabs: PERSONNEL_ATTENDANCE_ENABLED ? ['Hoy', 'Asistencia', 'Horarios', 'Empleados', 'Fichaje'] : PERSONNEL_PROTOTYPE ? ['Hoy', 'Asistencia', 'Incidencias', 'Ausencias', 'Empleados'] : ['Fichajes', 'Incidencias', 'Empleados', 'Informes'],                     group: 'rrhh'       },
   Predicción:  { icon: '🔮', label: 'Predicción',   tabs: ['Carga', 'Stock', 'Predicciones'],                                       group: 'analytics' },
   PlatformAdmin: { icon: '⚙', label: 'Plataforma', tabs: ['Tenants'], group: 'sistema' },
   Config:      { icon: '⚙',  label: 'Organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
@@ -51,7 +53,7 @@ const renderModulo = (modulo, tab, user, onPersonnelNavigate) => {
     case 'KPI':         return <KpisApp         tabActiva={tab} />;
     case 'Predicción':  return <PrediccionApp   tabActiva={tab} />;
     case 'Escandallos': return <EscandallosApp  tabActiva={tab} />;
-    case 'Personal':    return PERSONNEL_PROTOTYPE ? <PersonnelApp tabActiva={tab} onNavigate={onPersonnelNavigate} /> : <HorariosApp tabActiva={tab} />;
+    case 'Personal':    return PERSONNEL_ATTENDANCE_ENABLED ? <ProductionPersonnelApp tabActiva={tab} onNavigate={onPersonnelNavigate} /> : PERSONNEL_PROTOTYPE ? <PersonnelApp tabActiva={tab} onNavigate={onPersonnelNavigate} /> : <HorariosApp tabActiva={tab} />;
     case 'Producción':  return <ProduccionApp   tabActiva={tab} />;
     case 'Config':      return <TenantAdministration />;
     case 'PlatformAdmin': return <TenantAdministration platform />;
@@ -154,7 +156,7 @@ const MainLayout = ({ user: propsUser }) => {
   const tabActual = MODULOS[moduloActivo];
 
   return (
-    <div className={moduloActivo === 'Personal' && PERSONNEL_PROTOTYPE ? 'shell-personnel-prototype' : undefined} style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--c-bg)', fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
+    <div className={moduloActivo === 'Personal' && (PERSONNEL_PROTOTYPE || PERSONNEL_ATTENDANCE_ENABLED) ? 'shell-personnel-prototype' : undefined} style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--c-bg)', fontFamily: 'var(--font-body)', overflow: 'hidden' }}>
 
       {/* ══════════════════════════════════════════════════
           TOPBAR

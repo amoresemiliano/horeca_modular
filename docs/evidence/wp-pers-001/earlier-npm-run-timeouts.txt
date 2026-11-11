@@ -1,0 +1,462 @@
+> horeca-modular@0.1.0 test:run
+> vitest run
+
+
+ RUN  v5.0.0 <personnel-worktree>
+
+ ❯ tests/unit/finance_import_wiring.test.ts (3 tests | 1 failed) 10135ms
+   ❯ Finance active UI wiring after Core integration (3)
+     × has no legacy import writer or operation_type in browser source 9467ms
+ ❯ tests/unit/personnel_http_security.test.ts (12 tests | 3 failed) 22935ms
+   ❯ Personnel backend HTTP boundary and scrypt credentials (12)
+     × uses salted scrypt, tenant-bound keyed lookup and rejects wrong PIN/pepper 5644ms
+     × does not require or create an application user for punching and returns no private credential 5223ms
+     × returns generic PIN failure for unsuccessful verification 5077ms
+ ❯ tests/integration/dev_environment_boundary.test.ts (7 tests | 4 failed) 29789ms
+   ❯ HORECA shared project boundary (7)
+     × accepts only the canonical hosted DEV origin 6202ms
+     × rejects another project before creating a client: https://unrelated-project.supabase.co 7690ms
+     × rejects another project before creating a client: https://vmxjqwlfwnphorthhcwu.supabase.co.attacker.invalid 6609ms
+     × rejects missing browser credentials instead of selecting a hardcoded key 5885ms
+ ❯ tests/integration/sales/IngestSalesCsvUseCase.test.ts (13 tests | 3 failed) 57449ms
+   ❯ IngestSalesCsvUseCase Integration Tests with Approved Fixtures (13)
+     × 1. Ingests standard ~799-row dataset (tabs-report-0.csv) with exact row count and ~14,980.70 EUR revenue 11192ms
+     × 3. Ingests the 5,000-row dataset with exact revenue and 0 duplicate collisions 32415ms
+     × 4. Re-importing the same CSV file twice produces NO duplicate sales (100% duplicate detection) 8430ms
+ ❯ tests/unit/personnel_prototype.test.js (8 tests | 4 failed) 68795ms
+   ❯ Personnel prototype domain and mock ports (8)
+     × rejects overlapping schedules and copies only missing shifts 35557ms
+     × generates non-retrievable credentials and records in/out with duplicate suppression 5391ms
+     × throttles unsuccessful attempts without disclosing an identity 5496ms
+     × simulates files and notifications without network or retained binary 11158ms
+ ❯ tests/unit/sales/CsvIdentityCompatibility.test.ts (20 tests | 1 failed) 11860ms
+   ❯ CSV SHA-256 compatibility with reviewed 5e767ec (20)
+     × preserves every identity and the file hash for tabs-report-0-2.csv 7113ms
+node.exe : [vitest-pool]: Timeout terminating forks worker for test files C:/Users/Emiliano/Documents/1. Sistemas/El
+Criollo/el-criollo-ecosistema/04_horeca_modular_personnel/tests/unit/sales/CsvIdentityCompatibility.test.ts.
+En C:\Program Files\nodejs\npm.ps1: 29 Carácter: 3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([vitest-pool]: ...bility.test.ts.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+ ❯ tests/unit/finance_parsers.test.ts (25 tests | 1 failed) 21963ms
+   ❯ Excel containers preserve all four canonical parser families (8)
+     × BBVA_ACCOUNT parses an actual .xlsx workbook 5961ms
+ ❯ tests/integration/sales/NativeEsmStartup.test.ts (1 test | 1 failed) 82864ms
+   × starts both Sales handlers under native Node ESM and denies an anonymous request before network access 82655ms
+ ❯ tests/integration/sales/LastAppRateBudget.test.ts (13 tests | 7 skipped) 169805ms
+ ❯ tests/integration/ccr_fin_001_postgres.test.ts (41 tests | 41 skipped) 172957ms
+ ❯ tests/integration/core_baseline_postgres.test.ts (6 tests | 6 skipped) 174144ms
+ ❯ tests/integration/personnel_attendance_postgres.test.ts (11 tests | 11 skipped) 177590ms
+ ❯ tests/integration/production_foundation_postgres.test.ts (28 tests | 28 skipped) 178825ms
+ ❯ tests/integration/sales/LastAppPostgres.test.ts (8 tests | 8 skipped) 188237ms
+ ❯ tests/integration/sales/ResumableSync.test.ts (7 tests | 5 skipped) 191362ms
+ ❯ tests/integration/finance_workflow_postgres.test.ts (52 tests | 52 skipped) 161490ms
+ ❯ tests/integration/core_administration_postgres.test.ts (21 tests | 21 skipped) 204085ms
+ ❯ tests/integration/sales/LocationLifecycle.test.ts (33 tests | 13 skipped) 206658ms
+ ❯ tests/integration/finance_atomic_postgres.test.ts (27 tests | 27 skipped) 139213ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 11 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/ccr_fin_001_postgres.test.ts > CCR-FIN-001 embedded PostgreSQL authorization
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/ccr_fin_001_postgres.test.ts:17:3
+     15|   const gate = 'STATEMENTS_IMPORT_CONFIRM';
+     16|   const migration = readFileSync('supabase/migrations/20260927000000_c…
+     17|   beforeAll(async () => {
+       |   ^
+     18|     db = new PGlite();
+     19|     await db.exec(readFileSync('tests/fixtures/core/ccr_fin_001_schema…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/30]⎯
+
+ FAIL  tests/integration/core_administration_postgres.test.ts > WP-CORE-003 complete migration chain: embedded
+PostgreSQL, real roles/RLS
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/core_administration_postgres.test.ts:13:2
+     11| describe('WP-CORE-003 complete migration chain: embedded PostgreSQL, r…
+     12|  let db:PGlite;
+     13|  beforeAll(async()=>{
+       |  ^
+     14|   db=new PGlite();
+     15|   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE R…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/30]⎯
+
+ FAIL  tests/integration/core_baseline_postgres.test.ts > Consolidated HORECA baseline in embedded PostgreSQL (not
+hosted Auth)
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/core_baseline_postgres.test.ts:9:3
+      7| describe('Consolidated HORECA baseline in embedded PostgreSQL (not hos…
+      8|   let db: PGlite;
+      9|   beforeAll(async () => {
+       |   ^
+     10|     db = new PGlite();
+     11|     // Empty Auth contract stub only. Never insert or update auth.user…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/30]⎯
+
+ FAIL  tests/integration/finance_atomic_postgres.test.ts > Finance atomic SQL on embedded PostgreSQL (not hosted / not
+a concurrent-backend proof)
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/finance_atomic_postgres.test.ts:18:3
+     16| describe('Finance atomic SQL on embedded PostgreSQL (not hosted / not …
+     17|   let db: PGlite;
+     18|   beforeAll(async () => {
+       |   ^
+     19|     db = new PGlite();
+     20|     // Supabase Auth is an external fixture dependency: replace only i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/30]⎯
+
+ FAIL  tests/integration/finance_workflow_postgres.test.ts > WP-FIN-002 upgraded Finance contract on embedded
+PostgreSQL
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/finance_workflow_postgres.test.ts:19:3
+     17| describe('WP-FIN-002 upgraded Finance contract on embedded PostgreSQL'…
+     18|   let db: PGlite;
+     19|   beforeAll(async () => {
+       |   ^
+     20|     db = new PGlite();
+     21|     // Supabase Auth is an external fixture dependency: replace only i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/30]⎯
+
+ FAIL  tests/integration/personnel_attendance_postgres.test.ts > Personnel real PostgreSQL contracts, RLS and device
+commands (ephemeral only)
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/personnel_attendance_postgres.test.ts:11:2
+      9| describe('Personnel real PostgreSQL contracts, RLS and device commands…
+     10|  let db:PGlite;
+     11|  beforeAll(async()=>{
+       |  ^
+     12|   db=new PGlite();
+     13|   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE R…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/30]⎯
+
+ FAIL  tests/integration/production_foundation_postgres.test.ts > Production canonical commands, immutable facts and
+real PostgreSQL RLS (isolated)
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/production_foundation_postgres.test.ts:18:2
+     16| describe('Production canonical commands, immutable facts and real Post…
+     17|  let db:PGlite;
+     18|  beforeAll(async()=>{
+       |  ^
+     19|   db=new PGlite();
+     20|   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE R…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/30]⎯
+
+ FAIL  tests/integration/sales/LastAppPostgres.test.ts > Sales canonical migration, tenant constraints and trusted
+persistence in PostgreSQL
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/sales/LastAppPostgres.test.ts:14:3
+     12|   const run='40000000-0000-0000-0000-000000000001';
+     13|   const tab='50000000-0000-0000-0000-000000000001';
+     14|   beforeAll(async()=>{
+       |   ^
+     15|     db=new PGlite();
+     16|     await db.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE R…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/30]⎯
+
+ FAIL  tests/integration/sales/LastAppRateBudget.test.ts > distributed Last.app request admission with authoritative
+PostgreSQL state
+Error: Hook timed out in 30000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/sales/LastAppRateBudget.test.ts:23:3
+     21|   const adapter=(token:string,times:number[],reply:()=>Response=()=>Re…
+     22|     fetch:async()=>{times.push(now);return reply();}});
+     23|   beforeAll(async()=>{
+       |   ^
+     24|     db=new PGlite();await db.exec(`CREATE ROLE anon;CREATE ROLE authen…
+     25|       CREATE FUNCTION public.test_rate_clock() RETURNS timestamptz LAN…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/30]⎯
+
+ FAIL  tests/integration/sales/LastAppRateBudget.test.ts > distributed Last.app request admission with authoritative
+PostgreSQL state
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/sales/LastAppRateBudget.test.ts:29:3
+     27|     await db.exec(readFileSync('supabase/migrations/20261008100000_las…
+     28|   },30000);
+     29|   afterAll(async()=>{await db?.close();});
+       |   ^
+     30|   it('cannot dispatch 16 serial attempts in a one-second budget',async…
+     31|     now=0;const times:number[]=[];const source=adapter('burst',times);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/30]⎯
+
+ FAIL  tests/integration/sales/LocationLifecycle.test.ts > real PostgreSQL lifecycle transactions and provider handler
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/sales/LocationLifecycle.test.ts:61:2
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/30]⎯
+
+ FAIL  tests/integration/sales/ResumableSync.test.ts > resumable source windows with real PostgreSQL checkpoints and
+canonical writes
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ tests/integration/sales/ResumableSync.test.ts:39:3
+     37|     }catch(error){return {data:null,error};}
+     38|   }} as unknown as SupabaseClient;
+     39|   beforeAll(async()=>{
+       |   ^
+     40|     db=new PGlite();
+     41|     await db.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE R…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/30]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/dev_environment_boundary.test.ts > HORECA shared project boundary > accepts only the
+canonical hosted DEV origin
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/integration/dev_environment_boundary.test.ts:18:3
+     16|   }
+     17|
+     18|   it('accepts only the canonical hosted DEV origin', async () => {
+       |   ^
+     19|     const result = await config('https://vmxjqwlfwnphorthhcwu.supabase…
+     20|     expect(result.supabase.url).toBe('https://vmxjqwlfwnphorthhcwu.sup…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/30]⎯
+
+ FAIL  tests/integration/dev_environment_boundary.test.ts > HORECA shared project boundary > rejects another project
+before creating a client: https://unrelated-project.supabase.co
+ FAIL  tests/integration/dev_environment_boundary.test.ts > HORECA shared project boundary > rejects another project
+before creating a client: https://vmxjqwlfwnphorthhcwu.supabase.co.attacker.invalid
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/integration/dev_environment_boundary.test.ts:26:5
+     24|     'https://unrelated-project.supabase.co',
+     25|     'https://vmxjqwlfwnphorthhcwu.supabase.co.attacker.invalid',
+     26|   ])('rejects another project before creating a client: %s', async url…
+       |     ^
+     27|     await expect(config(url)).rejects.toThrow('HORECA DEV and PROD mus…
+     28|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/30]⎯
+
+ FAIL  tests/integration/dev_environment_boundary.test.ts > HORECA shared project boundary > rejects missing browser
+credentials instead of selecting a hardcoded key
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/integration/dev_environment_boundary.test.ts:30:3
+     28|   });
+     29|
+     30|   it('rejects missing browser credentials instead of selecting a hardc…
+       |   ^
+     31|     await expect(config('https://vmxjqwlfwnphorthhcwu.supabase.co', ''…
+     32|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/30]⎯
+
+ FAIL  tests/unit/finance_import_wiring.test.ts > Finance active UI wiring after Core integration > has no legacy
+import writer or operation_type in browser source
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/finance_import_wiring.test.ts:16:3
+     14| // Static integration guard; behavior/payload and SQL authorization ha…
+     15| describe('Finance active UI wiring after Core integration', () => {
+     16|   it('has no legacy import writer or operation_type in browser source'…
+       |   ^
+     17|     for (const file of runtimeFiles(root)) {
+     18|       expect(readFileSync(file, 'utf8'), path.relative(root, file)).no…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/30]⎯
+
+ FAIL  tests/unit/finance_parsers.test.ts > Excel containers preserve all four canonical parser families >
+BBVA_ACCOUNT parses an actual .xlsx workbook
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/finance_parsers.test.ts:244:38
+    242|   ] as const;
+    243|   for (const [fixture, family] of families) {
+    244|     it.each(['xls', 'xlsx'] as const)(family + ' parses an actual .%s …
+       |                                      ^
+    245|       const original = fs.readFileSync(path.join(fixturesDir, fixture)…
+    246|       const originalBuffer = original.buffer.slice(original.byteOffset…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/30]⎯
+
+ FAIL  tests/unit/personnel_http_security.test.ts > Personnel backend HTTP boundary and scrypt credentials > uses
+salted scrypt, tenant-bound keyed lookup and rejects wrong PIN/pepper
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/personnel_http_security.test.ts:27:2
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/30]⎯
+
+ FAIL  tests/unit/personnel_http_security.test.ts > Personnel backend HTTP boundary and scrypt credentials > does not
+require or create an application user for punching and returns no private credential
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/personnel_http_security.test.ts:31:2
+     29|   expect(await hashPin('1842',pepper)).not.toBe(stored);expect(pinLook…
+     30|  });
+     31|  it('does not require or create an application user for punching and r…
+       |  ^
+     32|   const res=response();await punchHandler(request({action:'punch',pin:…
+     33|   expect(res.code).toBe(200);expect(res.body).toEqual({id:'punch',kind…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/30]⎯
+
+ FAIL  tests/unit/personnel_http_security.test.ts > Personnel backend HTTP boundary and scrypt credentials > returns
+generic PIN failure for unsuccessful verification
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/personnel_http_security.test.ts:39:2
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/30]⎯
+
+ FAIL  tests/unit/personnel_prototype.test.js > Personnel prototype domain and mock ports > rejects overlapping
+schedules and copies only missing shifts
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/personnel_prototype.test.js:26:3
+     24|     expect(() => service.correct({ employeeId: 'demo-employee-1', reas…
+     25|   });
+     26|   it('rejects overlapping schedules and copies only missing shifts', (…
+       |   ^
+     27|     const service = create(), shift = service.state.schedules[0];
+     28|     expect(() => service.saveSchedule({ ...shift, start: '11:00' })).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/30]⎯
+
+ FAIL  tests/unit/personnel_prototype.test.js > Personnel prototype domain and mock ports > generates non-retrievable
+credentials and records in/out with duplicate suppression
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/personnel_prototype.test.js:32:3
+     30|     expect(service.copyWeek('2026-11-09', 'demo-dining')).toBeGreaterT…
+     31|   });
+     32|   it('generates non-retrievable credentials and records in/out with du…
+       |   ^
+     33|     const service = create(), employeeId = 'demo-employee-3';
+     34|     const pin = await service.resetPin(employeeId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/30]⎯
+
+ FAIL  tests/unit/personnel_prototype.test.js > Personnel prototype domain and mock ports > throttles unsuccessful
+attempts without disclosing an identity
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/personnel_prototype.test.js:46:3
+     44|     await expect(service.punch(pin, 'demo-dining')).rejects.toThrow(/v…
+     45|   });
+     46|   it('throttles unsuccessful attempts without disclosing an identity',…
+       |   ^
+     47|     const service = create();
+     48|     for (let i = 0; i < 5; i++) await expect(service.punch('invalid', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/30]⎯
+
+ FAIL  tests/unit/personnel_prototype.test.js > Personnel prototype domain and mock ports > simulates files and
+notifications without network or retained binary
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/personnel_prototype.test.js:57:3
+     55|     expect(() => service.employee('outside-tenant')).toThrow(/organiza…
+     56|   });
+     57|   it('simulates files and notifications without network or retained bi…
+       |   ^
+     58|     const fetch = vi.spyOn(globalThis, 'fetch');
+     59|     const service = create(), notifications = new PersonnelNotificatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/30]⎯
+
+ FAIL  tests/integration/sales/IngestSalesCsvUseCase.test.ts > IngestSalesCsvUseCase Integration Tests with Approved
+Fixtures > 1. Ingests standard ~799-row dataset (tabs-report-0.csv) with exact row count and ~14,980.70 EUR revenue
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/integration/sales/IngestSalesCsvUseCase.test.ts:34:3
+     32|   });
+     33|
+     34|   it('1. Ingests standard ~799-row dataset (tabs-report-0.csv) with ex…
+       |   ^
+     35|     const csvContent = fs.readFileSync(path.join(fixturesDir, 'tabs-re…
+     36|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/30]⎯
+
+ FAIL  tests/integration/sales/IngestSalesCsvUseCase.test.ts > IngestSalesCsvUseCase Integration Tests with Approved
+Fixtures > 3. Ingests the 5,000-row dataset with exact revenue and 0 duplicate collisions
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/integration/sales/IngestSalesCsvUseCase.test.ts:81:3
+     79|   });
+     80|
+     81|   it('3. Ingests the 5,000-row dataset with exact revenue and 0 duplic…
+       |   ^
+     82|     const csvContent = fs.readFileSync(path.join(fixturesDir, 'tabs-re…
+     83|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/30]⎯
+
+ FAIL  tests/integration/sales/IngestSalesCsvUseCase.test.ts > IngestSalesCsvUseCase Integration Tests with Approved
+Fixtures > 4. Re-importing the same CSV file twice produces NO duplicate sales (100% duplicate detection)
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/integration/sales/IngestSalesCsvUseCase.test.ts:99:3
+     97|   });
+     98|
+     99|   it('4. Re-importing the same CSV file twice produces NO duplicate sa…
+       |   ^
+    100|     const csvContent = fs.readFileSync(path.join(fixturesDir, 'tabs-re…
+    101|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/30]⎯
+
+ FAIL  tests/integration/sales/NativeEsmStartup.test.ts > starts both Sales handlers under native Node ESM and denies
+an anonymous request before network access
+Error: spawnSync C:\Program Files\nodejs\node.exe ETIMEDOUT
+ ❯ tests/integration/sales/NativeEsmStartup.test.ts:56:20
+     54| process.stdout.write('PASS');
+     55| `);
+     56|     const result = execFileSync(process.execPath, [script], {
+       |                    ^
+     57|       encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'pipe', 'pip…
+     58|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/30]⎯
+
+ FAIL  tests/unit/sales/CsvIdentityCompatibility.test.ts > CSV SHA-256 compatibility with reviewed 5e767ec > preserves
+every identity and the file hash for tabs-report-0-2.csv
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/unit/sales/CsvIdentityCompatibility.test.ts:32:28
+     30|   });
+     31|
+     32|   it.each(vectors.fixtures)('preserves every identity and the file has…
+       |                            ^
+     33|     const content = readFileSync(`tests/fixtures/sales/lastapp/${filen…
+     34|     expect(sha256Hex(content)).toBe(fileHash);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/30]⎯
+
+
+ Test Files  19 failed | 38 passed (57)
+      Tests  18 failed | 479 passed | 220 skipped (717)
+   Start at  23:56:49
+   Duration  242.99s (tests 75%, import 15%, transform 8%, worker 1%)
+
+    Isolate  57 workers spawned · ~6.59s startup each (spawn + environment, per file)
+             at least ~18.45s faster with isolate: false — reuses workers across files instead of one per file

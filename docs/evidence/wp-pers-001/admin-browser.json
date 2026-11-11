@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "synthetic": true,
+  "apiMocked": true,
+  "checks": [
+    "Employee save, unit assignment, one-time PIN, schedule save via production adapter",
+    "One-use activation link and device revocation through admin adapter",
+    "Production admin shell fits 375 / 390 / 430"
+  ],
+  "errors": []
+}

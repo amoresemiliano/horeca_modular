@@ -30,6 +30,7 @@ export function wallInstant(date, clock, zone) {
   throw new Error('Esta hora no existe en la zona de la unidad. Elige otra hora.');
 }
 export function scheduleInterval(schedule, zone) {
+  if (schedule.expectedStartAt && schedule.expectedEndAt) return [schedule.expectedStartAt, schedule.expectedEndAt];
   return [wallInstant(schedule.date, schedule.start, zone), wallInstant(schedule.end <= schedule.start ? addDays(schedule.date, 1) : schedule.date, schedule.end, zone)];
 }
 export const minutes = (end, start) => end && start ? Math.round((Date.parse(end) - Date.parse(start)) / 60000) : null;
@@ -40,7 +41,11 @@ export function attendanceProjection(state, employee, schedule, now, zone) {
   let clockIn = events.find(p => p.kind === 'IN')?.at;
   let clockOut = events.find(p => p.kind === 'OUT')?.at;
   const correction = state.corrections.filter(c => c.scheduleId === schedule.id && c.employeeId === employee.id).at(-1);
-  if (correction) { clockIn = correction.clockIn; clockOut = correction.clockOut; }
+  if (correction) {
+    clockIn = correction.clockIn;
+    const laterOut = events.filter(p => p.kind === 'OUT' && correction.at && Date.parse(p.at) > Date.parse(correction.at)).at(-1);
+    clockOut = laterOut?.at || correction.clockOut;
+  }
   const [expectedIn, expectedOut] = scheduleInterval(schedule, zone);
   const arrival = minutes(clockIn, expectedIn), departure = minutes(clockOut, expectedOut);
   const absence = state.absences.find(a => a.employeeId === employee.id && a.status === 'Aprobada' && a.start <= schedule.date && a.end >= schedule.date && !a.partial);

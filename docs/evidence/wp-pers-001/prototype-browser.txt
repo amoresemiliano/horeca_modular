@@ -1,0 +1,10 @@
+PASS Personnel-only entitlement/capabilities preserve shell and hide unrelated modules
+PASS Today → variance detail → appended correction retains original punch
+PASS Schedule creation and week navigation
+PASS Incident creation, employee/day relation and resolution
+PASS Absence with simulated attachment → approval → notification preview and simulated send
+PASS Configurable absence types
+PASS Employee profile sections, editing and one-time generated PIN
+PASS All primary screens and schedule fit 375 / 390 / 430 / 768 / 1024 / 1440
+PASS PIN kiosk punches, observation, automatic clearing and session-lock exit
+PASS Punch-only capability exposes no Personnel admin views

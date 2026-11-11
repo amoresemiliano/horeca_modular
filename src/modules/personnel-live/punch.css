@@ -1,0 +1,26 @@
+:root { font-family: system-ui, sans-serif; color: #142235; background: #f7f8fa; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.punch-app { min-height: 100dvh; display: flex; flex-direction: column; }
+.punch-app header { padding: 16px 24px; background: white; border-bottom: 1px solid #e5e7eb; display: flex; gap: 12px; align-items: center; font-size: 14px; font-weight: 700; }
+.punch-app header img { height: 34px; width: 34px; }
+.punch-app section { width: min(400px,100%); margin: auto; text-align: center; padding: 20px 24px; }
+.punch-unit { color: #536278; font-size: 14px; overflow-wrap: anywhere; }
+.punch-time { font-size: clamp(54px,14vw,76px); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -3px; }
+.punch-date { color: #536278; font-size: 14px; margin-top: 6px; }
+.punch-app h1 { font-size: 22px; margin: 24px 0 14px; }
+.punch-app h2 { font-size: 20px; }
+.punch-app button { min-height: 48px; padding: 10px; background: white; color: #142235; border: 1px solid #d6dee8; border-radius: 10px; font: 600 14px system-ui; cursor: pointer; }
+.punch-keypad { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.punch-keypad button { min-height: 66px; font-size: 24px; }
+.punch-keypad button:nth-last-child(3), .punch-keypad button:last-child { font-size: 14px; }
+.punch-dots { display: flex; gap: 22px; justify-content: center; font-size: 26px; margin: 20px 0; }
+#punch-pin, .punch-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; }
+#punch-pin:focus-visible + .punch-dots { outline: 3px solid #2563eb; border-radius: 8px; outline-offset: 5px; }
+.punch-app :focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.punch-error { color: #a62b25; font-size: 14px; min-height: 36px; line-height: 1.5; }
+.punch-success > span { color: #196240; font-size: 54px; display: block; }
+.punch-app textarea { width: 100%; min-height: 110px; padding: 12px; font: inherit; border-radius: 10px; border: 1px solid #cbd5e1; margin: 12px 0; }
+.punch-app footer { padding: 12px 24px; color: #536278; font-size: 12px; text-align: center; width: min(430px,100%); margin: 0 auto; }
+.punch-app footer small { display: block; margin: 12px 0; }
+.punch-app button:disabled { opacity: .5; cursor: wait; }

@@ -1,0 +1,14 @@
+> horeca-modular@0.1.0 test:run
+> vitest run --maxWorkers=1 --no-file-parallelism
+
+
+ RUN  v5.0.0 <personnel-worktree>
+
+
+ Test Files  57 passed (57)
+      Tests  719 passed | 1 skipped (720)
+   Start at  16:43:07
+   Duration  170.90s (tests 85%, import 9%, transform 4%, worker 2%)
+
+    Isolate  57 workers spawned · ~487ms startup each (spawn + environment, per file)
+             at least ~27.25s faster with isolate: false — reuses workers across files instead of one per file

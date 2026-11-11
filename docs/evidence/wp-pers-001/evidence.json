@@ -1,0 +1,220 @@
+{
+  "date": "2026-11-11",
+  "timezone": "Europe/Madrid",
+  "workPackage": "WP-PERS-001",
+  "branch": "module/personnel",
+  "sourceSha": "45ca49ad9680701e55ef3b17e9be3ba2ba92cfcb",
+  "currentDevInspected": "e9423023a656244fb2d30b65920c6091fd48784f",
+  "concurrentUpstreamPreserved": {
+    "head": "adcf24372b0fa85667fc99d17480ba047b98de2a",
+    "commits": [
+      "cb8b8637949f9e7097391e71d461500aa957a467",
+      "d5ba9859db41828ae44ff7ccb75dc16d97ad00e6",
+      "2e37199036df69867276a88bd8bdaa232ee32410",
+      "adcf24372b0fa85667fc99d17480ba047b98de2a"
+    ],
+    "scope": "personnel-ai-studio/ reference tree only",
+    "rootRuntimeChanged": false,
+    "importedIntoProductionEntries": false,
+    "publicationMethod": "Rebase unpublished WP commit onto current remote module head; normal fast-forward push, no force, no dev/main merge"
+  },
+  "referenceCssIsolation": {
+    "sourceExclusion": "../personnel-ai-studio",
+    "referenceFilesUnchanged": true,
+    "beforeUploads": "app-Cv7lJeTO.css",
+    "unexcludedUploads": "app-Bz344sY1.css",
+    "final": "app-Cv7lJeTO.css",
+    "verification": "Build output name/content hash restored exactly; no design rule change"
+  },
+  "migration": {
+    "path": "supabase/migrations/20261110090000_personnel_attendance_foundation.sql",
+    "appliedToSharedDatabase": false,
+    "coreSchemaOrCapabilitiesChanged": false,
+    "tenantSeeds": false
+  },
+  "quality": {
+    "lint": {
+      "exitCode": 0,
+      "warnings": 6,
+      "allInherited": true
+    },
+    "typecheck": {
+      "exitCode": 0
+    },
+    "build": {
+      "exitCode": 0,
+      "separatePwaHtml": true
+    },
+    "productionAdapterEnabledBuild": {
+      "exitCode": 0,
+      "localOnly": true,
+      "output": ".local-data/wp-pers-enabled-build",
+      "runtimeOrHostedFlagsChanged": false
+    },
+    "tests": {
+      "exitCode": 0,
+      "command": "npm.cmd run test:run -- --maxWorkers=1 --no-file-parallelism",
+      "passed": 719,
+      "skipped": 1,
+      "filesPassed": 57,
+      "hostedTestsEnabled": false,
+      "database": "Disposable PGlite only"
+    },
+    "browser": {
+      "prototypeChecks": 10,
+      "pwaChecks": 8,
+      "adminChecks": 3,
+      "syntheticApisOnly": true
+    },
+    "initialRuns": "Required npm scripts were executed. Earlier unrestricted/wrapper-driven runs timed out across existing and new suites under resource contention. Npm log/worker counts suggested worker arguments were not forwarded; the direct runner explicitly constrains workers. Assertions and timeouts were not changed. Earlier failures are retained in earlier-npm-run-timeouts.txt.",
+    "buildWarnings": [
+      "Existing Browserslist data age",
+      "Existing large app chunk",
+      "Plugin timing diagnostics"
+    ]
+  },
+  "security": {
+    "pin": "Node asynchronous scrypt N32768 r8 p1 + salt + server pepper; HMAC only for private tenant-bound lookup",
+    "device": "256-bit one-time activation, 10-minute expiry; revocable 90-day HttpOnly Secure SameSite Strict cookie",
+    "punch": "Server-only PIN resolution; DB permit, current revision recheck, serialized event commit, idempotency and duplicate suppression",
+    "rls": "RLS enabled; direct browser table/private schema access denied; Core-gated admin RPC and service-role-only device RPC",
+    "coreCcrRequired": false,
+    "newCoreCapabilities": [],
+    "configurationEnabled": false
+  },
+  "pwa": {
+    "manifest": {
+      "id": "/personal/fichaje/",
+      "name": "HORECA Personal",
+      "short_name": "Personal",
+      "lang": "es",
+      "start_url": "/personal/fichaje/",
+      "scope": "/personal/fichaje/",
+      "display": "standalone",
+      "background_color": "#f7f8fa",
+      "theme_color": "#006847",
+      "icons": [
+        {
+          "src": "/personal/fichaje/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any maskable"
+        },
+        {
+          "src": "/personal/fichaje/icon-512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any maskable"
+        }
+      ]
+    },
+    "realMobileInstallVerified": false,
+    "offline": "Visible failure, static navigation fallback only, no punch queue"
+  },
+  "outOfScope": [
+    "Payroll",
+    "Documents/Bluehost",
+    "Medical records",
+    "Absence/incident workflows",
+    "WhatsApp/email",
+    "Breaks/split-shift engine",
+    "Employee portal"
+  ],
+  "safety": {
+    "sharedDatabaseApplied": false,
+    "realDataChanged": false,
+    "realPinsOrDevicesCreated": false,
+    "deployment": false,
+    "devOrMainMerged": false,
+    "automaticDeploymentBlockedForBranch": true
+  },
+  "files": [
+    {
+      "path": "api/personnel-punch.ts",
+      "sha256": "538b906075257fcdd09a13db4d999e42adbe8f6140918b0c5e8190da79031343"
+    },
+    {
+      "path": "api/personnel.ts",
+      "sha256": "2fdf7882feb97d1a6f199ca43385d13c9e3d743327c7959855f2635b3904c083"
+    },
+    {
+      "path": "personal/fichaje/index.html",
+      "sha256": "73fc70e2e4f20c072094a3364a92d9293571b8200237018f8cde2c0cea3f510c"
+    },
+    {
+      "path": "public/personal/fichaje/icon-192.png",
+      "sha256": "9c6ef51d90a2f6374ee806c3d9128ddb932875f9007ff0c96bd1275d48ae7d6a"
+    },
+    {
+      "path": "public/personal/fichaje/icon-512.png",
+      "sha256": "2236ab0188ce414bf2b621a249c62c3c55dad46a8f1a74d5539240f053b5d3e7"
+    },
+    {
+      "path": "public/personal/fichaje/icon.svg",
+      "sha256": "7b770623c9d8f51d8a8f77996044f707c3260601b4f12332e09d565896bed2d5"
+    },
+    {
+      "path": "public/personal/fichaje/manifest.webmanifest",
+      "sha256": "ea227b3fa7bca8da9eb4e77ff02dc64bd91c27dd2aeb082471ffb9faaa89362a"
+    },
+    {
+      "path": "public/personal/fichaje/offline.html",
+      "sha256": "362c362fcc5c7466cd799e55092f8003a6f5084580d8b6fc3ba3f59be0b06f93"
+    },
+    {
+      "path": "public/personal/fichaje/sw.js",
+      "sha256": "019bee499cb511c0e2eeb7cc9cda2a25fb54ce2d9d686593709d1a58c5baff91"
+    },
+    {
+      "path": "server/personnel/runtime.ts",
+      "sha256": "eb4c113385c52fe39b87124b3e5073c79cb3747f3a1eb2a13eac8e032849b33e"
+    },
+    {
+      "path": "server/personnel/security.ts",
+      "sha256": "58ddca239e11fcb2ba0c155e4b261c9941d8d3655c624656461d10da0e8c610c"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "d82dc85c3db87cf9dc7ca29623246ee4abafd083dbb975d6d5171a81c6b829a1"
+    },
+    {
+      "path": "src/modules/personnel-live/adminClient.js",
+      "sha256": "64e6b5c2ba8b187f6b6408caa293a1bc882fa34be864329926fce816510019ca"
+    },
+    {
+      "path": "src/modules/personnel-live/config.js",
+      "sha256": "b60492e32ca5035160929858d5a36ee86b2525ec53126b38609c37908830abdb"
+    },
+    {
+      "path": "src/modules/personnel-live/deviceClient.js",
+      "sha256": "1873bf6f77871fcb9229932a8df20f2d3ac91152bca4b28221818bb55e759412"
+    },
+    {
+      "path": "src/modules/personnel-live/LiveEditor.jsx",
+      "sha256": "04a85b536eee200312c170310dc8fa68907f4a08ad9bec96c865bd03b5a55a2e"
+    },
+    {
+      "path": "src/modules/personnel-live/ProductionPersonnelApp.jsx",
+      "sha256": "5c984a73816861b03b4fa7ae4533b86b4d547bc9efb0a1101035d948ab3d833f"
+    },
+    {
+      "path": "src/modules/personnel-live/punch.css",
+      "sha256": "f8128a6a5fbf7d713941bf2550c5a8e868da8b4e1137c9cdba92fb97ad5e0498"
+    },
+    {
+      "path": "src/modules/personnel-live/PunchApp.jsx",
+      "sha256": "e42b3d6d53acbced2fc688153b3e836b6812fbe69dc2e6b3f7bc75082fb50161"
+    },
+    {
+      "path": "src/modules/personnel-live/punchMain.jsx",
+      "sha256": "e42adcd9fd1c48e613ee6eeb3fe1a195c62f408ec2c70404ed091ac5cf258d6b"
+    },
+    {
+      "path": "supabase/migrations/20261110090000_personnel_attendance_foundation.sql",
+      "sha256": "6fd14208fb4c2ec1d9fa861d051f7d4f64d03e881aabc9e6b0eee022544be317"
+    }
+  ],
+  "digestEncoding": "LF-normalized text, unchanged PNG bytes; compatible with Git line-ending normalization",
+  "preservedRootCssSha256": "eda741b1d2ff5e2274a4ea9715a96bb46d4a805b80bae8306761f4d358b4cda9",
+  "readiness": "READY_FOR_MASTER_INTEGRATION means reviewable source/unapplied contracts only; no live enablement or deployment approval"
+}

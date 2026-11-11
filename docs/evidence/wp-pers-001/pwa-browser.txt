@@ -1,0 +1,8 @@
+PASS One-time fragment removed; dedicated entry has no auth/admin shell
+PASS Reload resumes server-authorized device session without local credential storage
+PASS 375 / 390 / 430 fit without overflow
+PASS IN / OUT confirmations and separate optional observation
+PASS No client employee, tenant, unit, timestamp or authority supplied by punch UI
+PASS Offline punch fails visibly and is never queued
+PASS Uncertain server delivery retries one idempotency key instead of toggling attendance
+PASS Revoked device reload fails closed

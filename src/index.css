@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Upstream AI Studio uploads are references, not HORECA application sources. */
+@source not "../personnel-ai-studio";
 
 /* =====================================================
    SISTEMA DE DISEÑO — EC PLATAFORMA MAESTRA

@@ -1,5 +1,11 @@
 # Personal — prototipo integrado
 
+> Scope: this document preserves the validated synthetic prototype. WP-PERS-001
+> adds separate production adapters and an **unapplied** attendance migration;
+> see [WP-PERS-001](../../../docs/WP-PERS-001.md) and
+> [current production readiness](../../../docs/PERSONNEL-PRODUCTION-READINESS.md).
+> The historical prototype statements below do not describe live enablement.
+
 ## Abrir
 
 En la raíz de `el_criollo_modular`, ejecutar `npm run dev`. Iniciar sesión normalmente, seleccionar organización/unidad autorizadas y abrir **Personal**. Se conservan el shell, la marca, la autenticación y el evaluador Core. Son necesarios el entitlement `personal` y una capacidad existente de Personal; no se crean grants ni se alteran roles.

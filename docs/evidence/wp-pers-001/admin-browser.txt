@@ -1,0 +1,3 @@
+PASS Employee save, unit assignment, one-time PIN, schedule save via production adapter
+PASS One-use activation link and device revocation through admin adapter
+PASS Production admin shell fits 375 / 390 / 430
