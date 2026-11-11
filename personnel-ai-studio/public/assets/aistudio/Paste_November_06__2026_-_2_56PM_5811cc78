@@ -1,0 +1,1660 @@
+You are working inside the existing application:
+
+HORECA Modular
+
+PROJECT TYPE:
+Multi-tenant SaaS for HORECA / restaurants / hospitality.
+
+PRIMARY MARKET:
+Spain.
+
+REFERENCE CUSTOMER:
+El Criollo.
+
+DEPLOYMENT:
+Frontend/application deployed on Vercel.
+
+DATABASE:
+Supabase / PostgreSQL remains the canonical database for the whole HORECA Modular project.
+
+IMPORTANT:
+Bluehost is NOT the application database.
+
+Bluehost will be used later as external document/file storage for employee documents, payroll PDFs, medical certificates and similar files.
+
+DO NOT migrate the application database away from Supabase.
+
+==================================================
+MISSION
+==================================================
+
+Design and integrate a COMPLETE high-quality Personnel / HR operational module inside the CURRENT HORECA Modular application.
+
+The module must ultimately support:
+
+1. TODAY / PERSONNEL DASHBOARD
+2. ATTENDANCE
+3. INCIDENTS
+4. ABSENCES
+5. EMPLOYEES
+
+The immediate operational need is extremely urgent:
+
+The business must be able to start tracking employee attendance, expected schedules, actual clock-in/out times, absences and incidents as soon as possible.
+
+However:
+
+THIS FIRST AI STUDIO TASK IS PRIMARILY THE COMPLETE PRODUCT / UX MOCKUP AND FRONT-END ARCHITECTURE.
+
+The mockup should represent the FULL intended Personnel module.
+
+Later implementation may be released progressively, starting only with the essential capabilities.
+
+Therefore:
+
+DESIGN THE COMPLETE EXPERIENCE NOW.
+
+DO NOT artificially reduce the UX because the first production implementation will be smaller.
+
+==================================================
+PRODUCT PRINCIPLE
+==================================================
+
+This must NOT feel like:
+
+- an ERP screen;
+- a payroll application;
+- a spreadsheet;
+- a dense HR database;
+- a desktop-only admin tool.
+
+It should feel like a modern operational HORECA application:
+
+FAST
+SIMPLE
+MOBILE-FIRST
+VERY CLEAR
+LOW COGNITIVE LOAD
+HIGHLY VISUAL
+OPERATIONAL
+
+The employee clock-in experience must be almost frictionless.
+
+The admin experience should expose complexity only when needed.
+
+==================================================
+EXISTING APPLICATION
+==================================================
+
+Work INSIDE the current HORECA Modular application.
+
+Do NOT create a disconnected standalone application.
+
+Preserve:
+
+- current application shell;
+- navigation;
+- authentication;
+- tenant context;
+- organization context;
+- operational-unit context;
+- visual language;
+- Vegen Digital branding;
+- existing responsive behavior;
+- existing modules;
+- existing Core authorization concepts.
+
+Do NOT redesign unrelated modules.
+
+Do NOT break:
+
+Finance
+Sales
+Last.app integration
+Production
+Purchases
+Inventory
+Escandallos
+Core
+Authentication
+
+==================================================
+MULTI-TENANT SaaS REQUIREMENT
+==================================================
+
+Although El Criollo is the first real user, Personnel must be designed as a reusable SaaS module.
+
+It must support:
+
+Organization
+→ Operational Units / Locations
+→ Employees
+
+Examples:
+
+Restaurant Group
+├── Location A
+├── Location B
+└── Central Kitchen
+
+An employee may belong to one or more operational units according to future domain rules.
+
+Do NOT hardcode:
+
+El Criollo
+specific employee names
+specific schedules
+specific roles
+specific absence types
+
+Use synthetic data in the mockup.
+
+==================================================
+MODULE VISIBILITY
+==================================================
+
+HORECA Modular already has a modular authorization philosophy.
+
+Personnel must respect it.
+
+The Product Owner currently wants:
+
+- selected users to see ONLY Personnel;
+- other unfinished modules to remain hidden from them;
+- Product Owner / platform owner to continue seeing modules under development.
+
+Do NOT implement visibility using email checks or hardcoded users.
+
+Design for:
+
+MODULE ENTITLEMENT
++
+ROLE / CAPABILITY AUTHORIZATION
+
+A Personnel user should not automatically gain access to Finance, Sales, Purchases, etc.
+
+==================================================
+PRIMARY NAVIGATION
+==================================================
+
+Inside Personnel, design these primary areas:
+
+HOY
+ASISTENCIA
+INCIDENCIAS
+AUSENCIAS
+EMPLEADOS
+
+Use concise Spanish labels in the UI.
+
+==================================================
+1. HOY — OPERATIONAL DASHBOARD
+==================================================
+
+This is the default admin landing screen for Personnel.
+
+It must answer immediately:
+
+Who should be working today?
+Who has arrived?
+Who is late?
+Who is absent?
+Who has finished?
+Who has an unresolved incident?
+
+Avoid excessive dashboards or charts.
+
+Prioritize operational visibility.
+
+Suggested top summary:
+
+Programados
+Presentes
+Retrasos
+Ausentes
+Incidencias
+
+Below:
+
+HOY
+
+Employee card example:
+
+María López
+Cocina
+10:00 – 17:00
+
+Entrada real:
+10:07
+
+Status:
+7 min tarde
+
+Another:
+
+Carlos Ruiz
+Sala
+17:00 – 23:30
+
+Estado:
+Pendiente de entrada
+
+Another:
+
+Ana Pérez
+Producción
+07:00 – 15:00
+
+Entrada:
+06:58
+
+Salida:
+15:03
+
+Estado:
+Completo
+
+Use visual status badges.
+
+Examples:
+
+A tiempo
+Retraso
+Pendiente
+Ausente
+Incidencia
+Finalizado
+
+==================================================
+2. EMPLOYEE CLOCK-IN EXPERIENCE
+==================================================
+
+This is CRITICAL.
+
+Employees should NOT need a full account/login for normal attendance clocking.
+
+The physical location may use:
+
+- a tablet;
+- a mobile device;
+- a shared terminal;
+- potentially a dedicated kiosk device later.
+
+The clocking screen must be exceptionally simple.
+
+Design a dedicated:
+
+FICHAJE DE PERSONAL
+
+screen.
+
+The main screen should contain almost nothing except:
+
+Current time
+Current date
+Operational Unit name
+Numeric PIN keypad
+
+Prompt:
+
+Introduce tu PIN
+
+Employee PIN:
+
+4 digits.
+
+Example:
+
+● ● ● ●
+
+Use a large touch-friendly keypad.
+
+Buttons must be large enough for quick restaurant operation.
+
+DO NOT expose employee lists on the kiosk.
+
+DO NOT expose employee information before successful PIN verification.
+
+==================================================
+CLOCK-IN FLOW
+==================================================
+
+Employee enters PIN.
+
+System identifies employee securely.
+
+If employee has NOT clocked in today:
+
+Display:
+
+Hola, María
+
+Entrada registrada
+
+10:03
+
+Then automatically return to PIN screen after a few seconds.
+
+If employee is currently clocked in:
+
+PIN entry results in:
+
+Salida registrada
+
+17:06
+
+Then return automatically.
+
+No menus.
+No navigation.
+No forms.
+No unnecessary confirmation.
+
+==================================================
+CLOCKING OBSERVATION
+==================================================
+
+After clocking, optionally expose a small secondary action:
+
+Añadir observación
+
+This may be used for:
+
+"Llegué antes por cambio de turno"
+
+"Olvidé fichar al entrar"
+
+etc.
+
+It should NOT slow down normal clocking.
+
+==================================================
+PIN SECURITY
+==================================================
+
+PIN is 4 digits but must NOT be stored as plain text.
+
+Architecture must be compatible with:
+
+hashed PIN
+rate limiting
+attempt throttling
+audit logging
+operational-unit context
+server-side verification
+
+Do not expose PIN values to clients after creation.
+
+Admin may:
+
+create/reset PIN
+
+but should not normally be able to retrieve an existing plaintext PIN.
+
+==================================================
+EXPECTED VS ACTUAL ATTENDANCE
+==================================================
+
+This is the main business value.
+
+Admin defines EXPECTED schedule.
+
+Employee generates ACTUAL attendance.
+
+System calculates differences.
+
+Conceptually:
+
+EXPECTED
+
+10:00 – 17:00
+
+ACTUAL
+
+10:12 – 17:08
+
+RESULT:
+
+Entrada:
++12 min
+
+Salida:
++8 min
+
+Tiempo esperado:
+7 h
+
+Tiempo real:
+6 h 56 min
+
+Difference calculations must be DERIVED.
+
+Do not manually store every calculated metric if it can safely be computed from canonical data.
+
+==================================================
+3. SCHEDULE MANAGEMENT
+==================================================
+
+Admin must be able to define employee schedules.
+
+Design a very simple scheduler.
+
+Primary views:
+
+Semana
+Lista
+
+Avoid building an enterprise workforce scheduling system.
+
+Initial schedule needs:
+
+Employee
+Operational Unit
+Date
+Expected start
+Expected end
+Optional note
+
+Future compatibility:
+
+breaks
+split shifts
+recurring schedules
+templates
+rotations
+
+The initial architecture must NOT block those future features.
+
+Example:
+
+Lunes
+
+José
+07:00 – 15:00
+
+Elizabeth
+10:00 – 17:00
+
+Fernando
+17:00 – 23:30
+
+==================================================
+QUICK SCHEDULE EDITING
+==================================================
+
+Admin should be able to:
+
+tap employee
+→ modify time
+→ save
+
+Provide:
+
+Copy previous week
+
+as an obvious productivity action.
+
+Future concept:
+
+schedule template
+
+but do not make initial UX complex.
+
+==================================================
+4. ATTENDANCE
+==================================================
+
+Attendance admin view shows:
+
+Date
+Employee
+Scheduled start/end
+Actual start/end
+Difference
+Status
+
+Filters:
+
+Today
+This week
+Date range
+Employee
+Operational Unit
+Status
+
+On mobile, use cards instead of forcing a wide table.
+
+Desktop may use a compact table.
+
+Example:
+
+María López
+
+Expected
+10:00 – 17:00
+
+Actual
+10:07 – 17:03
+
+Difference
++7 min arrival
+
+Status
+Retraso
+
+==================================================
+ATTENDANCE STATES
+==================================================
+
+Architecturally support concepts similar to:
+
+EXPECTED
+PRESENT
+LATE
+MISSING_CLOCK_IN
+MISSING_CLOCK_OUT
+ABSENT
+COMPLETED
+INCIDENT
+
+Exact canonical names may be refined later.
+
+Do not hardcode business decisions inside visual components.
+
+==================================================
+5. INCIDENTS
+==================================================
+
+Incidents represent irregular attendance or personnel events.
+
+Initial suggested types:
+
+Late arrival
+Early departure
+Forgot clock-in
+Forgot clock-out
+Schedule change
+Unjustified absence
+Medical incident
+Work accident
+Other
+
+UI Spanish labels should be friendly:
+
+Retraso
+Salida anticipada
+Olvido de fichaje
+Cambio de turno
+Ausencia injustificada
+Incidencia médica
+Accidente laboral
+Otra
+
+Admin must be able to add custom incident types later.
+
+Do not hardcode the list permanently.
+
+==================================================
+INCIDENT RECORD
+==================================================
+
+Include:
+
+Employee
+Date
+Operational Unit
+Incident type
+Description
+Related attendance record if applicable
+Supporting document if applicable
+Status
+Created by
+Created at
+Resolution / notes
+
+Potential status:
+
+Abierta
+Revisada
+Resuelta
+
+==================================================
+6. ABSENCES
+==================================================
+
+Initial suggested absence types:
+
+Vacaciones
+Baja médica
+Permiso retribuido
+Permiso no retribuido
+Maternidad / paternidad
+Ausencia injustificada
+Descanso
+Otro
+
+BUT:
+
+Admin must be able to create new absence types.
+
+Provide a lightweight:
+
+Administrar tipos de ausencia
+
+modal.
+
+Each absence type may eventually include metadata such as:
+
+requires approval
+requires document
+paid/unpaid
+color
+active/inactive
+
+Do not overcomplicate the first UX.
+
+==================================================
+ABSENCE REQUEST / RECORD
+==================================================
+
+Admin must be able to record:
+
+Employee
+Absence type
+Start date
+End date
+Partial/full day
+Optional note
+Documentation
+Approval status
+
+Statuses:
+
+Pendiente
+Aprobada
+Rechazada
+Cancelada
+
+==================================================
+WHATSAPP COMMUNICATION
+==================================================
+
+Employee profile contains:
+
+mobile number
+email
+
+These should be usable for communications.
+
+The UX should expose actions such as:
+
+Notificar por WhatsApp
+
+Examples:
+
+Absence approved
+
+"Hola María, tu solicitud de vacaciones del 10 al 14 de noviembre ha sido aprobada."
+
+Documentation received
+
+"Hola María, hemos recibido correctamente la documentación."
+
+Incident notification
+
+"Hola María, se ha registrado una incidencia relacionada con tu jornada del 5 de noviembre."
+
+IMPORTANT:
+
+For the mockup:
+
+simulate message composition and status.
+
+Create a clean abstraction:
+
+PersonnelNotificationService
+
+Possible future providers:
+
+WHATSAPP
+EMAIL
+
+Do NOT hardcode a WhatsApp vendor directly into UI components.
+
+For an initial lightweight production implementation, a WhatsApp deep-link may be acceptable if explicitly approved later.
+
+Architecture must remain compatible with a future official WhatsApp provider/API.
+
+==================================================
+7. EMPLOYEES
+==================================================
+
+Employee is NOT User.
+
+This distinction is critical.
+
+EMPLOYEE != APPLICATION USER
+
+An employee may exist without ever logging into HORECA Modular.
+
+Employee profile should include:
+
+Personal information:
+
+First name
+Last name
+Preferred name
+Document / NIE / DNI / Passport
+Phone
+Email
+Address optional
+Emergency contact optional
+
+Employment information:
+
+Position
+Operational Unit
+Start date
+Employment status
+Contract type
+Weekly contracted hours
+Hourly cost if applicable
+Salary information if applicable
+
+Operational information:
+
+Personal PIN status
+Current schedule
+Attendance summary
+Absences
+Incidents
+
+==================================================
+EMPLOYEE PROFILE UX
+==================================================
+
+Employee profile should have a clean header:
+
+María López
+Cocina
+Activa
+
+Then tabs/sections:
+
+Resumen
+Asistencia
+Ausencias
+Incidencias
+Nóminas
+Documentos
+
+Do not put everything on a single massive form.
+
+==================================================
+8. PAYROLL
+==================================================
+
+Payroll is NOT intended to become a payroll calculation engine at this stage.
+
+It stores payroll-related information and documents.
+
+For each payroll record:
+
+Employee
+Month
+Year
+Gross salary
+Net salary
+Employer cost
+Social Security / employer contribution where provided
+Other deductions or relevant fields
+Document PDF
+Notes
+
+Employee contract profile should include separately:
+
+Start date
+Contract type
+Contracted hours
+Salary/cost metadata
+
+Do not attempt to calculate official Spanish payroll.
+
+==================================================
+9. DOCUMENTS
+==================================================
+
+Employee may have documents such as:
+
+Contract
+Payroll
+Medical certificate
+Sick leave document
+ID / NIE
+Training certificate
+Work permit
+Other
+
+Each document should have metadata:
+
+Employee
+Document type
+Title
+Issue date
+Expiry date optional
+Notes
+Uploaded by
+Uploaded at
+Storage reference
+
+==================================================
+DOCUMENT STORAGE ARCHITECTURE
+==================================================
+
+Canonical database remains SUPABASE.
+
+Document metadata belongs in Supabase/Postgres.
+
+Physical binary documents will eventually be stored in a protected folder/service hosted on Bluehost.
+
+IMPORTANT TECHNICAL RULE:
+
+The Vercel frontend must NOT directly write into a Bluehost filesystem.
+
+Design a storage abstraction:
+
+PersonnelDocumentStoragePort
+
+with future implementation similar to:
+
+BluehostPersonnelDocumentStorageAdapter
+
+Upload flow:
+
+Client
+→ authenticated backend/API
+→ authorization check
+→ secure upload
+→ Bluehost storage
+→ storage reference saved in Supabase
+
+Downloads must also go through controlled authorization.
+
+Do not expose direct filesystem paths publicly.
+
+Do not store sensitive employee documents in a publicly accessible web directory.
+
+For the AI Studio mockup:
+
+SIMULATE upload and document listing.
+
+Do not invent production credentials or endpoints.
+
+==================================================
+10. DOCUMENT NOTIFICATIONS
+==================================================
+
+When documentation is received or approved, admin should be able to notify employee.
+
+Example UI:
+
+Documento recibido
+
+[Notificar por WhatsApp]
+
+This uses employee mobile data from profile.
+
+==================================================
+11. ADMINISTRATION
+==================================================
+
+Personnel Admin capabilities include:
+
+Create employee
+Edit employee
+Deactivate employee
+Assign operational unit
+Manage schedule
+Review attendance
+Manage incidents
+Manage absences
+Approve/reject absences
+Manage absence types
+Upload employee documents
+Upload payroll
+Reset employee PIN
+
+Do NOT expose application-wide SuperAdmin functionality inside Personnel.
+
+==================================================
+ROLE MODEL
+==================================================
+
+For this mockup, visually represent at least:
+
+PERSONNEL ADMIN
+
+Future users may receive the same Personnel administration access.
+
+Do not model this as:
+
+only Emiliano can access it.
+
+Use capability-based thinking.
+
+Potential future distinctions may include:
+
+personnel.view
+personnel.manage
+attendance.manage
+schedule.manage
+absence.manage
+documents.manage
+
+These are conceptual only.
+
+Do NOT alter canonical Core authorization contracts unless explicitly required.
+
+==================================================
+12. MOBILE-FIRST
+==================================================
+
+This entire module MUST be designed mobile-first.
+
+Priority mobile experiences:
+
+Employee PIN clock-in
+Today dashboard
+Quick schedule check
+Employee lookup
+Incident creation
+Absence approval
+Document lookup
+
+Avoid:
+
+wide desktop tables
+tiny controls
+dense admin screens
+hover-only interactions
+complex nested menus
+
+Minimum touch targets must be comfortable.
+
+Use cards, bottom sheets, drawers and modals appropriately.
+
+==================================================
+13. RESPONSIVE DESIGN
+==================================================
+
+Must work beautifully at:
+
+375px
+390px
+430px
+768px
+1024px
+1440px
+
+No horizontal overflow.
+
+Desktop may become denser, but mobile UX is primary.
+
+==================================================
+14. VISUAL DESIGN
+==================================================
+
+Preserve HORECA Modular's current professional visual language.
+
+Use:
+
+clean spacing
+strong hierarchy
+few colors
+status badges
+cards
+clear typography
+minimal visual noise
+
+Do not create a completely different design system.
+
+Status colors should be semantic and restrained.
+
+Examples:
+
+present / approved
+late / attention
+absent / error
+pending / neutral
+
+Do not rely exclusively on color.
+
+Use icon + label.
+
+==================================================
+15. ACCESSIBILITY
+==================================================
+
+Support:
+
+keyboard navigation
+visible focus states
+semantic labels
+screen-reader friendly inputs
+sufficient contrast
+large touch controls
+clear error messages
+
+PIN interface must be usable on shared tablets.
+
+==================================================
+16. DOMAIN ARCHITECTURE
+==================================================
+
+Use SOLID principles.
+
+Separate:
+
+domain
+application
+infrastructure
+presentation
+
+Do NOT put business rules directly inside React components.
+
+Suggested conceptual domain entities:
+
+Employee
+
+EmploymentAssignment
+
+OperationalUnitAssignment
+
+EmployeeSchedule
+
+AttendanceRecord
+
+AttendancePunch
+
+PersonnelIncident
+
+IncidentType
+
+EmployeeAbsence
+
+AbsenceType
+
+EmployeeDocument
+
+PayrollRecord
+
+EmployeePinCredential
+
+NotificationRecord
+
+These are proposals.
+
+Do not blindly force names if the existing HORECA architecture already has canonical equivalents.
+
+==================================================
+ATTENDANCE DOMAIN SEMANTICS
+==================================================
+
+Keep separate:
+
+SCHEDULE
+from
+ATTENDANCE
+
+Expected schedule is not actual attendance.
+
+Concept:
+
+EmployeeSchedule
+
+2026-11-06
+10:00
+17:00
+
+Actual:
+
+AttendanceRecord
+
+clockIn:
+10:07
+
+clockOut:
+17:01
+
+Derived:
+
+arrivalVariance:
++7 min
+
+Do not overwrite expected schedule with real attendance.
+
+==================================================
+CLOCKING DATA INTEGRITY
+==================================================
+
+Clocking records should eventually be append-oriented/auditable.
+
+Avoid silently rewriting original punches.
+
+If an admin corrects attendance later, architecture should be compatible with:
+
+original event
++
+correction
++
+reason
++
+actor
++
+timestamp
+
+For mockup, visually expose:
+
+Corregir fichaje
+
+but do not build unnecessary complexity.
+
+==================================================
+TIMEZONE
+==================================================
+
+Attendance must be timezone-aware.
+
+Operational Unit timezone should control display and attendance-day boundaries.
+
+Do NOT assume browser timezone is canonical.
+
+Spain reference deployment will commonly use:
+
+Europe/Madrid
+
+but this must be tenant/unit configuration, not hardcoded.
+
+==================================================
+17. DATABASE TARGET
+==================================================
+
+Canonical database:
+
+Supabase / PostgreSQL.
+
+All personnel records must eventually include appropriate tenant scoping.
+
+Expected relationships conceptually:
+
+organization_id
+operational_unit_id
+
+where appropriate.
+
+Strict multi-tenant isolation is mandatory.
+
+Do not use insecure RLS.
+
+Never use:
+
+USING (true)
+
+for tenant-owned Personnel data.
+
+==================================================
+18. PRIVACY
+==================================================
+
+Personnel contains sensitive business and employee information.
+
+The UI must treat:
+
+payroll
+medical documents
+identity documents
+
+as restricted content.
+
+Do not show salary or medical information in general attendance screens.
+
+Sensitive data should only appear in appropriate employee profile sections and authorized views.
+
+Medical details should not be exposed beyond necessary document/status metadata.
+
+==================================================
+19. MOCKUP DATA
+==================================================
+
+Use synthetic realistic Spanish HORECA employees.
+
+Do NOT use actual El Criollo employee names or salaries.
+
+Create enough mock data to demonstrate:
+
+on-time employee
+late employee
+missing employee
+approved absence
+medical absence
+open incident
+completed shift
+employee with payroll/documents
+
+==================================================
+20. FULL MOCKUP SCOPE
+==================================================
+
+The AI Studio prototype should visually implement the COMPLETE intended experience:
+
+Personnel Home / Today
+
+Attendance kiosk / PIN
+
+Attendance admin
+
+Schedules
+
+Incidents
+
+Absences
+
+Employee directory
+
+Employee detail
+
+Payroll
+
+Documents
+
+Absence-type administration
+
+WhatsApp notification flow
+
+Responsive/mobile states
+
+Empty states
+
+Loading states
+
+Error states
+
+Confirmation states
+
+==================================================
+21. PRODUCTION IMPLEMENTATION PRIORITY
+==================================================
+
+Although the mockup is complete, the first real production implementation will focus on:
+
+PHASE 1 — URGENT MVP
+
+Employee profile
+Operational Unit assignment
+4-digit PIN credential
+Basic employee schedule
+Clock-in
+Clock-out
+Optional clocking observation
+Attendance persistence
+Expected vs actual comparison
+Today dashboard
+Basic attendance history
+Personnel Admin access
+
+PHASE 2
+
+Absences
+Absence types
+Approval
+Incidents
+Notifications
+
+PHASE 3
+
+Documents
+Bluehost secure storage
+Payroll metadata/PDF
+advanced reporting
+
+PHASE 4
+
+Advanced schedules
+split shifts
+templates
+employee self-service
+advanced WhatsApp integration
+analytics
+
+DO NOT hide Phase 2-4 UX from the full mockup.
+
+The Product Owner wants to validate the full product concept visually now.
+
+==================================================
+22. KIOSK MODE
+==================================================
+
+Design a dedicated route/state such as:
+
+Personnel → Fichaje
+
+It must be possible for an authorized operational device to remain in kiosk mode without exposing the Personnel admin interface.
+
+Do not assume that kiosk access automatically gives admin permissions.
+
+Architectural separation is mandatory.
+
+==================================================
+23. EMPLOYEE SEARCH
+==================================================
+
+Admin employee list should support:
+
+Search
+Active/inactive
+Operational Unit
+Position
+
+Employee card should show only useful operational information.
+
+Example:
+
+María López
+Cocina
+40 h / semana
+Activa
+
+Today:
+10:00 – 17:00
+
+Do not display salary on employee cards.
+
+==================================================
+24. REPORTING
+==================================================
+
+Initial Personnel reporting should remain simple.
+
+Useful outputs:
+
+Attendance by employee
+Expected vs actual hours
+Late arrivals
+Missing punches
+Absence days
+Incidents
+
+Do not build a BI dashboard.
+
+Use operational summaries.
+
+==================================================
+25. DATA QUALITY
+==================================================
+
+Make fields explicit.
+
+Avoid free text where structured values are appropriate.
+
+Examples:
+
+contract type
+absence type
+incident type
+operational unit
+employee status
+
+must be structured records/options.
+
+Notes remain free text.
+
+==================================================
+26. EMPLOYEE STATUS
+==================================================
+
+Architecturally support states such as:
+
+ACTIVE
+INACTIVE
+ON_LEAVE
+
+Do not delete employee history when an employee leaves.
+
+Employee records should be deactivated rather than destructively deleted.
+
+==================================================
+27. WHATSAPP UX
+==================================================
+
+Use WhatsApp primarily as an operational communication channel.
+
+Example:
+
+Absence approved.
+
+Button:
+
+Enviar WhatsApp
+
+Preview modal:
+
+María López
++34 XXX XXX XXX
+
+Message:
+"Hola María, tu solicitud de vacaciones del 10 al 14 de noviembre ha sido aprobada."
+
+Actions:
+
+Cancelar
+Abrir WhatsApp
+
+In the mockup, simulate success/state.
+
+Do not invent provider credentials.
+
+==================================================
+28. USER EXPERIENCE DETAILS
+==================================================
+
+Every major page needs:
+
+good empty state
+loading state
+error state
+success feedback
+
+Examples:
+
+"No hay incidencias abiertas."
+
+"No hay ausencias pendientes."
+
+"Todos los empleados programados han fichado."
+
+Avoid generic technical errors.
+
+==================================================
+29. CODE QUALITY
+==================================================
+
+Use:
+
+React
+existing HORECA stack
+existing router/navigation conventions
+existing design tokens where possible
+
+SOLID
+clean components
+small reusable components
+service abstraction
+clear domain boundaries
+
+Avoid:
+
+one giant Personnel.jsx
+business logic inside JSX
+hardcoded employees
+hardcoded tenant IDs
+hardcoded PINs
+hardcoded WhatsApp numbers
+direct Supabase calls scattered throughout UI
+direct Bluehost filesystem logic in components
+
+==================================================
+30. IMPORTANT — DO NOT TOUCH PRODUCTION DATA
+==================================================
+
+This AI Studio phase is a PRODUCT / UX PROTOTYPE.
+
+Do NOT:
+
+apply production database migrations
+write real Employee records
+touch real El Criollo personnel
+change existing production data
+modify real Supabase RLS
+upload actual documents
+configure production WhatsApp credentials
+configure Bluehost credentials
+
+Use synthetic/mock data and clear interfaces.
+
+The real implementation will go through the normal HORECA Modular engineering workflow after mockup approval.
+
+==================================================
+31. DO NOT CREATE A PARALLEL APPLICATION
+==================================================
+
+Very important.
+
+The output must fit naturally into the existing HORECA Modular application.
+
+Preserve:
+
+current layout
+sidebar/navigation
+responsive shell
+authentication presentation
+module access philosophy
+
+Personnel should look like it was always part of HORECA Modular.
+
+==================================================
+32. EXPECTED USER JOURNEYS TO DEMONSTRATE
+==================================================
+
+Provide working prototype navigation for at least these flows:
+
+FLOW A — CLOCK IN
+
+Employee arrives
+→ opens kiosk
+→ enters PIN
+→ system recognizes employee
+→ confirms entry time
+→ returns to PIN screen
+
+FLOW B — CLOCK OUT
+
+Employee enters PIN
+→ system recognizes active attendance
+→ registers exit
+→ confirms exit time
+→ returns to PIN screen
+
+FLOW C — ADMIN TODAY
+
+Admin opens Personnel
+→ sees Today
+→ identifies late employee
+→ opens attendance detail
+
+FLOW D — CREATE SCHEDULE
+
+Admin
+→ employee
+→ schedule
+→ set 10:00–17:00
+→ save
+
+FLOW E — REVIEW VARIANCE
+
+Expected:
+10:00–17:00
+
+Actual:
+10:12–17:04
+
+System clearly displays variance.
+
+FLOW F — ABSENCE
+
+Admin creates absence
+→ selects type
+→ attaches document
+→ approves
+→ WhatsApp notification preview
+
+FLOW G — INCIDENT
+
+Admin records forgotten clock-in
+→ incident attached to employee/day
+→ resolves incident
+
+FLOW H — EMPLOYEE
+
+Admin opens employee
+→ sees summary
+→ attendance
+→ absences
+→ incidents
+→ payroll
+→ documents
+
+==================================================
+33. FINAL DELIVERABLE
+==================================================
+
+Implement the full interactive front-end mockup inside the existing HORECA Modular project.
+
+After implementation, provide a concise report containing:
+
+1. files created/modified;
+2. routes/screens created;
+3. component architecture;
+4. responsive behavior;
+5. mock domain/service architecture;
+6. what is mocked;
+7. what remains for production backend implementation;
+8. any assumptions;
+9. screenshots or preview instructions.
+
+Do NOT provide a theoretical design only.
+
+Build the actual interactive mockup.
+
+==================================================
+FINAL PRODUCT STANDARD
+==================================================
+
+The final experience should be simple enough that:
+
+AN EMPLOYEE can clock in/out in seconds with only a 4-digit PIN.
+
+A RESTAURANT MANAGER can understand today's staffing status in seconds.
+
+AN ADMIN can manage schedules, absences, incidents and employee records without training.
+
+AND the underlying architecture remains suitable for a future multi-tenant HORECA SaaS product.
+
+Think like:
+
+a hospitality operations product designer
++
+a senior SaaS architect
++
+a mobile UX specialist
+
+but keep the user experience extremely simple.
