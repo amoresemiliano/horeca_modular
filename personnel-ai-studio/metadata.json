@@ -1,0 +1,6 @@
+{
+  "name": "HORECA Modular - Personal & Control Horario",
+  "description": "Módulo operativo de personal, fichaje táctil con PIN, control de asistencia, cuadrantes de turnos, ausencias e incidencias para hostelería.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
