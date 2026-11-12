@@ -1,0 +1,30 @@
+{
+  "environment": "DEV/UAT",
+  "project": "vmxjqwlfwnphorthhcwu",
+  "before": {
+    "id": "4ef1c8e2-8abe-407b-b6f0-a5c0ffe2f7ce",
+    "organization_id": "f84168ef-2b78-451b-b0a9-39c1c381e59b",
+    "code": "EL_CRIOLLO_LOCAL",
+    "name": "El Criollo",
+    "unit_type": "LOCAL",
+    "unit_subtype": null,
+    "is_active": true,
+    "created_at": "2026-11-12T02:25:51.454059+00:00",
+    "updated_at": "2026-11-12T02:25:51.454059+00:00"
+  },
+  "after": {
+    "id": "4ef1c8e2-8abe-407b-b6f0-a5c0ffe2f7ce",
+    "organization_id": "f84168ef-2b78-451b-b0a9-39c1c381e59b",
+    "code": "EL_CRIOLLO_LOCAL",
+    "name": "Palencia 06",
+    "unit_type": "LOCAL",
+    "unit_subtype": null,
+    "is_active": true,
+    "created_at": "2026-11-12T02:25:51.454059+00:00",
+    "updated_at": "2026-11-12T02:25:51.454059+00:00"
+  },
+  "change": "Only existing operational-unit display name",
+  "sameUnitId": true,
+  "personnelAndAuthorizationUnchanged": true,
+  "migrationsApplied": false
+}

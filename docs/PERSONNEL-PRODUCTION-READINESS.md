@@ -1,5 +1,11 @@
 # Personnel production readiness — WP-PERS-001
 
+Historical WP-PERS-001 assessment. The current production-separation decision and
+release blockers are recorded in
+[Personnel attendance release review](PERSONNEL-ATTENDANCE-RELEASE-REVIEW.md).
+The former shared DEV/PROD database assumption below is superseded: staging must
+remain DEV/UAT and a separate production project is required.
+
 Code/contract delivery for Domain Review and Master integration; **not enabled or deployed**.
 Final validation evidence is dated 2026-11-11 (Europe/Madrid).
 Shared Supabase `vmxjqwlfwnphorthhcwu` remains canonical for DEV/PROD by PO decision.

@@ -1,5 +1,9 @@
 # Personnel installable PWA
 
+For the 2026-11-12 red header/customer-logo update, canonical Palencia 06 unit
+label, current public DEV URL and production-separation review, see
+[Personnel attendance release review](PERSONNEL-ATTENDANCE-RELEASE-REVIEW.md).
+
 `/personal/fichaje/` is a separate Vite HTML/React entry, not an authenticated admin
 screen hidden with CSS. It imports no MainLayout, AuthProvider, employee roster,
 prototype fixtures or Supabase client. Its only data channel is `/api/personnel-punch`.

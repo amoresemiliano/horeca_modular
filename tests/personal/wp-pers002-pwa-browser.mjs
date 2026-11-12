@@ -7,7 +7,7 @@ import { resolve } from 'node:path';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || pathToFileURL(resolve('.local-data/tooling/node_modules/playwright/index.mjs')).href);
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const context=await browser.newContext({viewport:{width:390,height:844}}),page=await context.newPage();
-const artifacts=resolve('docs/evidence/wp-pers-002/browser-pwa');mkdirSync(artifacts,{recursive:true});
+const artifacts=resolve(process.env.PERSONNEL_PWA_ARTIFACTS || 'docs/evidence/wp-pers-002/browser-pwa');mkdirSync(artifacts,{recursive:true});
 const errors=[],checks=[],requests=[],committed=new Map();let active=false,revoked=false,offline=false,uncertain=false,kind='IN',punches=0;
 page.on('pageerror',e=>errors.push(e.message));
 await page.route('**/api/personnel-punch',async route=>{
@@ -16,7 +16,7 @@ await page.route('**/api/personnel-punch',async route=>{
  let result,status=200;
  if(body.action==='activate'){active=true;result={ok:true};}
  else if(!active||revoked){result={error:'INVALID_DEVICE'};status=400;}
- else if(body.action==='session')result={organization:'HORECA DEV LAB',unit:'Synthetic unit',timeZone:'Europe/Madrid'};
+ else if(body.action==='session')result={organization:'El Criollo',unit:'Palencia 06',timeZone:'Europe/Madrid'};
  else if(body.action==='punch'){
   result=committed.get(body.requestId);
   if(!result){punches++;result={id:'10000000-0000-4000-8000-000000000001',kind,firstName:'Synthetic',occurredAt:new Date().toISOString()};committed.set(body.requestId,result);kind=kind==='IN'?'OUT':'IN';}
@@ -34,6 +34,13 @@ try{
  await page.goto(base+'/personal/fichaje/#activate='+'A'.repeat(43));await page.getByRole('heading',{name:'Introduce tu PIN'}).waitFor();
  assert.equal(new URL(page.url()).hash,'');assert.equal(await page.getByRole('navigation').count(),0);assert.equal(await page.locator('aside').count(),0);
  assert.equal(requests[0].action,'activate');pass('One-time fragment removed; dedicated entry has no auth/admin shell');
+ await page.getByText('El Criollo · Palencia 06',{exact:true}).waitFor();
+ const logo=page.getByRole('img',{name:'El Criollo',exact:true});await logo.waitFor();
+ assert(await logo.evaluate(img=>img.complete&&img.naturalWidth>0&&Math.abs(img.width/img.height-img.naturalWidth/img.naturalHeight)<0.05));
+ assert.equal(await page.locator('header').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(223, 23, 51)');
+ assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'),'#df1733');
+ await page.locator('header').getByText('HORECA Personal',{exact:true}).waitFor();
+ pass('El Criollo logo retains aspect ratio; product title, red header/theme and server-provided organization/unit identity render');
  assert.equal(await page.evaluate(()=>window.__permissionRequests),0);
  if(await page.getByText('Recordatorios de tu turno',{exact:true}).count()) {
   await page.getByText('Recordatorios de tu turno',{exact:true}).click();

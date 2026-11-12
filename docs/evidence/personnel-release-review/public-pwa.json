@@ -1,0 +1,64 @@
+{
+  "base": "https://horecamodular-git-dev-vegen-s-projects.vercel.app",
+  "resources": [
+    {
+      "route": "/personal/fichaje/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "route": "/personal/fichaje/manifest.webmanifest",
+      "status": 200,
+      "contentType": "application/manifest+json; charset=utf-8"
+    },
+    {
+      "route": "/personal/fichaje/sw.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    {
+      "route": "/personal/fichaje/icon-192.png",
+      "status": 200,
+      "contentType": "image/png"
+    },
+    {
+      "route": "/personal/fichaje/icon-512.png",
+      "status": 200,
+      "contentType": "image/png"
+    }
+  ],
+  "manifest": {
+    "id": "/personal/fichaje/",
+    "name": "HORECA Personal",
+    "short_name": "Personal",
+    "lang": "es",
+    "start_url": "/personal/fichaje/",
+    "scope": "/personal/fichaje/",
+    "display": "standalone",
+    "background_color": "#f7f8fa",
+    "theme_color": "#006847",
+    "icons": [
+      {
+        "src": "/personal/fichaje/icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "/personal/fichaje/icon-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ]
+  },
+  "production": {
+    "id": "dpl_7fPek5Scyr8RxTkEm9jYLkHTALRT",
+    "branch": "main",
+    "cronDefinitions": [],
+    "sha": "04cfc8238c0a7a2cf310e3bbccdd565bd9d072b3"
+  },
+  "preview": {
+    "id": "dpl_6AvUw9XtN5WhDbwtP6gsS5HMoXL2"
+  }
+}

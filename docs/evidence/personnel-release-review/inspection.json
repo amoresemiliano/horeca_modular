@@ -1,0 +1,102 @@
+{
+  "projects": [
+    {
+      "id": "vmxjqwlfwnphorthhcwu",
+      "name": "horeca_modular_staging",
+      "status": "ACTIVE_HEALTHY"
+    }
+  ],
+  "units": [
+    {
+      "is_active": true,
+      "organization": "El Criollo",
+      "organization_code": "EL_CRIOLLO",
+      "organization_id": "f84168ef-2b78-451b-b0a9-39c1c381e59b",
+      "timezone": "Europe/Madrid",
+      "unit": "El Criollo",
+      "unit_code": "EL_CRIOLLO_LOCAL",
+      "unit_id": "4ef1c8e2-8abe-407b-b6f0-a5c0ffe2f7ce"
+    }
+  ],
+  "history": [
+    {
+      "name": "horeca_core_baseline",
+      "version": "20260926000000"
+    },
+    {
+      "name": "ccr_fin_001_core_authorization",
+      "version": "20260927000000"
+    },
+    {
+      "name": "finance_atomic_bank_import",
+      "version": "20260928010000"
+    },
+    {
+      "name": "finance_classification_workflow",
+      "version": "20261001000000"
+    },
+    {
+      "name": "core_tenant_administration",
+      "version": "20261002000000"
+    },
+    {
+      "name": "core_secure_provisioning",
+      "version": "20261002010000"
+    },
+    {
+      "name": "core_legacy_fail_closed",
+      "version": "20261002020000"
+    },
+    {
+      "name": "core_module_entitlement_registry",
+      "version": "20261002030000"
+    },
+    {
+      "name": "core_saas_ux",
+      "version": "20261003000000"
+    },
+    {
+      "name": "canonical_sales_schema",
+      "version": "20261003100000"
+    },
+    {
+      "name": "lastapp_sales_ingestion",
+      "version": "20261003110000"
+    },
+    {
+      "name": "sales_resumable_sync",
+      "version": "20261003120000"
+    },
+    {
+      "name": "lastapp_request_budgets",
+      "version": "20261008100000"
+    },
+    {
+      "name": "lastapp_location_lifecycle",
+      "version": "20261008110000"
+    },
+    {
+      "name": "core_production_capabilities",
+      "version": "20261015090000"
+    },
+    {
+      "name": "production_execution_foundation",
+      "version": "20261015100000"
+    },
+    {
+      "name": "personnel_attendance_foundation",
+      "version": "20261110090000"
+    },
+    {
+      "name": "personnel_push_reminders",
+      "version": "20261111100000"
+    }
+  ],
+  "counts": [
+    {
+      "employees": 1
+    }
+  ],
+  "readOnly": true,
+  "accessibleProjectCount": 5
+}

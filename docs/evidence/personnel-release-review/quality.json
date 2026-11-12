@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-12",
+  "timezone": "Europe/Madrid",
+  "lint": {"status": "PASS", "errors": 0, "existingWarnings": 6},
+  "typecheck": "PASS",
+  "build": "PASS",
+  "focusedTests": {"status": "PASS", "files": 9, "tests": 73, "command": "npm run test:run -- personnel dev_environment_boundary finance_import_wiring LastAppRateBudget --maxWorkers=1"},
+  "browserRegression": "PASS",
+  "browserApiMocked": true,
+  "fullSuite": "NOT_GREEN: existing test/hook timing limits; affected suites subsequently passed focused run",
+  "testTimeoutsChanged": false,
+  "pinBackendChanged": false,
+  "migrationsChanged": false,
+  "deploymentPerformed": false,
+  "productionChanged": false
+}
