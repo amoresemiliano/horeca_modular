@@ -5,10 +5,14 @@ import reminders from '../../api/personnel-reminders';
 import { isLateArrival } from '../../src/modules/personal/domain';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { execFileSync } from 'node:child_process';
 
 const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({ format: 'jwk' });
 const keys = { p256dh: Buffer.concat([Buffer.from([4]), Buffer.from(jwk.x!, 'base64url'), Buffer.from(jwk.y!, 'base64url')]).toString('base64url'), auth: randomBytes(16).toString('base64url') };
 describe('Personnel push trust boundary', () => {
+  it('loads the installed Web Push transport in native Node ESM', () => {
+    expect(execFileSync(process.execPath, ['--input-type=module', '-e', "import * as push from 'web-push'; if(typeof push.sendNotification!=='function'||typeof push.generateVAPIDKeys!=='function')process.exit(1); process.stdout.write('PASS')"], { encoding: 'utf8', windowsHide: true })).toBe('PASS');
+  });
   it('shows push messages and opens only the standalone punch route', async () => {
     const handlers: Record<string, (event: any) => void> = {}, shown: unknown[] = [], opened: string[] = [];
     const self = { location: { origin: 'https://personnel.example.invalid' }, addEventListener(name: string, handler: (event: any) => void) { handlers[name] = handler; }, registration: { async showNotification(...args: unknown[]) { shown.push(args); } }, clients: { async matchAll() { return []; }, async openWindow(url: string) { opened.push(url); } } };

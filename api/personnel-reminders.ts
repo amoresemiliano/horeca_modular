@@ -1,4 +1,4 @@
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 import { timingSafeEqual } from 'node:crypto';
 import { rpc, trustedClient, type Request, type Response } from '../server/personnel/runtime.js';
 import { pushConfiguration, reminderBody, validateSubscription } from '../server/personnel/push.js';
