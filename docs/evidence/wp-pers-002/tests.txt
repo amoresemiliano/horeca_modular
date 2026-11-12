@@ -1,0 +1,10 @@
+RUN  v5.0.0 C:/Users/Emiliano/Documents/1. Sistemas/El Criollo/el-criollo-ecosistema/04_horeca_modular_personnel
+
+
+ Test Files  58 passed (58)
+      Tests  730 passed | 1 skipped (731)
+   Start at  21:30:49
+   Duration  187.73s (tests 83%, import 10%, transform 5%, worker 2%)
+
+    Isolate  58 workers spawned · ~580ms startup each (spawn + environment, per file)
+             at least ~33.06s faster with isolate: false — reuses workers across files instead of one per file

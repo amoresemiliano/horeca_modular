@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-11",
+  "timezone": "Europe/Madrid",
+  "supabase": {
+    "project": "vmxjqwlfwnphorthhcwu",
+    "observedStatus": "INACTIVE",
+    "statusSource": "supabase projects list --output json",
+    "sqlAttempts": 2,
+    "sqlFailure": "HTTP 544: Failed to create login role: Connection terminated due to connection timeout",
+    "remoteMigrationHistoryConfirmed": false,
+    "remoteCollisionCheckCompleted": false,
+    "migrationsAppliedByThisWP": [],
+    "employeesCreatedByThisWP": 0,
+    "tenantEnablementsByThisWP": [],
+    "restore": "Not performed; awaiting PO decision about shared project and billing"
+  },
+  "devIntegrated": false,
+  "mainModified": false,
+  "remoteSecretsChanged": false,
+  "hostedUATCompleted": false,
+  "pushDeliveryToRealDeviceTested": false,
+  "personnelOnlyRoleAssignmentsPerformed": false,
+  "coreMismatch": "HR_PERSONNEL includes reporting.operational.view; navigation maps it to Dashboard/KPI/Prediccion when their entitlements are enabled. Mutation stopped. Remote effective grants not yet verifiable."
+}

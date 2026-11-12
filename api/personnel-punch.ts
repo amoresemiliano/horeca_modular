@@ -11,7 +11,8 @@ export default async function handler(req: Request, res: Response) {
     if (action === 'activate') {
       if (typeof body.token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(body.token)) throw new Error('INVALID_DEVICE');
       const token = secretToken();
-      const result = await rpc(client, 'personnel_device_command', { p_action: 'activate', p_token_hash: tokenHash(body.token), p_ip_key: ip, p_body: { deviceHash: tokenHash(token) } });
+      const previous = deviceCookie(req);
+      const result = await rpc(client, 'personnel_activate_device', { p_activation_hash: tokenHash(body.token), p_device_hash: tokenHash(token), p_previous_hash: /^[A-Za-z0-9_-]{43}$/.test(previous) ? tokenHash(previous) : null, p_ip_key: ip });
       if (result.error) throw new Error('INVALID_DEVICE');
       res.setHeader('Set-Cookie', cookieHeader(token)); res.status(200).json({ ok: true }); return;
     }

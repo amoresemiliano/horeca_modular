@@ -36,6 +36,12 @@ export function scheduleInterval(schedule, zone) {
 export const minutes = (end, start) => end && start ? Math.round((Date.parse(end) - Date.parse(start)) / 60000) : null;
 export const duration = value => value == null ? '—' : `${Math.floor(Math.abs(value) / 60)} h ${Math.abs(value) % 60} min`;
 export const variance = value => value == null ? '—' : `${value > 0 ? '+' : ''}${value} min`;
+// Initial policy: strictly after expected start is late (no grace period).
+export const ATTENDANCE_POLICY = Object.freeze({ arrivalGraceMinutes: 0 });
+/** @param {string | undefined | null} actual @param {string} expected @param {{arrivalGraceMinutes: number}} policy */
+export function isLateArrival(actual, expected, policy = ATTENDANCE_POLICY) {
+  return Boolean(actual && Date.parse(actual) > Date.parse(expected) + policy.arrivalGraceMinutes * 60000);
+}
 export function attendanceProjection(state, employee, schedule, now, zone) {
   const events = state.punches.filter(p => p.employeeId === employee.id && p.scheduleId === schedule.id);
   let clockIn = events.find(p => p.kind === 'IN')?.at;
@@ -47,9 +53,9 @@ export function attendanceProjection(state, employee, schedule, now, zone) {
     clockOut = laterOut?.at || correction.clockOut;
   }
   const [expectedIn, expectedOut] = scheduleInterval(schedule, zone);
-  const arrival = minutes(clockIn, expectedIn), departure = minutes(clockOut, expectedOut);
+  const arrival = minutes(clockIn, expectedIn), departure = minutes(clockOut, expectedOut), late = isLateArrival(clockIn, expectedIn);
   const absence = state.absences.find(a => a.employeeId === employee.id && a.status === 'Aprobada' && a.start <= schedule.date && a.end >= schedule.date && !a.partial);
-  let status = absence ? 'ABSENT' : clockOut ? 'COMPLETED' : clockIn ? (arrival > 0 ? 'LATE' : 'PRESENT') : Date.parse(now) > Date.parse(expectedIn) ? 'MISSING_CLOCK_IN' : 'EXPECTED';
+  let status = absence ? 'ABSENT' : clockOut ? 'COMPLETED' : clockIn ? (late ? 'LATE' : 'PRESENT') : Date.parse(now) > Date.parse(expectedIn) ? 'MISSING_CLOCK_IN' : 'EXPECTED';
   if (clockIn && !clockOut && Date.parse(now) > Date.parse(expectedOut)) status = 'MISSING_CLOCK_OUT';
-  return { employee, schedule, clockIn, clockOut, arrival, departure, expectedMinutes: minutes(expectedOut, expectedIn), actualMinutes: minutes(clockOut, clockIn), status, corrected: Boolean(correction), incidents: state.incidents.filter(i => i.employeeId === employee.id && i.date === schedule.date && i.status !== 'Resuelta') };
+  return { employee, schedule, clockIn, clockOut, arrival, departure, late, expectedMinutes: minutes(expectedOut, expectedIn), actualMinutes: minutes(clockOut, clockIn), status, corrected: Boolean(correction), incidents: state.incidents.filter(i => i.employeeId === employee.id && i.date === schedule.date && i.status !== 'Resuelta') };
 }

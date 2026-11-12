@@ -1,0 +1,41 @@
+> horeca-modular@0.1.0 build
+> vite build
+
+vite v8.0.2 building client environment for production...
+
+node.exe : Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+En C:\Program Files\nodejs\npm.ps1: 29 Carácter: 3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Browserslist: b...ld. Please run::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+transforming...✓ 1966 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/personal/fichaje/index.html          0.86 kB │ gzip:   0.44 kB
+dist/index.html                           1.12 kB │ gzip:   0.61 kB
+dist/assets/logo_cliente-D5MKEBDE.png   165.88 kB
+dist/assets/vegen-digital-C_gnRgxj.png  212.83 kB
+dist/assets/personnel-LqSZk9V2.css        2.18 kB │ gzip:   0.85 kB
+dist/assets/app-Cv7lJeTO.css            108.42 kB │ gzip:  21.22 kB
+dist/assets/personnel-DpMvtlsh.js         8.92 kB │ gzip:   3.42 kB
+dist/assets/jsx-runtime-DFcsXh-Y.js     190.83 kB │ gzip:  60.17 kB
+dist/assets/app-C_BX5IIg.js             930.02 kB │ gzip: 273.02 kB
+
+[PLUGIN_TIMINGS] Warning: Your build spent significant time in plugins. Here is a breakdown:
+  - vite:css (68%)
+  - rolldown:vite-resolve (10%)
+  - vite:build-html (10%)
+  - vite:asset (10%)
+See https://rolldown.rs/options/checks#plugintimings for more details.
+
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking:
+https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 9.14s

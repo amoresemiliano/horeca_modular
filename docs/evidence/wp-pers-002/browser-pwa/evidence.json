@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "synthetic": true,
+  "apiMocked": true,
+  "checks": [
+    "One-time fragment removed; dedicated entry has no auth/admin shell",
+    "Explicit push opt-in; denied permission leaves attendance available",
+    "Reload resumes server-authorized device session without local credential storage",
+    "375 / 390 / 430 / 768 / 1024 / 1440 fit without overflow",
+    "IN / OUT confirmations and separate optional observation",
+    "No client employee, tenant, unit, timestamp or authority supplied by punch UI",
+    "Offline punch fails visibly and is never queued",
+    "Uncertain server delivery retries one idempotency key instead of toggling attendance",
+    "Unsupported PushManager leaves PIN attendance available",
+    "Revoked device reload fails closed"
+  ],
+  "errors": []
+}

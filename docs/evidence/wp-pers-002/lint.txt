@@ -1,0 +1,23 @@
+> horeca-modular@0.1.0 lint
+> eslint src/
+
+
+C:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\04_horeca_modular_personnel\src\modules\configuracion\Configuracion.jsx
+  1:20  warning  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  @typescript-eslint/no-unused-vars
+
+C:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\04_horeca_modular_personnel\src\modules\inventario\components\charts\ProductionLineChart.jsx
+  52:8  warning  React Hook useEffect has a missing dependency: 'visibleLines'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\04_horeca_modular_personnel\src\modules\inventario\components\charts\StockBarChart.jsx
+  26:8  warning  React Hook useMemo has missing dependencies: 'colorsMap' and 'productosBase'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\04_horeca_modular_personnel\src\modules\inventario\store\store.jsx
+  1:44  warning  'useContext' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  @typescript-eslint/no-unused-vars
+
+C:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\04_horeca_modular_personnel\src\modules\personal\ui.jsx
+  13:108  warning  The ref value 'trigger.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'trigger.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+C:\Users\Emiliano\Documents\1. Sistemas\El Criollo\el-criollo-ecosistema\04_horeca_modular_personnel\src\modules\presence\PresenceApp.jsx
+  11:9  warning  'filteredChannels' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  @typescript-eslint/no-unused-vars
+
+✖ 6 problems (0 errors, 6 warnings)

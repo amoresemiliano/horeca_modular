@@ -1,0 +1,280 @@
+{
+  "project": {
+    "id": "prj_RaRsLmj1gvwxECThjesAeJQkxPhb",
+    "name": "horeca_modular",
+    "link": {
+      "type": "github",
+      "repo": "horeca_modular",
+      "repoId": 1191064315,
+      "org": "amoresemiliano",
+      "repoOwnerId": 199988637,
+      "gitCredentialId": "cred_ab9b9655655afb27e808c81ddc910d28ece97dd6",
+      "productionBranch": "main",
+      "sourceless": true,
+      "createdAt": 1783268543056,
+      "updatedAt": 1788359964767,
+      "deployHooks": []
+    },
+    "crons": {
+      "enabledAt": 1783268558228,
+      "disabledAt": null,
+      "updatedAt": 1792183357822,
+      "deploymentId": "dpl_7fPek5Scyr8RxTkEm9jYLkHTALRT",
+      "definitions": []
+    }
+  },
+  "deployments": [
+    {
+      "uid": "dpl_3Aeu4P84EtVxgbujakC7gsuJAwNa",
+      "url": "horecamodular-5tcu5i85o-vegen-s-projects.vercel.app",
+      "state": "READY",
+      "target": null,
+      "branch": "module/production",
+      "sha": "1c77fbfb601264fa4a8f994af23d6bdb75db9ae3"
+    },
+    {
+      "uid": "dpl_7fPek5Scyr8RxTkEm9jYLkHTALRT",
+      "url": "horecamodular-nef48kt0n-vegen-s-projects.vercel.app",
+      "state": "READY",
+      "target": "production",
+      "branch": "main",
+      "sha": "04cfc8238c0a7a2cf310e3bbccdd565bd9d072b3"
+    },
+    {
+      "uid": "dpl_D18kvKotVBgsAE1jtiuM2dAhzYLK",
+      "url": "horecamodular-efo0esrev-vegen-s-projects.vercel.app",
+      "state": "READY",
+      "target": null,
+      "branch": "dev",
+      "sha": "e9423023a656244fb2d30b65920c6091fd48784f"
+    },
+    {
+      "uid": "dpl_GUoqrkekkDQXdmg4HpV1r7cdYRFk",
+      "url": "horecamodular-6995vr7wx-vegen-s-projects.vercel.app",
+      "state": "READY",
+      "target": null,
+      "branch": "module/production",
+      "sha": "e9423023a656244fb2d30b65920c6091fd48784f"
+    },
+    {
+      "uid": "dpl_3RQvnwYLiLqz2yxDpqY3pZqfHLAj",
+      "url": "horecamodular-7ghthob7s-vegen-s-projects.vercel.app",
+      "state": "READY",
+      "target": null,
+      "branch": "dev",
+      "sha": "980e41ac61588d75e571eda94a5aa97926aa43fa"
+    }
+  ],
+  "env": [
+    {
+      "key": "LAST_APP_TOKEN",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "SUPABASE_ANON_KEY",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "SUPABASE_URL",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "LAST_APP_TOKEN",
+      "target": [
+        "preview"
+      ],
+      "branch": "dev"
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "target": [
+        "preview"
+      ],
+      "branch": "dev"
+    },
+    {
+      "key": "SUPABASE_ANON_KEY",
+      "target": [
+        "preview"
+      ],
+      "branch": "dev"
+    },
+    {
+      "key": "SUPABASE_URL",
+      "target": [
+        "preview"
+      ],
+      "branch": "dev"
+    },
+    {
+      "key": "VITE_RELEASE_SHA",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_PASSWORD_AUTH",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_DEV_PASSWORD_AUTH",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_APP_ENV",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_SUPABASE_PUBLISHABLE_KEY",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_APP_ENV",
+      "target": [
+        "preview"
+      ],
+      "branch": "dev"
+    },
+    {
+      "key": "VITE_SUPABASE_ANON_KEY",
+      "target": [
+        "preview"
+      ],
+      "branch": "dev"
+    },
+    {
+      "key": "VITE_SUPABASE_URL",
+      "target": [
+        "preview"
+      ],
+      "branch": "dev"
+    },
+    {
+      "key": "VITE_DEV_PASSWORD_AUTH",
+      "target": [
+        "preview"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_SUPABASE_URL",
+      "target": [
+        "preview"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_SUPABASE_ANON_KEY",
+      "target": [
+        "preview"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_SUPABASE_URL",
+      "target": [
+        "development"
+      ],
+      "branch": null
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "target": [
+        "development"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_FIREBASE_MEASUREMENT_ID",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_FIREBASE_APP_ID",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_FIREBASE_MESSAGING_SENDER_ID",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_FIREBASE_STORAGE_BUCKET",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_FIREBASE_PROJECT_ID",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_FIREBASE_AUTH_DOMAIN",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_FIREBASE_API_KEY",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_SUPABASE_ANON_KEY",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    },
+    {
+      "key": "VITE_SUPABASE_URL",
+      "target": [
+        "production"
+      ],
+      "branch": null
+    }
+  ]
+}

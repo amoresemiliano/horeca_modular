@@ -24,3 +24,6 @@ body { margin: 0; }
 .punch-app footer { padding: 12px 24px; color: #536278; font-size: 12px; text-align: center; width: min(430px,100%); margin: 0 auto; }
 .punch-app footer small { display: block; margin: 12px 0; }
 .punch-app button:disabled { opacity: .5; cursor: wait; }
+
+.punch-reminders { text-align: left; margin-block: 12px; overflow-wrap: anywhere; }
+.punch-reminders input { width: 100%; max-width: 100%; padding: 10px; margin-block: 8px; border: 1px solid #cbd5e1; border-radius: 8px; }

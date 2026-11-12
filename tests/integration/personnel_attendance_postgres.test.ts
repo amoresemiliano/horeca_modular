@@ -13,7 +13,7 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE SCHEMA auth;
    CREATE TABLE auth.users(id uuid PRIMARY KEY);
    CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$; GRANT USAGE ON SCHEMA auth TO authenticated,anon;`);
-  for(const name of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql','20261002030000_core_module_entitlement_registry.sql','20261110090000_personnel_attendance_foundation.sql']) await db.exec(readFileSync('supabase/migrations/'+name,'utf8'));
+  for(const name of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql','20261002030000_core_module_entitlement_registry.sql','20261110090000_personnel_attendance_foundation.sql','20261111100000_personnel_push_reminders.sql']) await db.exec(readFileSync('supabase/migrations/'+name,'utf8'));
  },60000);
  afterAll(async()=>{await db?.close()});
  beforeEach(async()=>{
@@ -150,5 +150,60 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
   await admin('attendance.correct',{employeeId:eid,scheduleId:sid,clockIn:times.start,clockOut:null,reason:'Synthetic initial correction'});
   await admin('attendance.correct',{employeeId:eid,scheduleId:sid,clockIn:times.start,clockOut:times.finish,reason:'Synthetic final correction'});
   expect((await punch(a.credential,raw)).kind).toBe('IN');
+ });
+
+ const push=async(credential:string,action:string,body:object={})=>(await run('service_role','','SELECT public.personnel_push_command($1,$2,$3) result',[tokenHash(credential),action,JSON.stringify(body)]))[0].result as Record<string,unknown>;
+ const job=async(action:string,body:object={})=>(await run('service_role','','SELECT public.personnel_reminder_job($1,$2) result',[action,JSON.stringify(body)]))[0].result;
+ async function subscribed(){
+  const eid=await employee(),raw=await pin(eid),a=await activated();
+  const prepared=await device('prepare',a.credential,{lookup:pinLookup(org,raw,pepper),requestId:randomUUID()});
+  expect(await push(a.credential,'subscribe',{attemptId:prepared.attemptId,verified:true,subscription:{endpoint:'https://synthetic.invalid',keys:{}}})).toEqual({enabled:true});
+  await db.query("INSERT INTO personnel_private.reminder_policies(organization_id,enabled) VALUES($1,true)",[org]);
+  return {eid,raw,...a};
+ }
+ async function due(eid:string,kind:string){
+  const sid=randomUUID(),start=kind==='ENTRY'?"now()+interval '2 minutes'":kind==='EXIT'?"now()-interval '8 hours'":"now()-interval '30 seconds'",end=kind==='EXIT'?"now()-interval '30 seconds'":"now()+interval '8 hours'";
+  await db.query(`INSERT INTO public.personnel_schedules(id,organization_id,operational_unit_id,employee_id,local_date,expected_start_time,expected_end_time,timezone,expected_start_at,expected_end_at) VALUES($1,$2,$3,$4,current_date,'10:00','18:00','Europe/Madrid',${start},${end})`,[sid,org,unit,eid]);return sid;
+ }
+ it('requires PIN proof for push binding, consumes permits, isolates devices and honors revocation',async()=>{
+  const a=await subscribed(),b=await activated();
+  expect(await push(a.credential,'status')).toEqual({enabled:true});expect(await push(b.credential,'status')).toEqual({enabled:false});
+  const prepared=await device('prepare',b.credential,{lookup:pinLookup(org,a.raw,pepper),requestId:randomUUID()});
+  await pin(a.eid,'2839');
+  expect(await push(b.credential,'subscribe',{attemptId:prepared.attemptId,verified:true,subscription:{}})).toEqual({error:'PIN_REJECTED'});
+  await push(a.credential,'unsubscribe');expect(await push(a.credential,'status')).toEqual({enabled:false});
+  await db.exec('UPDATE public.personnel_punch_devices SET revoked_at=now()');expect(await push(a.credential,'status')).toEqual({error:'INVALID_DEVICE'});
+  await expect(run('authenticated',owner,"SELECT public.personnel_reminder_job('claim')")).rejects.toThrow(/permission denied/);
+  await expect(run('authenticated',owner,'SELECT * FROM personnel_private.push_subscriptions')).rejects.toThrow(/permission denied/);
+ });
+ it.each(['ENTRY','START'])('claims %s once and rechecks IN before sending',async(kind)=>{
+  const a=await subscribed();await due(a.eid,kind);
+  const claims=await job('claim') as string[];expect(claims).toHaveLength(1);expect(await job('claim')).toEqual([]);
+  expect(await job('prepare',{id:claims[0]})).toMatchObject({kind});
+  await punch(a.credential,a.raw);
+  expect(await job('prepare',{id:claims[0]})).toEqual({});
+  await job('complete',{id:claims[0],status:'SKIPPED'});expect(await job('claim')).toEqual([]);
+ });
+ it('sends no exit reminder without an open session or after a corrected OUT',async()=>{
+  const a=await subscribed(),sid=await due(a.eid,'EXIT');
+  expect(await job('claim')).toEqual([]);
+  const times=(await db.query<{start:string,end:string}>("SELECT (now()-interval '8 hours')::text start,(now()-interval '1 minute')::text end")).rows[0];
+  await admin('attendance.correct',{employeeId:a.eid,scheduleId:sid,clockIn:times.start,reason:'Synthetic open session'});
+  const claims=await job('claim') as string[];expect(claims).toHaveLength(1);
+  await admin('attendance.correct',{employeeId:a.eid,scheduleId:sid,clockIn:times.start,clockOut:times.end,reason:'Synthetic closed session'});
+  expect(await job('prepare',{id:claims[0]})).toEqual({});
+ });
+ it('disables expired provider credentials without returning secrets to the device',async()=>{
+  const a=await subscribed();await due(a.eid,'ENTRY');const claims=await job('claim') as string[];
+  await job('complete',{id:claims[0],status:'FAILED',httpStatus:410});expect(await push(a.credential,'status')).toEqual({enabled:false});expect(await job('claim')).toEqual([]);
+ });
+
+ it('clears the previous mobile reminder association atomically on reactivation',async()=>{
+  const a=await subscribed(),activation=randomUUID(),credential=randomUUID();
+  await admin('device.activate',{tokenHash:tokenHash(activation),label:'Reactivated mobile'});
+  const rows=await run('service_role','','SELECT public.personnel_activate_device($1,$2,$3,$4) result',[tokenHash(activation),tokenHash(credential),tokenHash(a.credential),'synthetic-ip']);
+  expect(rows[0].result).toEqual({ok:true});
+  expect(await push(a.credential,'status')).toEqual({enabled:false});
+  expect(await push(credential,'status')).toEqual({enabled:false});
  });
 });

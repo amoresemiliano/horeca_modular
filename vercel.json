@@ -11,6 +11,9 @@
     },
     "api/sales-webhook.ts": {
       "maxDuration": 10
+    },
+    "api/personnel-reminders.ts": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
