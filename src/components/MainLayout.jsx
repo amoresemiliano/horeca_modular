@@ -205,7 +205,7 @@ const MainLayout = ({ user: propsUser }) => {
                 <option value="" disabled={!platformCan('platform.tenants.provision')}>{platformCan('platform.tenants.provision') ? 'Sin organización · Plataforma' : 'Seleccionar organización'}</option>
                 {availableOrganizations.map((org) => (
                   <option key={org.id} value={org.id}>
-                    {org.name || org.legalName || org.taxId || 'Organización'}{org.role ? ` (${org.role})` : ''}
+                    {org.name || org.legalName || org.taxId || 'Organización'}{org.role ? ` (${org.role === 'HR_PERSONNEL' ? 'Admin' : org.role})` : ''}
                   </option>
                 ))}
               </select>
@@ -215,7 +215,7 @@ const MainLayout = ({ user: propsUser }) => {
           {/* Línea divisoria */}
           <div style={{ width: '1px', height: '28px', background: 'var(--c-border)' }} />
 
-          {activeOrganization && availableOperationalUnits?.length > 0 && <select style={{maxWidth:210}} aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Contexto de organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
+          {activeOrganization && availableOperationalUnits?.length > 0 && <select style={{maxWidth:210}} aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
           {/* Navegación por grupos */}
           <nav aria-label="Módulos operativos" className={'shell-module-navigation' + (platformCatalog ? ' shell-module-catalog' : '')}>
             {Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && modulosPermitidos.includes(key)).map(([key, mod]) => {
