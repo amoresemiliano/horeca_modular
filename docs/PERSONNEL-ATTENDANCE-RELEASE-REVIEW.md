@@ -1,5 +1,11 @@
 # Personnel attendance — presentation and production review
 
+Subsequent repository preparation (2026-11-13): see
+[Production foundation](PRODUCTION-FOUNDATION.md) and
+[CCR-CORE-ENV-001](CCR-CORE-ENV-001.md). The staging-only guards documented below
+are the inspected baseline; separation changes are prepared locally for review,
+not integrated or deployed. The independent project remains uncreated.
+
 Date: 2026-11-12, Europe/Madrid. Scope: three approved presentation changes and
 production inspection. No production deployment or infrastructure creation.
 

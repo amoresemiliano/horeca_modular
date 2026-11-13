@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-13",
+  "timezone": "Europe/Madrid",
+  "tests": {
+    "status": "PASS",
+    "command": "node node_modules/vitest/vitest.mjs run --maxWorkers=1",
+    "files": 61,
+    "passed": 759,
+    "skipped": 1
+  },
+  "focusedTests": {
+    "files": 23,
+    "passed": 288
+  },
+  "postPackagingPortabilityTests": {"status": "PASS", "files": 2, "passed": 11},
+  "migrationChecksumsMatchCanonicalGitBlobs": 10,
+  "startSha": "ba9b2d9c16bb3a582526512c21374fefe4c1111b",
+  "devBaseSha": "89ae0e826d16f129526244719db7ed6a08d017f3",
+  "closingRemoteDevSha": "58eb3fec94c43cec5c0fe15fd6ad69ba9e6c2cb6",
+  "remoteDevDelta": "Non-overlapping global favicon change; preserved, not merged",
+  "closingMainSha": "04cfc8238c0a7a2cf310e3bbccdd565bd9d072b3",
+  "existingTestTimeoutsChanged": false,
+  "newExternalProcessTestTimeoutMs": 15000,
+  "productionInfrastructureCreated": false,
+  "productionDeployed": false,
+  "stagingDataChanged": false,
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS"
+  }
+}

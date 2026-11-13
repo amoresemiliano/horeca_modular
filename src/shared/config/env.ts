@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AppError } from '../errors/AppError';
+import { appOrigin, checkSupabaseKey, deploymentEnvironment, supabaseTarget } from './environmentBoundary';
 
 export const AppEnvironment = {
   DEVELOPMENT: 'development',
@@ -15,6 +16,8 @@ const envSchema = z.object({
   VITE_SUPABASE_URL: z.string().url('VITE_SUPABASE_URL must be a valid URL'),
   VITE_SUPABASE_PUBLISHABLE_KEY: z.string().min(10, 'VITE_SUPABASE_PUBLISHABLE_KEY is required'),
   VITE_SUPABASE_ANON_KEY: z.string().optional(),
+  VITE_SUPABASE_PROJECT_REF: z.string().optional(),
+  VITE_APP_ORIGIN: z.string().optional(),
 });
 
 export type RawEnv = z.infer<typeof envSchema>;
@@ -25,6 +28,7 @@ export interface AppConfig {
   readonly isProduction: boolean;
   readonly isUat: boolean;
   readonly isDevelopment: boolean;
+  readonly origin?: string;
   readonly supabase: {
     readonly url: string;
     readonly publishableKey: string;
@@ -35,11 +39,17 @@ function resolveEnv(): RawEnv {
   const raw = {
     VITE_APP_ENV: import.meta.env.VITE_APP_ENV || 'development',
     VITE_RELEASE_SHA: import.meta.env.VITE_RELEASE_SHA || 'a90724d',
-    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://vmxjqwlfwnphorthhcwu.supabase.co',
+    VITE_SUPABASE_URL: supabaseTarget(
+      deploymentEnvironment(import.meta.env.VITE_APP_ENV || 'development', import.meta.env.VITE_DEPLOYMENT_ENV),
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_PROJECT_REF,
+    ).url,
     VITE_SUPABASE_PUBLISHABLE_KEY:
       import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
       import.meta.env.VITE_SUPABASE_ANON_KEY,
     VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+    VITE_SUPABASE_PROJECT_REF: import.meta.env.VITE_SUPABASE_PROJECT_REF,
+    VITE_APP_ORIGIN: import.meta.env.VITE_APP_ORIGIN,
   };
 
   const parseResult = envSchema.safeParse(raw);
@@ -48,9 +58,10 @@ function resolveEnv(): RawEnv {
     throw AppError.validation(`Invalid application environment configuration: ${errorDetails}`);
   }
 
-  if (new URL(parseResult.data.VITE_SUPABASE_URL).origin !== 'https://vmxjqwlfwnphorthhcwu.supabase.co') {
-    throw AppError.validation('HORECA DEV and PROD must use project vmxjqwlfwnphorthhcwu');
-  }
+  const target = supabaseTarget(parseResult.data.VITE_APP_ENV, parseResult.data.VITE_SUPABASE_URL, parseResult.data.VITE_SUPABASE_PROJECT_REF);
+  checkSupabaseKey(parseResult.data.VITE_SUPABASE_PUBLISHABLE_KEY, target.projectRef, 'anon');
+  const origin = appOrigin(parseResult.data.VITE_APP_ENV, parseResult.data.VITE_APP_ORIGIN);
+  if (parseResult.data.VITE_APP_ENV === 'production' && typeof window !== 'undefined' && window.location.origin !== origin) throw AppError.validation('Production application origin mismatch');
 
   return parseResult.data;
 }
@@ -71,6 +82,7 @@ export function getAppConfig(): AppConfig {
     isProduction: environment === AppEnvironment.PRODUCTION,
     isUat: environment === AppEnvironment.UAT,
     isDevelopment: environment === AppEnvironment.DEVELOPMENT,
+    origin: env.VITE_APP_ORIGIN,
     supabase: {
       url: env.VITE_SUPABASE_URL,
       publishableKey: env.VITE_SUPABASE_PUBLISHABLE_KEY,

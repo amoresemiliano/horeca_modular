@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-11-13T00:04:56.184Z",
+  "environment": "DEV/UAT",
+  "project": "vmxjqwlfwnphorthhcwu",
+  "readOnly": true,
+  "employeeReviewCandidates": [
+    {
+      "attendance_rows": 4,
+      "employment_rows": 1,
+      "employment_status": "ACTIVE",
+      "organization_id": "f84168ef-2b78-451b-b0a9-39c1c381e59b",
+      "staging_employee_id": "6c15c8c6-a176-4252-9f17-ee8fba09d2d5",
+      "unit_assignment_rows": 1
+    }
+  ],
+  "recommendedAutomaticMigration": [],
+  "operationalDataCopied": false,
+  "personnelCredentialMaterialRead": false
+}

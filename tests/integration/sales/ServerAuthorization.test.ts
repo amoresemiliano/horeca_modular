@@ -6,7 +6,7 @@ import type { Response } from '../../../server/salesRuntime';
 describe('Sales trusted entrypoint Core authorization',()=>{
   beforeEach(()=>{
     vi.clearAllMocks();
-    vi.stubEnv('SUPABASE_URL','https://test.supabase.co');
+    vi.stubEnv('SUPABASE_URL','https://vmxjqwlfwnphorthhcwu.supabase.co');
     vi.stubEnv('SUPABASE_ANON_KEY','sanitized-anon-key');
     mocks.createClient.mockReturnValue({auth:{getUser:mocks.getUser},rpc:mocks.rpc});
     mocks.getUser.mockResolvedValue({data:{user:{id:'actor'}},error:null});

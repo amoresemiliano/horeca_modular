@@ -7,18 +7,22 @@ import { SyncSalesSourceUseCase } from '../src/application/sales/useCases/SyncSa
 import type { ProductMapping } from '../src/application/sales/services/LastAppSalesMapper.js';
 import { SupabaseSalesSyncCheckpoint } from '../src/infrastructure/sales/repositories/SupabaseSalesSyncCheckpoint.js';
 import type { SalesSyncCheckpoint } from '../src/application/sales/ports/SalesSyncCheckpointPort.js';
+import { serverSupabaseTarget } from './supabaseEnvironment.js';
+import { checkSupabaseKey } from '../src/shared/config/environmentBoundary.js';
 
 export interface Request { method?: string; headers: Record<string,string|string[]|undefined>; body?: Record<string,unknown> }
 export interface Response { status(code:number): Response; json(value:unknown): void; end(): void }
 export function serverClient(): SupabaseClient {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('SERVER_NOT_CONFIGURED');
-  return createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+  const target=serverSupabaseTarget();checkSupabaseKey(process.env.SUPABASE_SERVICE_ROLE_KEY,target.projectRef,'service_role');
+  return createClient(target.url,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
 }
 export async function authorize(request: Request, org: string, capability: string) {
   const auth = request.headers.authorization;
   if (typeof auth !== 'string' || !auth.startsWith('Bearer ') || !org) throw new Error('DENIED');
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) throw new Error('SERVER_NOT_CONFIGURED');
-  const caller = createClient(process.env.SUPABASE_URL,process.env.SUPABASE_ANON_KEY,{
+  const target=serverSupabaseTarget();checkSupabaseKey(process.env.SUPABASE_ANON_KEY,target.projectRef,'anon');
+  const caller = createClient(target.url,process.env.SUPABASE_ANON_KEY,{
     global:{headers:{Authorization:auth}},auth:{persistSession:false,autoRefreshToken:false}});
   const {data:user,error:userError} = await caller.auth.getUser(auth.slice(7));
   if (userError || !user.user) throw new Error('DENIED');

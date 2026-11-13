@@ -1,0 +1,42 @@
+[
+  {
+    "file": "20260926000000_horeca_core_baseline.sql",
+    "sha256": "bba3cf1534a9bdecb2b285fb1adadf8f9d4c4a4891c9a1a343e9ee27b124eebc"
+  },
+  {
+    "file": "20260927000000_ccr_fin_001_core_authorization.sql",
+    "sha256": "ee505cda98a3461cc4d3a12d61f53abc794e97fe63e9cc5be31b5ea32e3b8598"
+  },
+  {
+    "file": "20260928010000_finance_atomic_bank_import.sql",
+    "sha256": "86e1f113321703bf4a48247a4723f2fa552b5122340d67120e0c49dda2e7976a"
+  },
+  {
+    "file": "20261001000000_finance_classification_workflow.sql",
+    "sha256": "87ee5c57f6eb73b9418c3079cacbbecaa400965463971bab62960f8b0083d993"
+  },
+  {
+    "file": "20261002000000_core_tenant_administration.sql",
+    "sha256": "3b7ed4aa9b2b8f3ac2c69bc30ff4f3f326faa4d652070cfa17cc1a56359aa034"
+  },
+  {
+    "file": "20261002010000_core_secure_provisioning.sql",
+    "sha256": "a58633aaef5704a58c52d5850e8b77961bd653a46556e861f97fd26f9d917b97"
+  },
+  {
+    "file": "20261002020000_core_legacy_fail_closed.sql",
+    "sha256": "d67a4743943746c89e0f5bb7161f6f96c35b2dae351bf65ebe7fe18605b53907"
+  },
+  {
+    "file": "20261002030000_core_module_entitlement_registry.sql",
+    "sha256": "67d89caa4c2b0fd19e26a2e8737c5a822148c287ce7a8ce63c841e7aa80150c8"
+  },
+  {
+    "file": "20261003000000_core_saas_ux.sql",
+    "sha256": "4265ebb0ed2330030e213c9257b52d8a13a1cb47a579c3cf7444361a6b2925b8"
+  },
+  {
+    "file": "20261110090000_personnel_attendance_foundation.sql",
+    "sha256": "6fd14208fb4c2ec1d9fa861d051f7d4f64d03e881aabc9e6b0eee022544be317"
+  }
+]

@@ -32,3 +32,9 @@ app/
 
 # Supabase CLI local project state
 supabase/.temp/
+
+# Environment credential files; only non-secret examples belong in Git.
+.env
+.env.*
+!.env.example
+!.env.*.example

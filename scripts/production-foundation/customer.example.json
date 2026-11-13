@@ -1,0 +1,12 @@
+{
+  "environment": "production",
+  "projectRef": null,
+  "origin": "https://horecamodular.vercel.app",
+  "organization": {"code": "EL_CRIOLLO", "name": "El Criollo", "timezone": "Europe/Madrid", "countryCode": "ES", "currency": "EUR"},
+  "unit": {"code": "PALENCIA_06", "name": "Palencia 06", "type": "LOCAL"},
+  "identities": {
+    "platformAdmin": {"authUserId": null, "email": null},
+    "tenantOwner": {"authUserId": null, "email": null},
+    "personnelAdmin": {"authUserId": null, "email": null}
+  }
+}

@@ -1,11 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 import { hashPin, pinLookup, secretToken, tokenHash } from './security.js';
+import { appOrigin, checkSupabaseKey } from '../../src/shared/config/environmentBoundary.js';
+import { serverSupabaseTarget } from '../supabaseEnvironment.js';
 
 export interface Request { method?: string; headers: Record<string, string | string[] | undefined>; body?: Record<string, unknown> }
 export interface Response { status(code: number): Response; json(value: unknown): void; setHeader(name: string, value: string): void }
 export function configuration() {
-  if (process.env.PERSONNEL_BACKEND_ENABLED !== 'true' || process.env.SUPABASE_URL !== 'https://vmxjqwlfwnphorthhcwu.supabase.co' || !process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.SUPABASE_ANON_KEY || !process.env.PERSONNEL_ORIGIN || (process.env.PERSONNEL_PIN_PEPPER || '').length < 32) throw new Error('SERVER_NOT_CONFIGURED');
-  return { url: process.env.SUPABASE_URL, serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY, anonKey: process.env.SUPABASE_ANON_KEY, origin: process.env.PERSONNEL_ORIGIN, pepper: process.env.PERSONNEL_PIN_PEPPER! };
+  try {
+    if (process.env.PERSONNEL_BACKEND_ENABLED !== 'true' || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.SUPABASE_ANON_KEY || !process.env.PERSONNEL_ORIGIN || (process.env.PERSONNEL_PIN_PEPPER || '').length < 32) throw new Error();
+    const target = serverSupabaseTarget();
+    const origin = appOrigin(target.environment, process.env.PERSONNEL_ORIGIN)!;
+    if (target.environment === 'production' && target.origin !== origin) throw new Error();
+    checkSupabaseKey(process.env.SUPABASE_SERVICE_ROLE_KEY, target.projectRef, 'service_role');
+    checkSupabaseKey(process.env.SUPABASE_ANON_KEY, target.projectRef, 'anon');
+    return { url: target.url, serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY, anonKey: process.env.SUPABASE_ANON_KEY, origin, pepper: process.env.PERSONNEL_PIN_PEPPER! };
+  } catch { throw new Error('SERVER_NOT_CONFIGURED'); }
 }
 export function secureRequest(req: Request, res: Response) {
   res.setHeader('Cache-Control', 'no-store'); res.setHeader('Pragma', 'no-cache');
