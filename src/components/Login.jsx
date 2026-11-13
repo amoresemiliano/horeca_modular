@@ -17,6 +17,7 @@ const Login = () => {
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [useOtp, setUseOtp] = useState(false);
   const { loginWithProvider, loginWithPassword, requestPasswordReset, updatePassword, isPasswordRecovery } = useAuth();
 
   // Preserve the existing DEV/PROD flags and trusted auth callbacks.
@@ -45,7 +46,7 @@ const Login = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     const cleanEmail = (emailInput || '').trim();
-    const cleanPassword = (passwordInput || '').trim();
+    const cleanPassword = passwordInput || '';
     if (!cleanEmail || !cleanPassword) {
       setErrorMsg('Introduce tu email y contraseña.');
       setStatus('error');
@@ -107,8 +108,9 @@ const Login = () => {
     }
   };
 
-  const title = isProduction ? 'Accede con tu correo' : isPasswordRecovery ? 'Configura tu contraseña' : isRecoveryRequest ? 'Recupera tu acceso' : 'Iniciá sesión para continuar';
-  const description = isProduction ? 'Recibe un código de acceso de un solo uso.' : isPasswordRecovery ? 'Elige una contraseña para tu cuenta.' : isRecoveryRequest ? 'Recibe un enlace seguro en tu correo.' : 'Ingresa tus credenciales del portal de gestión';
+  const showOtp = isProduction && (!isPasswordAuthEnabled || useOtp) && !isPasswordRecovery && !isRecoveryRequest;
+  const title = isPasswordRecovery ? 'Configura tu contraseña' : isRecoveryRequest ? 'Recupera tu acceso' : showOtp ? 'Accede con tu correo' : 'Iniciá sesión para continuar';
+  const description = isPasswordRecovery ? 'Elige una contraseña para tu cuenta.' : isRecoveryRequest ? 'Recibe un enlace seguro en tu correo.' : showOtp ? 'Recibe un código de acceso de un solo uso.' : 'Ingresa tus credenciales del portal de gestión';
 
   return (
     <main className="access-portal">
@@ -117,7 +119,7 @@ const Login = () => {
         {isDevPasswordAuthEnabled && !isPasswordRecovery && !isRecoveryRequest && <p className="access-dev-badge">Acceso de Desarrollo (DEV-ONLY)</p>}
         {errorMsg && <p id="access-error" className="access-message access-message--error" role="alert">{errorMsg}</p>}
         {status.startsWith('success_') && <p className="access-message access-message--success" role="status">{successMsg}</p>}
-        {isProduction ? <EmailOtpLogin /> : isPasswordRecovery ? (
+        {showOtp ? <EmailOtpLogin /> : isPasswordRecovery ? (
           <form className="access-form" onSubmit={handleUpdatePasswordSubmit} aria-busy={busy}>
             <label htmlFor="access-new-password">Nueva contraseña</label>
             <div className="access-input-wrap"><KeyRound aria-hidden="true" size={18} /><input id="access-new-password" name="new-password" type="password" autoComplete="new-password" value={newPasswordInput} onChange={e => setNewPasswordInput(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength={6} aria-describedby={errorMsg ? 'access-error' : undefined} /></div>
@@ -138,6 +140,7 @@ const Login = () => {
             <label htmlFor="access-password">Contraseña</label>
             <div className="access-input-wrap"><LockKeyhole aria-hidden="true" size={18} /><input id="access-password" name="password" type="password" autoComplete="current-password" value={passwordInput} onChange={e => setPasswordInput(e.target.value)} placeholder="Tu contraseña" required aria-describedby={errorMsg ? 'access-error' : undefined} /></div>
             <button className="access-submit" type="submit" disabled={busy}>{status === 'loading_password' ? 'Iniciando sesión…' : 'Iniciar sesión'}<ArrowRight aria-hidden="true" size={18} /></button>
+            <a className="access-back" href="/reset-password">¿Olvidaste tu contraseña?</a>
           </form>
         ) : (
           <div className="access-providers" aria-busy={busy}>
@@ -146,6 +149,7 @@ const Login = () => {
             <button type="button" disabled={busy} onClick={() => handleOAuthLogin('github')}>{status === 'loading_github' ? 'Redirigiendo a GitHub…' : 'Acceder con GitHub'}<ArrowRight aria-hidden="true" size={18} /></button>
           </div>
         )}
+        {isProduction && isPasswordAuthEnabled && !isPasswordRecovery && !isRecoveryRequest && <button type="button" className="access-back" disabled={busy} onClick={() => { setUseOtp(!useOtp); setErrorMsg(''); }}>{useOtp ? 'Entrar con contraseña' : 'Entrar con código por correo'}</button>}
         {busy && <p className="access-progress" role="status">{status === 'loading_reset' ? 'Solicitando recuperación…' : status === 'loading_update' ? 'Guardando nueva contraseña…' : 'Conectando de forma segura…'}</p>}
         <p className="access-secure"><ShieldCheck size={16} aria-hidden="true" />Acceso seguro a tu organización</p>
         {isDevPasswordAuthEnabled && <p className="access-diagnostics">DEV · {gitSha} · Supabase {projectRef}</p>}
