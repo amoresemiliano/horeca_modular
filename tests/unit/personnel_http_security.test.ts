@@ -37,6 +37,15 @@ describe('Personnel backend HTTP boundary and scrypt credentials',()=>{
   const res=response();await punchHandler(request({action:'punch',pin:'1842',requestId:org,[key]:'spoof'}),res);expect(res.code).toBe(400);expect(mocks.rpc).not.toHaveBeenCalled();
  });
  it('returns generic PIN failure for unsuccessful verification',async()=>{const res=response();await punchHandler(request({action:'punch',pin:'9999',requestId:org}),res);expect(res.body).toEqual({error:'PIN_REJECTED'});});
+ it('activates against the ten-migration foundation without the optional push RPC',async()=>{
+  vi.stubEnv('PERSONNEL_ACTIVATION_MODE','foundation');
+  const res=response();await punchHandler(request({action:'activate',token:'A'.repeat(43)}),res);
+  expect(res.code).toBe(200);
+  expect(mocks.rpc).toHaveBeenCalledWith('personnel_device_command',expect.objectContaining({p_action:'activate',p_token_hash:expect.stringMatching(/^[a-f0-9]{64}$/),p_body:{deviceHash:expect.stringMatching(/^[a-f0-9]{64}$/)}}));
+  expect(mocks.rpc.mock.calls.some(([name])=>name==='personnel_activate_device')).toBe(false);
+  expect(res.headers['Set-Cookie']).toContain('HttpOnly; Secure; SameSite=Strict');
+  vi.stubEnv('PERSONNEL_ACTIVATION_MODE','');
+ });
  it('sets only a secure HttpOnly device cookie after activation',async()=>{
   const res=response();await punchHandler(request({action:'activate',token:'A'.repeat(43)}),res);expect(res.code).toBe(200);expect(res.body).toEqual({ok:true});expect(res.headers['Set-Cookie']).toMatch(/HttpOnly; Secure; SameSite=Strict/);expect(res.headers['Set-Cookie']).toContain('Path=/;');
  });
