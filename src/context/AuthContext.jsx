@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase.js';
 import { moduleEnabled, resolveAuthorizedCapabilities, selectOrganization } from './tenantContext.js';
+import { requestEmailCode, verifyEmailCode } from '../application/auth/emailOtp.js';
 
 const AuthContext = createContext({
   user: null,
@@ -24,6 +25,8 @@ const AuthContext = createContext({
   loginWithGoogle: async () => {},
   loginWithGithub: async () => {},
   loginWithPassword: async (_email, _password) => {},
+  requestLoginCode: async (_email) => {},
+  verifyLoginCode: async (_email, _code) => {},
   requestPasswordReset: async (_email) => {},
   updatePassword: async (_newPassword) => {},
   logout: async () => {},
@@ -475,6 +478,8 @@ export function AuthProvider({ children }) {
     loginWithGoogle,
     loginWithGithub,
     loginWithPassword,
+    requestLoginCode: email => requestEmailCode(supabase, email),
+    verifyLoginCode: (email, code) => verifyEmailCode(supabase, email, code),
     requestPasswordReset,
     updatePassword,
     logout,

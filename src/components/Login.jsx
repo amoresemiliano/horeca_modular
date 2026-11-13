@@ -3,6 +3,7 @@ import { ArrowRight, KeyRound, LockKeyhole, Mail, ShieldCheck } from 'lucide-rea
 import { useAuth } from '../context/AuthContext';
 import LoginHero from './access/LoginHero';
 import LoginPanel from './access/LoginPanel';
+import EmailOtpLogin from './access/EmailOtpLogin';
 import './access/access.css';
 
 const Login = () => {
@@ -106,8 +107,8 @@ const Login = () => {
     }
   };
 
-  const title = isPasswordRecovery ? 'Configura tu contraseña' : isRecoveryRequest ? 'Recupera tu acceso' : 'Iniciá sesión para continuar';
-  const description = isPasswordRecovery ? 'Elige una contraseña para tu cuenta.' : isRecoveryRequest ? 'Recibe un enlace seguro en tu correo.' : 'Ingresa tus credenciales del portal de gestión';
+  const title = isProduction ? 'Accede con tu correo' : isPasswordRecovery ? 'Configura tu contraseña' : isRecoveryRequest ? 'Recupera tu acceso' : 'Iniciá sesión para continuar';
+  const description = isProduction ? 'Recibe un código de acceso de un solo uso.' : isPasswordRecovery ? 'Elige una contraseña para tu cuenta.' : isRecoveryRequest ? 'Recibe un enlace seguro en tu correo.' : 'Ingresa tus credenciales del portal de gestión';
 
   return (
     <main className="access-portal">
@@ -116,7 +117,7 @@ const Login = () => {
         {isDevPasswordAuthEnabled && !isPasswordRecovery && !isRecoveryRequest && <p className="access-dev-badge">Acceso de Desarrollo (DEV-ONLY)</p>}
         {errorMsg && <p id="access-error" className="access-message access-message--error" role="alert">{errorMsg}</p>}
         {status.startsWith('success_') && <p className="access-message access-message--success" role="status">{successMsg}</p>}
-        {isPasswordRecovery ? (
+        {isProduction ? <EmailOtpLogin /> : isPasswordRecovery ? (
           <form className="access-form" onSubmit={handleUpdatePasswordSubmit} aria-busy={busy}>
             <label htmlFor="access-new-password">Nueva contraseña</label>
             <div className="access-input-wrap"><KeyRound aria-hidden="true" size={18} /><input id="access-new-password" name="new-password" type="password" autoComplete="new-password" value={newPasswordInput} onChange={e => setNewPasswordInput(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength={6} aria-describedby={errorMsg ? 'access-error' : undefined} /></div>
