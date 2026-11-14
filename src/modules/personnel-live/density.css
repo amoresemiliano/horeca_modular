@@ -1,0 +1,73 @@
+/* Same Personnel palette, type and cards; denser spacing only. */
+.shell-personnel-prototype main { padding: 16px !important; }
+.shell-personnel-prototype main > div > div:first-child { display: none; }
+.shell-personnel-prototype main > div > div:last-child { padding: 16px !important; min-height: 0 !important; }
+.personnel-dense .per-context { margin: 0 0 10px; gap: 10px; }
+.personnel-dense .per-context > small { margin-right: auto; color: var(--c-text-3); }
+.personnel-dense .per-section-heading { margin: 10px 0 12px; gap: 8px; }
+.personnel-dense .per-section-heading h2 { margin-bottom: 3px; }
+.personnel-dense .per-toolbar { margin: 10px 0; gap: 8px; }
+.personnel-dense .per-toolbar .per-field { flex-basis: 130px; }
+.personnel-dense .per-info { margin-top: 12px; padding: 10px 12px; }
+.personnel-dense .per-record-grid { gap: 8px; }
+.personnel-dense .per-record { padding: 10px 12px; }
+.personnel-dense .per-record p { margin: 4px 0; }
+.personnel-dense .per-record .per-actions { margin-top: 6px; gap: 6px; }
+.personnel-dense .per-rule-row { display: grid; grid-template-columns: 1fr 1.4fr 1.7fr auto; gap: 10px; align-items: center; }
+.personnel-dense .per-range-details { margin-block: 6px; font-size: 12px; color: var(--c-text-3); }
+.personnel-dense .per-range-details > summary { min-height: 32px; cursor: pointer; }
+.personnel-dense .per-person { gap: 8px; }
+.personnel-dense .per-avatar { width: 34px; height: 34px; }
+.personnel-dense .per-summary { grid-template-columns: repeat(6,minmax(0,1fr)); gap: 8px; }
+.personnel-dense .per-summary button { padding: 8px 12px; }
+.personnel-dense .per-summary strong { margin-top: 2px; font-size: 26px; }
+.personnel-dense .per-attendance-list { gap: 6px; }
+.personnel-dense .per-attendance-card { padding: 10px 12px; gap: 10px; grid-template-columns: 1.5fr 1fr 1fr .65fr 1.35fr; }
+.personnel-dense .per-attendance-card small { margin-top: 2px; font-size: 11px; }
+.personnel-dense .per-unscheduled-row { margin: 0; padding: 5px 0; border-bottom: 1px solid var(--c-border); }
+.personnel-dense .per-employee-list, .personnel-dense .per-device-list { display: grid; gap: 6px; }
+.personnel-dense .per-employee-row, .personnel-dense .per-device-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.personnel-dense .per-employee-row .per-person { flex: 1; }
+.personnel-dense .per-employee-row .per-actions { margin: 0; }
+.personnel-dense button.per-name-button { border: 0; padding: 0; text-align: left; background: transparent; }
+.personnel-dense .per-device-row > strong { flex: 1; overflow-wrap: anywhere; }
+.personnel-dense .per-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding: 8px 0; font-size: 12px; }
+.personnel-dense .per-pagination > span:first-child { margin-right: auto; font-variant-numeric: tabular-nums; }
+.personnel-dense .per-pagination .per-field { flex-direction: row; align-items: center; gap: 6px; }
+.personnel-dense .per-pagination select { width: 78px; padding: 6px; }
+.personnel-dense .per-pagination button { padding-inline: 10px; }
+.personnel-dense .per-day { padding: 6px; }
+.personnel-dense .per-day h3 { margin: 4px 0 8px; }
+.personnel-dense .per-day-shifts { display: grid; align-content: start; gap: 6px; max-height: 62vh; overflow-y: auto; scrollbar-gutter: stable; }
+.personnel-dense .per-calendar-item { display: grid; gap: 3px; padding: 7px; }
+.personnel-dense .per-calendar-item > strong { font-size: 13px; line-height: 1.35; }
+.personnel-dense .per-calendar-item > span { font-size: 12px; color: var(--c-text-3); }
+.personnel-dense .per-calendar-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 3px; max-width: 144px; }
+.personnel-dense .per-calendar-actions button { display: grid; place-items: center; padding: 5px; min-width: 0; min-height: 44px; }
+.personnel-dense button:disabled { opacity: .45; cursor: default; }
+.per-dialog-compact .per-copy-line { display: flex; align-items: center; gap: 8px; }
+.per-dialog-compact .per-copy-line p { margin: 0; flex: 1; font-size: 13px; }
+.per-dialog-compact .per-icon-button { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 8px; flex-shrink: 0; }
+.per-dialog-compact .per-activation-result textarea { display: block; margin-top: 6px; min-height: 76px; padding: 8px; font: 12px/1.5 var(--font-body); resize: vertical; }
+.per-dialog-compact .per-activation-result small { display: block; margin-top: 4px; color: #196240; }
+.per-dialog-compact .per-form { gap: 10px; }
+@media (min-width: 769px) { .personnel-dense > .per-tabs { display: none; } }
+@media (min-width: 1101px) and (max-width: 1279px) { .personnel-dense .per-week { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+@media (max-width: 1100px) {
+  .personnel-dense .per-attendance-card { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .personnel-dense .per-attendance-card > .per-person { grid-column: 1 / -1; }
+  .personnel-dense .per-employee-row { flex-wrap: wrap; }
+  .personnel-dense .per-rule-row { grid-template-columns: 1fr auto; }
+}
+@media (max-width: 700px) {
+  .personnel-dense .per-summary { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .personnel-dense .per-attendance-card { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .personnel-dense .per-employee-row .per-actions { width: 100%; justify-content: flex-start; }
+  .personnel-dense .per-device-row { flex-wrap: wrap; }
+  .personnel-dense .per-device-row > strong { flex-basis: 50%; }
+  .personnel-dense .per-pagination { justify-content: flex-start; }
+  .personnel-dense .per-pagination > span:first-child { width: 100%; }
+  .personnel-dense .per-context > * { width: auto; }
+  .personnel-dense .per-day-shifts { max-height: 65vh; }
+  .personnel-dense .per-rule-row { grid-template-columns: 1fr; gap: 4px; }
+}

@@ -1,10 +1,12 @@
-import { useState } from 'react';
 import { Attendance } from '../../personal/Attendance';
 import { Avatar, Badge, Empty } from '../../personal/ui';
 import ScheduleView from '../schedule/ScheduleView';
+import Pagination, { usePagedList } from '../Pagination';
+import { usePersonnelUi } from '../uiState';
 
-export default function EmployeeDirectory({ employees, state, unit, open, detail, command, refresh, onError, onRange }) {
-  const [selected, setSelected] = useState(null), [tab, setTab] = useState('Resumen');
+export default function EmployeeDirectory({ employees, state, unit, open, detail, command, refresh, onError, onRange, filterKey = '' }) {
+  const [selected, setSelected] = usePersonnelUi('employees:selected',null), [tab, setTab] = usePersonnelUi('employees:tab','Resumen');
+  const list = usePagedList(employees,'employees',filterKey);
   const employee = employees.find(e => e.id === selected);
   if (employee) return <>
     <button onClick={() => setSelected(null)}>← Volver al equipo</button>
@@ -15,5 +17,5 @@ export default function EmployeeDirectory({ employees, state, unit, open, detail
     {tab === 'Horarios' && <ScheduleView {...{ state, unit, open, command, refresh, onError, onRange }} employeeId={employee.id} />}
     <p className="per-info">Ausencias · Incidencias · Nóminas · Documentos · WhatsApp: próximamente.</p>
   </>;
-  return <><div className="per-section-heading"><h2>Equipo</h2><button className="per-primary" onClick={() => open({ kind: 'employee' })}>+ Nuevo empleado</button></div><div className="per-record-grid">{employees.map(e => <article className="per-record" key={e.id}><div className="per-person"><Avatar employee={e} /><div><button onClick={() => { setSelected(e.id); setTab('Resumen'); }}>{e.name}</button><small>{e.position}</small></div><Badge status={e.status} /></div><p>{e.weeklyHours || '—'} h / semana</p><div className="per-actions"><button onClick={() => open({ kind: 'employee', record: e })}>Editar / desactivar</button><button onClick={() => open({ kind: 'pin', employeeId: e.id })}>{e.pinSet ? 'Restablecer PIN' : 'Crear PIN'}</button><button onClick={() => open({ kind: 'rule', employeeId: e.id })}>Horario habitual</button></div></article>)}</div>{!employees.length && <Empty title="Todavía no hay empleados" />}</>;
+  return <><div className="per-section-heading"><h2>Equipo</h2><button className="per-primary" onClick={() => open({ kind: 'employee' })}>+ Nuevo empleado</button></div><div className="per-employee-list">{list.items.map(e => <article className="per-record per-employee-row" key={e.id}><div className="per-person"><Avatar employee={e} /><div><button className="per-name-button" onClick={() => { setSelected(e.id); setTab('Resumen'); }}>{e.name}</button><small>{e.position} · {e.weeklyHours || '—'} h / semana</small></div><Badge status={e.status} /></div><div className="per-actions"><button onClick={() => open({ kind: 'employee', record: e })}>Editar / desactivar</button><button onClick={() => open({ kind: 'pin', employeeId: e.id })}>{e.pinSet ? 'Restablecer PIN' : 'Crear PIN'}</button><button onClick={() => open({ kind: 'rule', employeeId: e.id })}>Horario habitual</button></div></article>)}</div><Pagination list={list} label="Empleados" />{!employees.length && <Empty title="Todavía no hay empleados" />}</>;
 }

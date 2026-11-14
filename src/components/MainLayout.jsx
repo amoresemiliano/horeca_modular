@@ -9,7 +9,7 @@ import ProductionPersonnelApp from '../modules/personnel-live/ProductionPersonne
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
 import TenantAdministration from '../modules/administration/TenantAdministration';
 import { navigationAllowed, banksSectionAllowed, visibleModules } from '../application/tenancy/accessNavigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoCliente from '../assets/logo_cliente.png';
 import platformLogo from '../assets/vegen-digital.png';
@@ -84,18 +84,16 @@ const AccesoRestringido = ({ modulo }) => (
 const MainLayout = ({ user: propsUser }) => {
   const { user: authUser, can, isModuleEnabled, platformCan, navigationScope, setNavigationScope, availableOrganizations, availableOperationalUnits, activeOperationalUnit, switchOperationalUnit, activeOrganization, switchOrganization, logout, updatePassword } = useAuth();
   const user = authUser || propsUser;
-  const [moduloActivo,      setModuloActivo]      = useState(() => readRoute(user?.id).module || (navigationScope === 'platform' ? 'PlatformAdmin' : 'Dashboard'));
-  const [tabActiva,         setTabActiva]          = useState(() => readRoute(user?.id).section || (navigationScope === 'platform' ? 'Tenants' : 'Inicio'));
+  const route = readRoute(user?.id);
+  const restoreRoute = route.module !== 'Personal' || navigationAllowed('Personal', can, isModuleEnabled, platformCan);
+  const [moduloActivo,      setModuloActivo]      = useState(() => (restoreRoute && route.module) || (navigationScope === 'platform' ? 'PlatformAdmin' : 'Dashboard'));
+  const [tabActiva,         setTabActiva]          = useState(() => (restoreRoute && route.section) || (navigationScope === 'platform' ? 'Tenants' : 'Inicio'));
   const [sidebarOpen,       setSidebarOpen]        = useState(true);
   const modulosPermitidos = visibleModules(Object.keys(MODULOS), can, isModuleEnabled, platformCan, navigationScope);
   const platformCatalog = navigationScope === 'platform' && platformCan('platform.tenants.provision');
   const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || platformCatalog || banksSectionAllowed(tab, can));
-  useEffect(() => {
-    if (platformCatalog) {
-      setModuloActivo('PlatformAdmin');
-      setTabActiva('Tenants');
-    }
-  }, [platformCatalog]);
+  // The validated URL, not platform-catalog availability, owns the active view.
+  // Re-mounting after session revalidation must not force Personnel back home.
 
   // Change password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -129,6 +127,10 @@ const MainLayout = ({ user: propsUser }) => {
   };
 
   const navigationKey = modulosPermitidos.map(mod => mod + ':' + permittedTabs(mod).join(',')).join('|');
+  const moduleNav = useRef(null);
+  useEffect(()=>{
+    if(moduloActivo==='Personal') moduleNav.current?.querySelector('[aria-current="page"]')?.scrollIntoView({block:'nearest',inline:'nearest'});
+  },[moduloActivo,navigationKey]);
   useEffect(() => {
     if (navigationKey.split('|').some(entry => entry.split(':')[0] === moduloActivo && entry.split(':')[1]?.split(',').includes(tabActiva))) {
       saveRoute(user?.id, moduloActivo, tabActiva);
@@ -223,12 +225,13 @@ const MainLayout = ({ user: propsUser }) => {
 
           {activeOrganization && availableOperationalUnits?.length > 0 && <select style={{maxWidth:210}} aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
           {/* Navegación por grupos */}
-          <nav aria-label="Módulos operativos" className={'shell-module-navigation' + (platformCatalog ? ' shell-module-catalog' : '')}>
+          <nav ref={moduleNav} aria-label="Módulos operativos" className={'shell-module-navigation' + (platformCatalog ? ' shell-module-catalog' : '')}>
             {Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && modulosPermitidos.includes(key)).map(([key, mod]) => {
               const isActive = moduloActivo === key;
               return (
                 <button
                   key={key}
+                  aria-current={isActive ? 'page' : undefined}
                   onClick={() => cambiarModulo(key)}
                   style={{
                     display: 'flex',

@@ -22,11 +22,21 @@
 }
 .shell-module-catalog {
   flex: 1;
-  flex-wrap: wrap;
-  overflow-x: visible;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   padding: 0.25rem 0;
 }
 .shell-profile { flex-shrink: 0; margin-left: 1rem; }
+.shell-module-navigation > button { flex: 0 0 auto; white-space: nowrap; }
+@media (min-width: 901px) {
+  .shell-identity-navigation { gap: .5rem; overflow: hidden; }
+  .shell-tenant-control { max-width: 190px; min-width: 0; }
+  .shell-tenant-control select { min-width: 0; width: 100%; }
+  .shell-identity-navigation > select { max-width: 145px !important; min-width: 100px; }
+  .shell-module-navigation { flex: 1; flex-wrap: nowrap; }
+  .shell-module-navigation > button { padding-inline: .5rem !important; gap: .3rem !important; }
+  .shell-profile { margin-left: .5rem; }
+}
 .shell-admin-link {
   display: flex;
   align-items: center;
