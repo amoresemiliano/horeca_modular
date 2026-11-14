@@ -26,7 +26,7 @@ export default async function handler(req: Request, res: Response) {
       await rpc(client, 'personnel_admin_command', { p_org: org, p_unit: unit, p_action: action, p_body: { label: payload.label, tokenHash: tokenHash(token) } });
       res.status(200).json({ activationUrl: `${configuration().origin}/personal/fichaje/#activate=${token}`, expiresIn: 600 }); return;
     }
-    if (!['snapshot', 'employee.save', 'schedule.save', 'schedule.cancel', 'device.revoke', 'attendance.correct'].includes(action)) throw new Error('INVALID_INPUT');
+    if (!['snapshot', 'employee.save', 'schedule.save', 'schedule.cancel', 'schedule.rule.save', 'schedule.exception.save', 'device.revoke', 'attendance.correct'].includes(action)) throw new Error('INVALID_INPUT');
     const result = await rpc(client, 'personnel_admin_command', { p_org: org, p_unit: unit, p_action: action, p_body: payload });
     res.status(200).json(result);
   } catch (error) {

@@ -13,7 +13,7 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE SCHEMA auth;
    CREATE TABLE auth.users(id uuid PRIMARY KEY);
    CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$; GRANT USAGE ON SCHEMA auth TO authenticated,anon;`);
-  for(const name of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql','20261002030000_core_module_entitlement_registry.sql','20261110090000_personnel_attendance_foundation.sql','20261111100000_personnel_push_reminders.sql']) await db.exec(readFileSync('supabase/migrations/'+name,'utf8'));
+  for(const name of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql','20261002030000_core_module_entitlement_registry.sql','20261110090000_personnel_attendance_foundation.sql','20261111100000_personnel_push_reminders.sql','20261114090000_personnel_recurring_schedules.sql']) await db.exec(readFileSync('supabase/migrations/'+name,'utf8'));
  },60000);
  afterAll(async()=>{await db?.close()});
  beforeEach(async()=>{
@@ -40,6 +40,61 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
  async function pin(eid:string,raw='1648') {await admin('pin.reset',{employeeId:eid,lookup:pinLookup(org,raw,pepper),hash:await hashPin(raw,pepper)});return raw;}
  async function punch(credential:string,raw:string,requestId=randomUUID()) {const prepared=await device('prepare',credential,{lookup:pinLookup(org,raw,pepper),requestId});if(prepared.error)return prepared;return device('execute',credential,{attemptId:prepared.attemptId,verified:prepared.hash?await verifyPin(raw,String(prepared.hash),pepper):false});}
 
+ it('resolves indefinite weekdays, Saturday, overrides and cancellations without unlimited daily rows',async()=>{
+  const eid=await employee();
+  const draft={employeeId:eid,weekdays:[1,2,3,4,5],start:'10:00',end:'17:00',validFrom:'2040-01-02',validUntil:''};
+  await admin('schedule.rule.save',draft);
+  await admin('schedule.rule.save',{...draft,weekdays:[6],end:'15:00'});
+  expect((await db.query('SELECT count(*)::int n FROM public.personnel_schedules')).rows[0]).toMatchObject({n:0});
+  const snap=await admin('snapshot',{from:'2040-01-02',to:'2040-01-08'});
+  const shifts=snap.schedules as {local_date:string;expected_end_time:string}[];expect(shifts).toHaveLength(6);
+  expect(shifts.find(s=>s.local_date==='2040-01-07')?.expected_end_time).toBe('15:00:00');
+  const before=(await db.query('SELECT * FROM public.personnel_schedules ORDER BY id')).rows;
+  await admin('snapshot',{from:'2040-01-02',to:'2040-01-08'});expect((await db.query('SELECT * FROM public.personnel_schedules ORDER BY id')).rows).toEqual(before);
+  await admin('schedule.exception.save',{employeeId:eid,date:'2040-01-04',start:'12:00',end:'19:00'});
+  await admin('schedule.exception.save',{employeeId:eid,date:'2040-01-05',cancelled:true});
+  const changed=(await admin('snapshot',{from:'2040-01-02',to:'2040-01-08'})).schedules as {local_date:string;expected_start_time:string}[];
+  expect(changed.find(s=>s.local_date==='2040-01-04')?.expected_start_time).toBe('12:00:00');expect(changed.find(s=>s.local_date==='2040-01-05')).toBeUndefined();
+  expect(((await admin('snapshot',{from:'2050-01-01',to:'2050-01-07'})).schedules as unknown[]).length).toBe(6);
+ });
+ it('enforces finite bounds, weekly overlap, revisions, tenant/unit gates and preserves manual shifts',async()=>{
+  const eid=await employee(),draft={employeeId:eid,weekdays:[1,2,3,4,5],start:'10:00',end:'17:00',validFrom:'2040-01-02',validUntil:'2040-01-06'};
+  const saved=await admin('schedule.rule.save',draft);
+  await expect(admin('schedule.rule.save',{...draft,start:'16:00',end:'20:00'})).rejects.toThrow('OVERLAPPING_SCHEDULE');
+  await expect(admin('schedule.rule.save',{...draft,id:saved.id,revision:0})).rejects.toThrow('STALE_REVISION');
+  await expect(admin('schedule.rule.save',{...draft,weekdays:[]})).rejects.toThrow('INVALID_INPUT');
+  await expect(admin('schedule.rule.save',draft,worker)).rejects.toThrow('ACCESS_DENIED');
+  await expect(admin('schedule.rule.save',draft,owner,foreign)).rejects.toThrow('ACCESS_DENIED');
+  await expect(admin('schedule.rule.save',draft,owner,org,other)).rejects.toThrow('ACCESS_DENIED');
+  await admin('schedule.save',{employeeId:eid,date:'2040-01-03',start:'09:00',end:'16:00'});
+  const shifts=(await admin('snapshot',{from:'2040-01-02',to:'2040-01-10'})).schedules as {local_date:string;expected_start_time:string}[];
+  expect(shifts).toHaveLength(5);expect(shifts.find(s=>s.local_date==='2040-01-03')?.expected_start_time).toBe('09:00:00');
+ });
+ it('links PIN attendance to the effective recurring shift without a prior admin snapshot',async()=>{
+  const eid=await employee(),raw=await pin(eid),a=await activated();
+  const date=(await db.query<{day:string;dow:number;start:string;end:string}>(`SELECT ((now()+interval '1 hour') AT TIME ZONE 'Europe/Madrid')::date::text AS "day",extract(isodow FROM (now()+interval '1 hour') AT TIME ZONE 'Europe/Madrid')::int AS dow,((now()+interval '1 hour') AT TIME ZONE 'Europe/Madrid')::time::text AS "start",((now()+interval '2 hours') AT TIME ZONE 'Europe/Madrid')::time::text AS "end"`)).rows[0];
+  await admin('schedule.rule.save',{employeeId:eid,weekdays:[date.dow],validFrom:date.day,start:date.start,end:date.end});
+  const result=await punch(a.credential,raw);expect(result.kind).toBe('IN');
+  expect((await db.query<{schedule_id:string}>('SELECT schedule_id FROM public.personnel_attendance_punches WHERE id=$1',[result.id])).rows[0].schedule_id).toBeTruthy();
+ });
+ it('edits future recurrence with stable dated IDs and ends it without losing manual or started facts',async()=>{
+  const eid=await employee(),draft={employeeId:eid,weekdays:[1,2,3,4,5],start:'10:00',end:'17:00',validFrom:'2040-01-02',validUntil:''};
+  const rule=await admin('schedule.rule.save',draft);
+  await admin('snapshot',{from:'2040-01-02',to:'2040-01-10'});
+  await db.query("UPDATE public.personnel_schedules SET expected_start_at=now()-interval '1 hour',expected_end_at=now()+interval '6 hours' WHERE local_date='2040-01-02'");
+  const before=(await db.query("SELECT * FROM public.personnel_schedules WHERE local_date='2040-01-02'")).rows[0];
+  await admin('schedule.rule.save',{...draft,id:rule.id,revision:1,start:'11:00',validUntil:'2040-01-06'});
+  const snapshot=await admin('snapshot',{from:'2040-01-02',to:'2040-01-10'});
+  expect((await db.query("SELECT * FROM public.personnel_schedules WHERE local_date='2040-01-02'")).rows[0]).toEqual(before);
+  const shifts=snapshot.schedules as {local_date:string;expected_start_time:string}[];
+  expect(shifts.find(s=>s.local_date==='2040-01-03')?.expected_start_time).toBe('11:00:00');expect(shifts.some(s=>s.local_date>'2040-01-06')).toBe(false);
+ });
+ it('keeps a shared activated device usable by different employees without phone verification',async()=>{
+  const first=await employee(),second=await employee(),a=await activated('Shared tablet');
+  await pin(first,'1648');await pin(second,'2839');
+  expect((await punch(a.credential,'1648')).kind).toBe('IN');expect((await punch(a.credential,'2839')).kind).toBe('IN');
+  expect((await db.query('SELECT count(DISTINCT employee_id)::int n FROM public.personnel_attendance_punches')).rows[0]).toMatchObject({n:2});
+ });
  it('gates admin by canonical capability, entitlement, revoke and tenant',async()=>{
   await expect(admin('employee.save',{},worker)).rejects.toThrow('ACCESS_DENIED');
   await expect(admin('employee.save',{},owner,foreign)).rejects.toThrow('ACCESS_DENIED');

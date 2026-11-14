@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import logoCliente from '../assets/logo_cliente.png';
 import platformLogo from '../assets/vegen-digital.png';
 import './MainLayout.css';
+import { readRoute, saveRoute } from '../context/navigationState';
 
 /* ─── ESTRUCTURA MAESTRA ──────────────────────────────────────────────────── */
 const MODULOS = {
@@ -83,8 +84,8 @@ const AccesoRestringido = ({ modulo }) => (
 const MainLayout = ({ user: propsUser }) => {
   const { user: authUser, can, isModuleEnabled, platformCan, navigationScope, setNavigationScope, availableOrganizations, availableOperationalUnits, activeOperationalUnit, switchOperationalUnit, activeOrganization, switchOrganization, logout, updatePassword } = useAuth();
   const user = authUser || propsUser;
-  const [moduloActivo,      setModuloActivo]      = useState(() => navigationScope === 'platform' ? 'PlatformAdmin' : 'Dashboard');
-  const [tabActiva,         setTabActiva]          = useState(() => navigationScope === 'platform' ? 'Tenants' : 'Inicio');
+  const [moduloActivo,      setModuloActivo]      = useState(() => readRoute(user?.id).module || (navigationScope === 'platform' ? 'PlatformAdmin' : 'Dashboard'));
+  const [tabActiva,         setTabActiva]          = useState(() => readRoute(user?.id).section || (navigationScope === 'platform' ? 'Tenants' : 'Inicio'));
   const [sidebarOpen,       setSidebarOpen]        = useState(true);
   const modulosPermitidos = visibleModules(Object.keys(MODULOS), can, isModuleEnabled, platformCan, navigationScope);
   const platformCatalog = navigationScope === 'platform' && platformCan('platform.tenants.provision');
@@ -128,6 +129,11 @@ const MainLayout = ({ user: propsUser }) => {
   };
 
   const navigationKey = modulosPermitidos.map(mod => mod + ':' + permittedTabs(mod).join(',')).join('|');
+  useEffect(() => {
+    if (navigationKey.split('|').some(entry => entry.split(':')[0] === moduloActivo && entry.split(':')[1]?.split(',').includes(tabActiva))) {
+      saveRoute(user?.id, moduloActivo, tabActiva);
+    }
+  }, [user?.id, navigationKey, moduloActivo, tabActiva]);
   useEffect(() => {
     const current = navigationKey.split('|').find(entry => entry.startsWith(moduloActivo + ':'));
     const tabs = current?.split(':')[1].split(',') || [];

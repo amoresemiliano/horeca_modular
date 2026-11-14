@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { supabase } from '../lib/supabase.js';
 import { moduleEnabled, resolveAuthorizedCapabilities, selectOrganization } from './tenantContext.js';
 import { requestEmailCode, verifyEmailCode } from '../application/auth/emailOtp.js';
+import { readContext, saveContext, clearContext } from './navigationState';
 
 const AuthContext = createContext({
   user: null,
@@ -64,6 +65,7 @@ export function AuthProvider({ children }) {
 
   const resolveFullContext = useCallback(async (authUser, targetOrgId = null, targetUnitId = null) => {
     const request = ++contextRequest.current;
+    setLoading(true);
     // Clear authority before resolving another identity, organization or scope.
     setProfile(null);
     setAvailableOrganizations([]);
@@ -77,6 +79,7 @@ export function AuthProvider({ children }) {
     setPlatformCapabilities([]);
     setAvailableOperationalUnits([]);
     if (!authUser) {
+      setLoading(false);
       setProfile(null);
       setMembership(null);
       setRole(null);
@@ -197,18 +200,20 @@ export function AuthProvider({ children }) {
       setAvailableOrganizations(orgs);
 
       // Select active organization
-      const previous = selectedContext.current.userId === authUser.id ? selectedContext.current : {};
+      const saved = readContext(authUser.id);
+      const previous = selectedContext.current.userId === authUser.id ? selectedContext.current : saved;
       const selectedOrg = selectOrganization(orgs, targetOrgId, previous.organizationId, platformAllowed === true);
       const activeMem = selectedOrg ? memList?.find((m) => m.organization_id === selectedOrg.id) : null;
       const unitId = targetOrgId ? targetUnitId : previous.unitId || null;
 
       if (selectedContext.current.userId !== authUser.id) {
-        setNavigationScope(platformAllowed === true ? 'platform' : 'organization');
+        setNavigationScope(platformAllowed === true && saved.navigationScope !== 'organization' ? 'platform' : 'organization');
       }
       if (!selectedOrg && platformAllowed === true) setNavigationScope('platform');
       selectedContext.current = { userId: authUser.id, organizationId: selectedOrg?.id || null, unitId: activeMem ? unitId : null };
       setActiveOrganization(selectedOrg);
       setOrganizationId(selectedOrg?.id || null);
+      if (!activeMem) saveContext(authUser.id, { organizationId: selectedOrg?.id || null, unitId: null });
 
       if (activeMem) {
         const orgInfo = orgs.find((o) => o.id === activeMem.organization_id);
@@ -253,18 +258,19 @@ export function AuthProvider({ children }) {
 
         const { data: units, error: unitsError } = await supabase.from('eco_operational_units').select('id,name').eq('organization_id',activeMem.organization_id).eq('is_active',true);
         if (unitsError) throw unitsError;
-        if (unitId && !units.some(u=>u.id===unitId)) throw new Error('Invalid active unit');
+        const validUnitId = units.some(u=>u.id===unitId) ? unitId : null;
 
         // The canonical gate resolves role activity, scope, revoke precedence and
         // required entitlements. Candidate codes alone never confer authority.
-        const decisions = await resolveAuthorizedCapabilities(supabase, activeMem.organization_id, caps, unitId);
+        const decisions = await resolveAuthorizedCapabilities(supabase, activeMem.organization_id, caps, validUnitId);
         if (request !== contextRequest.current) return;
-        selectedContext.current = { userId: authUser.id, organizationId: activeMem.organization_id, unitId };
+        selectedContext.current = { userId: authUser.id, organizationId: activeMem.organization_id, unitId: validUnitId };
+        saveContext(authUser.id, { organizationId: activeMem.organization_id, unitId: validUnitId });
         setMembership(activeMem);
         setRole(activeMem.role || null);
         setOrganizationId(activeMem.organization_id);
         setActiveOrganization(orgInfo);
-        setActiveOperationalUnit(unitId ? { id: unitId } : null);
+        setActiveOperationalUnit(validUnitId ? units.find(u=>u.id===validUnitId) : null);
         setAvailableOperationalUnits(units);
         setEffectiveCapabilities(decisions);
 
@@ -282,15 +288,14 @@ export function AuthProvider({ children }) {
       setEffectiveCapabilities([]);
       setEntitlements([]);
       setPlatformCapabilities([]);
+    } finally {
+      if (request === contextRequest.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     let mounted = true;
     const requestCounter = contextRequest;
-    const safetyTimer = setTimeout(() => {
-      if (mounted) setLoading(false);
-    }, 4000);
 
     async function initAuth() {
       try {
@@ -299,14 +304,12 @@ export function AuthProvider({ children }) {
           if (window.location.pathname === '/reset-password') setIsPasswordRecovery(true);
           setUser(session.user);
           await resolveFullContext(session.user);
+        } else if (mounted) {
+          setLoading(false);
         }
       } catch (err) {
         console.error('Auth initialization error:', err);
-      } finally {
-        if (mounted) {
-          clearTimeout(safetyTimer);
-          setLoading(false);
-        }
+        if (mounted) setLoading(false);
       }
     }
 
@@ -326,6 +329,7 @@ export function AuthProvider({ children }) {
         await resolveFullContext(session.user);
         cleanUrlAuthParams();
       } else {
+        clearContext(selectedContext.current.userId);
         ++contextRequest.current;
         selectedContext.current = { userId: null, organizationId: null, unitId: null };
         setUser(null);
@@ -339,37 +343,26 @@ export function AuthProvider({ children }) {
         setEffectiveCapabilities([]);
         setEntitlements([]);
         setPlatformCapabilities([]);
+        setLoading(false);
       }
-      setLoading(false);
       }, 0);
     });
 
     return () => {
       mounted = false;
       ++requestCounter.current;
-      clearTimeout(safetyTimer);
       subscription?.unsubscribe();
     };
   }, [resolveFullContext]);
 
   const switchOrganization = async (targetOrgId) => {
     if (!user) return;
-    setLoading(true);
-    try {
-      await resolveFullContext(user, targetOrgId);
-    } finally {
-      setLoading(false);
-    }
+    await resolveFullContext(user, targetOrgId);
   };
 
   const switchOperationalUnit = async (targetUnitId) => {
     if (!user || !organizationId) return;
-    setLoading(true);
-    try {
-      await resolveFullContext(user, organizationId, targetUnitId);
-    } finally {
-      setLoading(false);
-    }
+    await resolveFullContext(user, organizationId, targetUnitId);
   };
 
   const can = (capabilityCode, unitId = activeOperationalUnit?.id || null) => {
@@ -433,6 +426,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     setLoading(true);
+    clearContext(user?.id);
     try {
       await supabase.auth.signOut();
     } finally {
@@ -472,7 +466,7 @@ export function AuthProvider({ children }) {
     isModuleEnabled,
     platformCan: code => platformCapabilities.includes(code),
     navigationScope,
-    setNavigationScope,
+    setNavigationScope: scope => { saveContext(user?.id, { navigationScope: scope }); setNavigationScope(scope); },
     refreshAccess: () => resolveFullContext(user, organizationId, activeOperationalUnit?.id || null),
     loginWithProvider,
     loginWithGoogle,

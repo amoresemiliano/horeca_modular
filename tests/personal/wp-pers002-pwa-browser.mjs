@@ -37,10 +37,10 @@ try{
  await page.getByText('El Criollo · Palencia 06',{exact:true}).waitFor();
  const logo=page.getByRole('img',{name:'El Criollo',exact:true});await logo.waitFor();
  assert(await logo.evaluate(img=>img.complete&&img.naturalWidth>0&&Math.abs(img.width/img.height-img.naturalWidth/img.naturalHeight)<0.05));
- assert.equal(await page.locator('header').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(223, 23, 51)');
+ assert.equal(await page.locator('header').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
  assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'),'#df1733');
  await page.locator('header').getByText('HORECA Personal',{exact:true}).waitFor();
- pass('El Criollo logo retains aspect ratio; product title, red header/theme and server-provided organization/unit identity render');
+ pass('El Criollo logo retains aspect ratio; white header, product title, red system theme and server-provided organization/unit identity render');
  assert.equal(await page.evaluate(()=>window.__permissionRequests),0);
  if(await page.getByText('Recordatorios de tu turno',{exact:true}).count()) {
   await page.getByText('Recordatorios de tu turno',{exact:true}).click();

@@ -6,6 +6,7 @@ import { normalizeSnapshot, personnelCommand, todayIn } from './adminClient';
 import LiveEditor from './LiveEditor';
 import EmployeeDirectory from './employees/EmployeeDirectory';
 import ScheduleView from './schedule/ScheduleView';
+import ScheduleEditor from './schedule/ScheduleEditor';
 import { addDays } from '../personal/domain';
 import '../personal/personal.css';
 
@@ -48,7 +49,7 @@ function Session({ org, activeUnit, units, tab, can, onNavigate }) {
       {tab === 'Empleados' && <><Field label="Buscar empleado"><input type="search" value={search} onChange={e => setSearch(e.target.value)} /></Field><EmployeeDirectory {...{ employees, state, unit, open, command, refresh, onRange }} detail={setRow} onError={setError} /></>}
       {tab === 'Horarios' && <ScheduleView {...{ state, unit, open, command, refresh, onRange }} onError={setError} />}
       {tab === 'Fichaje' && <><div className="per-section-heading"><div><h2>Dispositivos de fichaje</h2><p>Un dispositivo, una unidad. Sin acceso al directorio ni administración.</p></div><button className="per-primary" onClick={() => open({ kind: 'activate' })}>Activar dispositivo</button></div>{state.devices.map(d => <article className="per-record" key={d.id}><strong>{d.label}</strong><p>{d.revoked_at ? 'Revocado' : new Date(d.expires_at) < new Date() ? 'Caducado' : 'Activo'}</p>{!d.revoked_at && <button onClick={() => revoke(d.id)}>Revocar dispositivo</button>}</article>)}{!state.devices.length && <Empty title="No hay dispositivos activados" />}</>}
-      {modal && <LiveEditor key={`${modal.kind}-${modal.record?.id || modal.employeeId || ''}`} {...{ modal, state, unit, command, refresh }} close={() => setModal(null)} />}
+      {modal && (['rule','exception'].includes(modal.kind) ? <ScheduleEditor key={`${modal.kind}-${modal.record?.id || modal.employeeId || ''}`} {...{ modal, state, unit, command, refresh }} close={()=>setModal(null)} /> : <LiveEditor key={`${modal.kind}-${modal.record?.id || modal.employeeId || ''}`} {...{ modal, state, unit, command, refresh }} close={() => setModal(null)} />)}
       {row && <AttendanceDetail {...{ row, state, open }} zone={row.schedule.timeZone || unit.timeZone} close={() => setRow(null)} />}
     </>}
     <details className="per-info"><summary>Funciones futuras</summary><p>Incidencias, ausencias, documentos, nóminas y WhatsApp: próximamente. No guardan datos en esta versión.</p></details>
