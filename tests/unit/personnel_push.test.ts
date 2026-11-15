@@ -43,6 +43,10 @@ describe('Personnel push trust boundary', () => {
     expect(reminderBody('ENTRY', '10:00')).toContain('10:00');
     expect(reminderBody('START', '')).toContain('entrada');
     expect(reminderBody('EXIT', '')).toContain('salida');
+    expect(reminderBody('ENTRY_15', '')).toContain('entrada');
+    expect(reminderBody('EXIT_15', '')).toContain('salida');
+    expect(() => reminderBody('ENTRY_30', '')).toThrow('INVALID_INPUT');
+    expect(() => reminderBody('EXIT_30', '')).toThrow('INVALID_INPUT');
     expect(() => reminderBody('UNKNOWN', '')).toThrow('INVALID_INPUT');
   });
 });

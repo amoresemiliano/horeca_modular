@@ -13,7 +13,7 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE SCHEMA auth;
    CREATE TABLE auth.users(id uuid PRIMARY KEY);
    CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$; GRANT USAGE ON SCHEMA auth TO authenticated,anon;`);
-  for(const name of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql','20261002030000_core_module_entitlement_registry.sql','20261110090000_personnel_attendance_foundation.sql','20261111100000_personnel_push_reminders.sql','20261114090000_personnel_recurring_schedules.sql']) await db.exec(readFileSync('supabase/migrations/'+name,'utf8'));
+  for(const name of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql','20261002030000_core_module_entitlement_registry.sql','20261110090000_personnel_attendance_foundation.sql','20261111100000_personnel_push_reminders.sql','20261114090000_personnel_recurring_schedules.sql','20261115120000_personnel_push_final_reminders.sql']) await db.exec(readFileSync('supabase/migrations/'+name,'utf8'));
  },60000);
  afterAll(async()=>{await db?.close()});
  beforeEach(async()=>{
@@ -149,7 +149,9 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
   await db.query<Record<string,unknown>>("UPDATE public.personnel_employees SET employment_status='INACTIVE' WHERE id=$1",[eid]);expect(await punch(a.credential,'2839')).toEqual({error:'PIN_REJECTED'});
   await db.query<Record<string,unknown>>("UPDATE public.personnel_employees SET employment_status='ACTIVE' WHERE id=$1",[eid]);
   await db.query<Record<string,unknown>>('UPDATE public.personnel_unit_assignments SET valid_to=valid_from WHERE employee_id=$1',[eid]);expect(await punch(a.credential,'2839')).toEqual({error:'PIN_REJECTED'});
-  const audit=JSON.stringify((await db.query<Record<string,unknown>>('SELECT * FROM personnel_private.audit')).rows);expect(audit).not.toContain(raw);expect(audit).not.toContain('2839');
+  const audit=(await db.query<Record<string,unknown>>('SELECT * FROM personnel_private.audit')).rows;
+  // Random UUIDs may coincidentally contain four PIN digits; inspect values and event text.
+  for(const row of audit){expect(Object.values(row)).not.toContain(raw);expect(Object.values(row)).not.toContain('2839');expect(String(row.event)).not.toMatch(/\d{4}/);expect(Object.keys(row).sort()).toEqual(['actor','at','device_id','event','id','organization_id']);}
  });
  it('enforces database-backed budgets and one-use attempt permits',async()=>{
   const a=await activated();let result:Record<string,unknown>={};
@@ -241,13 +243,41 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
   await expect(run('authenticated',owner,"SELECT public.personnel_reminder_job('claim')")).rejects.toThrow(/permission denied/);
   await expect(run('authenticated',owner,'SELECT * FROM personnel_private.push_subscriptions')).rejects.toThrow(/permission denied/);
  });
- it.each(['ENTRY','START'])('claims %s once and rechecks IN before sending',async(kind)=>{
+ it.each(['ENTRY','START','ENTRY_15'])('claims %s once and rechecks IN before sending',async(kind)=>{
   const a=await subscribed();await due(a.eid,kind);
+  if(kind==='ENTRY_15')await db.exec("UPDATE public.personnel_schedules SET expected_start_at=now()-interval '15 minutes 30 seconds'");
   const claims=await job('claim') as string[];expect(claims).toHaveLength(1);expect(await job('claim')).toEqual([]);
   expect(await job('prepare',{id:claims[0]})).toMatchObject({kind});
   await punch(a.credential,a.raw);
   expect(await job('prepare',{id:claims[0]})).toEqual({});
   await job('complete',{id:claims[0],status:'SKIPPED'});expect(await job('claim')).toEqual([]);
+ });
+ it('has no entry reminder after the final +15 window, including +30',async()=>{
+  const a=await subscribed();await due(a.eid,'START');
+  for(const minutes of [17,30,45,60]){await db.query("UPDATE public.personnel_schedules SET expected_start_at=now()-$1*interval '1 minute'",[minutes]);expect(await job('claim')).toEqual([]);}
+ });
+ it('sends one final exit reminder at +15 only while an IN is open',async()=>{
+  const a=await subscribed(),sid=await due(a.eid,'EXIT');
+  await db.exec("UPDATE public.personnel_schedules SET expected_end_at=now()-interval '15 minutes 30 seconds'");
+  expect(await job('claim')).toEqual([]);
+  const start=(await db.query<{stamp:string}>("SELECT (now()-interval '8 hours')::text stamp")).rows[0].stamp;
+  await admin('attendance.correct',{employeeId:a.eid,scheduleId:sid,clockIn:start,reason:'Synthetic open session'});
+  const claims=await job('claim') as string[];expect(claims).toHaveLength(1);expect(await job('claim')).toEqual([]);expect(await job('prepare',{id:claims[0]})).toMatchObject({kind:'EXIT_15'});
+  const finish=(await db.query<{stamp:string}>("SELECT (now()-interval '1 second')::text stamp")).rows[0].stamp;
+  await admin('attendance.correct',{employeeId:a.eid,scheduleId:sid,clockIn:start,clockOut:finish,reason:'Synthetic closed session'});
+  expect(await job('prepare',{id:claims[0]})).toEqual({});
+ });
+ it('never repeats exit at +30, even if the expected OUT remains missing',async()=>{
+  const a=await subscribed(),sid=await due(a.eid,'EXIT');const start=(await db.query<{stamp:string}>("SELECT (now()-interval '8 hours')::text stamp")).rows[0].stamp;
+  await admin('attendance.correct',{employeeId:a.eid,scheduleId:sid,clockIn:start,reason:'Synthetic open session'});
+  for(const minutes of [17,30,45]){await db.query("UPDATE public.personnel_schedules SET expected_end_at=now()-$1*interval '1 minute'",[minutes]);expect(await job('claim')).toEqual([]);}
+ });
+ it('keeps duplicate endpoints unique, rebinds only after PIN proof and honors preference disable',async()=>{
+  const a=await subscribed(),b=await activated();
+  const prepared=await device('prepare',b.credential,{lookup:pinLookup(org,a.raw,pepper),requestId:randomUUID()});
+  expect(await push(b.credential,'subscribe',{attemptId:prepared.attemptId,verified:true,subscription:{endpoint:'https://synthetic.invalid',keys:{}}})).toEqual({enabled:true});
+  expect(await push(a.credential,'status')).toEqual({enabled:false});expect(await push(b.credential,'status')).toEqual({enabled:true});
+  await due(a.eid,'START');await db.exec('UPDATE personnel_private.notification_preferences SET start_check=false');expect(await job('claim')).toEqual([]);
  });
  it('sends no exit reminder without an open session or after a corrected OUT',async()=>{
   const a=await subscribed(),sid=await due(a.eid,'EXIT');
@@ -258,9 +288,9 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
   await admin('attendance.correct',{employeeId:a.eid,scheduleId:sid,clockIn:times.start,clockOut:times.end,reason:'Synthetic closed session'});
   expect(await job('prepare',{id:claims[0]})).toEqual({});
  });
- it('disables expired provider credentials without returning secrets to the device',async()=>{
+ it.each([404,410])('disables expired provider credentials (%s) without returning secrets to the device',async(code)=>{
   const a=await subscribed();await due(a.eid,'ENTRY');const claims=await job('claim') as string[];
-  await job('complete',{id:claims[0],status:'FAILED',httpStatus:410});expect(await push(a.credential,'status')).toEqual({enabled:false});expect(await job('claim')).toEqual([]);
+  await job('complete',{id:claims[0],status:'FAILED',httpStatus:code});expect(await push(a.credential,'status')).toEqual({enabled:false});expect(await job('claim')).toEqual([]);
  });
 
  it('clears the previous mobile reminder association atomically on reactivation',async()=>{

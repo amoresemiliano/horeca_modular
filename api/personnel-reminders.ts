@@ -17,7 +17,8 @@ export default async function handler(req: Request, res: Response) {
       try {
         const item = await job('prepare', { id });
         if (item.subscription) {
-          await webpush.sendNotification(validateSubscription(item.subscription), JSON.stringify({ title: 'HORECA Personal', body: reminderBody(item.kind, item.start), tag: id }), { vapidDetails: config, TTL: 60, timeout: 8000 });
+          const delivery = await webpush.sendNotification(validateSubscription(item.subscription), JSON.stringify({ title: 'HORECA Personal', body: reminderBody(item.kind, item.start), tag: id }), { vapidDetails: config, TTL: 60, timeout: 8000 });
+          httpStatus = delivery.statusCode;
           status = 'SENT'; sent++;
         }
       } catch (error) { status = 'FAILED'; httpStatus = typeof error === 'object' && error && 'statusCode' in error ? Number(error.statusCode) : null; }

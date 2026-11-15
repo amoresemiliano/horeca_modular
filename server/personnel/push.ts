@@ -24,6 +24,8 @@ export function pushConfiguration() {
 export function reminderBody(kind: string, start: string) {
   if (kind === 'ENTRY') return `Tu turno empieza a las ${start}. Recuerda registrar tu entrada.`;
   if (kind === 'START') return 'Tu turno ha comenzado y todavía no registramos tu entrada.';
+  if (kind === 'ENTRY_15') return 'Si ya has comenzado tu turno, recuerda registrar tu entrada.';
   if (kind === 'EXIT') return 'Tu turno termina ahora. Recuerda registrar tu salida.';
+  if (kind === 'EXIT_15') return 'Si ya has terminado tu turno, recuerda registrar tu salida.';
   throw new Error('INVALID_INPUT');
 }

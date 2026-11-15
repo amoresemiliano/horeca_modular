@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 
 export const supportsPush = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const publicKeyBytes = key => Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+function matchesKey(subscription, key) {
+  const previous = subscription?.options?.applicationServerKey;
+  if (!previous) return true;
+  const expected = publicKeyBytes(key), actual = new Uint8Array(previous);
+  return expected.length === actual.length && expected.every((byte,index)=>byte===actual[index]);
+}
 async function request(action, payload = {}) {
   const response = await fetch('/api/personnel-push', { method: 'POST', cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...payload }) });
   const result = await response.json();
@@ -12,7 +19,15 @@ export default function PushOptIn() {
   useEffect(() => {
     if (!supportsPush()) return;
     let active = true;
-    request('status').then(value => { if (active) setConfig(value); }).catch(() => { if (active) setMessage('Los recordatorios todavía no están disponibles. Puedes seguir fichando.'); });
+    request('status').then(async value => {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (active) {
+        const enabled = value.enabled && Notification.permission === 'granted' && !!subscription && matchesKey(subscription,value.publicKey);
+        setConfig({ ...value, enabled });
+        if (value.enabled && !enabled) setMessage('Vuelve a activar los recordatorios en este dispositivo para renovar la suscripción.');
+      }
+    }).catch(() => { if (active) setMessage('Los recordatorios todavía no están disponibles. Puedes seguir fichando.'); });
     return () => { active = false; };
   }, []);
   if (!supportsPush()) return <p>Este navegador no admite recordatorios. Puedes seguir fichando. En iPhone, instala la aplicación desde Safari.</p>;
@@ -23,8 +38,12 @@ export default function PushOptIn() {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') { setMessage('Recordatorios desactivados por el navegador. Puedes seguir fichando.'); return; }
       const registration = await navigator.serviceWorker.ready;
-      const key = Uint8Array.from(atob(config.publicKey.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
-      const subscription = await registration.pushManager.getSubscription() || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+      const key = publicKeyBytes(config.publicKey);
+      let subscription = await registration.pushManager.getSubscription();
+      if (subscription && !matchesKey(subscription,config.publicKey)) {
+        await subscription.unsubscribe(); subscription = null;
+      }
+      subscription ||= await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
       const result = await request('subscribe', { pin, subscription: subscription.toJSON() });
       setConfig({ ...config, enabled: result.enabled }); setMessage('Recordatorios activados para tu PIN en este móvil.');
     } catch (error) { setMessage(error.message === 'PIN_REJECTED' ? 'No se ha podido validar el PIN. Revisa el PIN o espera un minuto.' : 'No se han activado los recordatorios. Puedes seguir fichando.'); }
