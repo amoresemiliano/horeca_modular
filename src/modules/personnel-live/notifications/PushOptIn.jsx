@@ -40,7 +40,9 @@ export default function PushOptIn() {
       const registration = await navigator.serviceWorker.ready;
       const key = publicKeyBytes(config.publicKey);
       let subscription = await registration.pushManager.getSubscription();
-      if (subscription && !matchesKey(subscription,config.publicKey)) {
+      // Explicit opt-in must also replace a provider-expired endpoint whose
+      // browser object still exists after the server disabled it on 404/410.
+      if (subscription && (!config.enabled || !matchesKey(subscription,config.publicKey))) {
         await subscription.unsubscribe(); subscription = null;
       }
       subscription ||= await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });

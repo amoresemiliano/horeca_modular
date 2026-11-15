@@ -57,6 +57,8 @@ devices cannot subscribe or receive reminders. Shared attendance tablets should
 keep employee-specific reminders disabled.
 
 A missing browser subscription or changed VAPID key offers explicit re-enablement.
+Explicit re-enablement also replaces a browser endpoint disabled by the server
+after provider 404/410, even if its browser subscription object still exists.
 No permission prompt, subscription creation or renewal runs silently on load.
 PIN values are cleared after each opt-in attempt. The send endpoint records
 provider success HTTP codes as well as failures, without logging endpoints/keys.
