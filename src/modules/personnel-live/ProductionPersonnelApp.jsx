@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { Attendance, AttendanceDetail } from '../personal/Attendance';
 import { Empty, Field } from '../personal/ui';
 import { normalizeSnapshot, personnelCommand, todayIn } from './adminClient';
+import HrAdmin from './hr/HrAdmin';
+import {hrEnabled,hrRequest} from './hr/client';
 import LiveEditor from './LiveEditor';
 import EmployeeDirectory from './employees/EmployeeDirectory';
 import ScheduleView from './schedule/ScheduleView';
@@ -39,9 +41,11 @@ function Session({ org, activeUnit, units, tab, can, onNavigate, onUnitChange })
       const raw = await command('snapshot', { from, to });
       const zone = raw.units.find(u => u.id === unitId)?.timeZone;
       if (!zone) throw new Error('La unidad ya no está disponible.');
-      if (version === requestVersion.current) setState(normalizeSnapshot(raw, todayIn(zone)));
+      const normalized = normalizeSnapshot(raw, todayIn(zone));
+      if(hrEnabled) normalized.approvedLeave = await hrRequest(org.id,unitId,'leave.context',{from,to});
+      if (version === requestVersion.current) setState(normalized);
     } catch (err) { if (version === requestVersion.current) { setState(null); setError(err.message); } } finally { if (version === requestVersion.current) setLoading(false); }
-  }, [command, unitId, from, to]);
+  }, [command, org.id, unitId, from, to]);
   useEffect(() => { refresh(); return () => { requestVersion.current = Symbol(); }; }, [refresh, tab]);
   useEffect(() => {
     setModal(null); setRow(null);
@@ -55,21 +59,22 @@ function Session({ org, activeUnit, units, tab, can, onNavigate, onUnitChange })
     return () => { window.removeEventListener('focus', resume); window.removeEventListener('pageshow', resume); document.removeEventListener('visibilitychange', resume); };
   }, [refresh]);
   const unit = state?.units.find(u => u.id === unitId);
-  const open = m => { if (m.kind === 'incident') { setError('Las incidencias siguen pendientes de una entrega posterior.'); return; } if (m.kind === 'correction' && !can('personnel.fichajes.audit')) { setError('La corrección requiere permiso de auditoría de fichajes.'); return; } setRow(null); setModal(m); };
+  const open = m => { if (m.kind === 'incident' && hrEnabled) { onNavigate?.('Incidencias'); return; } if (m.kind === 'correction' && !can('personnel.fichajes.audit')) { setError('La corrección requiere permiso de auditoría de fichajes.'); return; } setRow(null); setModal(m); };
   const employees = state?.employees.filter(e => e.unitIds.includes(unitId) && e.name.toLowerCase().includes(search.toLowerCase())) || [];
   async function revoke(deviceId) { try { await command('device.revoke', { deviceId }); await refresh(); } catch (err) { setError(err.message); } }
-  return <section className="personnel personnel-dense"><nav className="per-tabs" aria-label="Personal persistente">{['Hoy', 'Asistencia', 'Horarios', 'Empleados', 'Fichaje'].map(name => <button key={name} aria-current={tab === name ? 'page' : undefined} onClick={() => onNavigate?.(name)}>{name}</button>)}</nav><div className="per-context">{!activeUnit && <Field label="Unidad operativa"><select value={unitId} onChange={e => { setState(null); setModal(null); setRow(null); setUnitId(e.target.value); onUnitChange?.(e.target.value || null); }}><option value="">Selecciona unidad</option>{units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select></Field>}<small>{state?.date || todayIn(org.timezone || 'UTC')}</small><button onClick={refresh}>Actualizar</button></div>
+  return <section className="personnel personnel-dense"><nav className="per-tabs" aria-label="Personal persistente">{['Hoy', 'Asistencia', 'Horarios', 'Empleados', 'Fichaje', ...(hrEnabled ? ['Incidencias','Nóminas','Permisos'] : [])].map(name => <button key={name} aria-current={tab === name ? 'page' : undefined} onClick={() => onNavigate?.(name)}>{name}</button>)}</nav><div className="per-context">{!activeUnit && <Field label="Unidad operativa"><select value={unitId} onChange={e => { setState(null); setModal(null); setRow(null); setUnitId(e.target.value); onUnitChange?.(e.target.value || null); }}><option value="">Selecciona unidad</option>{units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select></Field>}<small>{state?.date || todayIn(org.timezone || 'UTC')}</small><button onClick={refresh}>Actualizar</button></div>
     {error && <p role="alert" className="per-error">{error}</p>}{loading && <p role="status">Cargando personal…</p>}
     {!unitId && <Empty title="Selecciona una unidad operativa" description="Selecciona el local cuyo equipo quieres gestionar." />}
     {unitId && tab === 'Horarios' && <details className="per-range-details"><summary>Consultar otro periodo</summary><div className="per-toolbar"><Field label="Historial desde"><input type="date" value={from} onChange={e => setFrom(e.target.value)} /></Field><Field label="Hasta"><input type="date" value={to} min={from} onChange={e => setTo(e.target.value)} /></Field><small>Consulta hasta 93 días por periodo.</small></div></details>}{state && unit && <>
       {['Hoy', 'Asistencia'].includes(tab) && <Attendance {...{ state, unit, open }} now={new Date().toISOString()} today={tab === 'Hoy'} detail={setRow} onRange={onRange} live />}
-      {tab === 'Empleados' && <><Field label="Buscar empleado"><input type="search" value={search} onChange={e => setSearch(e.target.value)} /></Field><EmployeeDirectory filterKey={search} {...{ employees, state, unit, open, command, refresh, onRange }} detail={setRow} onError={setError} /></>}
+      {hrEnabled && ['Incidencias','Nóminas','Permisos'].includes(tab) && <HrAdmin key={tab+unitId} orgId={org.id} unitId={unitId} employees={state.employees.filter(e=>e.unitIds.includes(unitId))} section={tab} />}
+      {tab === 'Empleados' && <><Field label="Buscar empleado"><input type="search" value={search} onChange={e => setSearch(e.target.value)} /></Field><EmployeeDirectory orgId={org.id} filterKey={search} {...{ employees, state, unit, open, command, refresh, onRange }} detail={setRow} onError={setError} /></>}
       {tab === 'Horarios' && <ScheduleView {...{ state, unit, open, command, refresh, onRange }} onError={setError} />}
       {tab === 'Fichaje' && <><div className="per-section-heading"><div><h2>Dispositivos de fichaje</h2><p>Un dispositivo, una unidad. Sin acceso al directorio ni administración.</p></div><button className="per-primary" onClick={() => open({ kind: 'activate' })}>Activar dispositivo</button></div><div className="per-device-list">{devices.items.map(d => <article className="per-record per-device-row" key={d.id}><strong>{d.label}</strong><span className="per-badge neutral">{d.revoked_at ? 'Revocado' : new Date(d.expires_at) < new Date() ? 'Caducado' : 'Activo'}</span>{!d.revoked_at && <button onClick={() => revoke(d.id)}>Revocar dispositivo</button>}</article>)}</div><Pagination list={devices} label="Dispositivos" />{!state.devices.length && <Empty title="No hay dispositivos activados" />}</>}
       {modal && (['rule','exception'].includes(modal.kind) ? <ScheduleEditor key={`${modal.kind}-${modal.record?.id || modal.employeeId || ''}`} {...{ modal, state, unit, command, refresh }} close={()=>setModal(null)} /> : <LiveEditor key={`${modal.kind}-${modal.record?.id || modal.employeeId || ''}`} {...{ modal, state, unit, command, refresh }} close={() => setModal(null)} />)}
       {row && <AttendanceDetail {...{ row, state, open }} zone={row.schedule.timeZone || unit.timeZone} close={() => setRow(null)} />}
     </>}
-    <details className="per-info"><summary>Funciones futuras</summary><p>Incidencias, ausencias, documentos, nóminas y WhatsApp: próximamente. No guardan datos en esta versión.</p></details>
+
   </section>;
 }
 export default function ProductionPersonnelApp({ tabActiva = 'Hoy', onNavigate }) {

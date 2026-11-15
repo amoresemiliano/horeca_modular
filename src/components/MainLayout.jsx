@@ -5,6 +5,7 @@ import PedidosApp     from '../modules/pedidos/PedidosApp';
 import KpisApp        from '../modules/kpis/KpisApp';
 import PrediccionApp  from '../modules/prediccion/PrediccionApp';
 import EscandallosApp from '../modules/escandallos/EscandallosApp';
+import {hrEnabled} from '../modules/personnel-live/hr/shared';
 import ProductionPersonnelApp from '../modules/personnel-live/ProductionPersonnelApp';
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
 import TenantAdministration from '../modules/administration/TenantAdministration';
@@ -26,7 +27,7 @@ const MODULOS = {
   Escandallos: { icon: '🥘', label: 'Escandallos',  tabs: ['Preparación', 'Platos', 'Productos'],                                  group: 'operaciones'},
   Compras:     { icon: '🛒', label: 'Compras',      tabs: ['Orden', 'Historial'],                                                  group: 'operaciones'},
   Producción:  { icon: '🍳', label: 'Producción',   tabs: ['Registro', 'Historial', 'Resumen'],                                    group: 'operaciones'},
-  Personal:    { icon: '👤', label: 'Personal',     tabs: ['Hoy', 'Asistencia', 'Horarios', 'Empleados', 'Fichaje'],                     group: 'rrhh'       },
+  Personal:    { icon: '👤', label: 'Personal',     tabs: ['Hoy', 'Asistencia', 'Horarios', 'Empleados', 'Fichaje', ...(hrEnabled ? ['Incidencias','Nóminas','Permisos'] : [])],                     group: 'rrhh'       },
   Predicción:  { icon: '🔮', label: 'Predicción',   tabs: ['Carga', 'Stock', 'Predicciones'],                                       group: 'analytics' },
   PlatformAdmin: { icon: '⚙', label: 'Plataforma', tabs: ['Tenants'], group: 'sistema' },
   Config:      { icon: '⚙',  label: 'Organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },

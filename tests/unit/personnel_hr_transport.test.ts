@@ -1,0 +1,15 @@
+import {beforeEach,describe,it,expect,vi} from 'vitest';
+const m=vi.hoisted(()=>({rpc:vi.fn(),secure:vi.fn(),caller:vi.fn(),trusted:vi.fn(),send:vi.fn()}));
+vi.mock('../../server/personnel/runtime.js',()=>({secureRequest:m.secure,callerClient:m.caller,trustedClient:m.trusted,rpc:m.rpc,deviceCookie:()=>'',requestKey:()=>'',tokenHash:()=>''}));
+vi.mock('web-push',()=>({sendNotification:m.send}));
+import handler from '../../api/personnel-hr';
+const org='10000000-0000-4000-8000-000000000001',unit='20000000-0000-4000-8000-000000000001';
+const res=()=>({code:0,data:null as any,status(n:number){this.code=n;return this;},json(d:any){this.data=d;},setHeader(){}});
+describe('HR API authority and upload boundaries',()=>{
+ beforeEach(()=>{vi.clearAllMocks();m.secure.mockReturnValue({url:'https://vmxjqwlfwnphorthhcwu.supabase.co',pepper:'test'});m.caller.mockResolvedValue({});m.trusted.mockReturnValue({});m.rpc.mockResolvedValue({});});
+ it('refuses production even with otherwise valid request configuration',async()=>{m.secure.mockReturnValue({url:'https://cznauyzhtbqvqtwmfeki.supabase.co'});const r=res();await handler({method:'POST',headers:{},body:{action:'snapshot',organizationId:org,unitId:unit}},r);expect(r.code).toBe(403);expect(m.caller).not.toHaveBeenCalled();});
+ it('denies employee requests lacking existing activated-device cookie',async()=>{const r=res();await handler({method:'POST',headers:{},body:{employee:true,pin:'1648',action:'snapshot'}},r);expect(r.data.error).toBe('INVALID_DEVICE');expect(m.trusted).not.toHaveBeenCalled();});
+ it('never signs a payroll URL before the caller-scoped RPC authorizes the file',async()=>{m.rpc.mockRejectedValue(Error('ACCESS_DENIED'));const r=res();await handler({method:'POST',headers:{},body:{action:'payroll.download',organizationId:org,unitId:unit,payload:{id:org}}},r);expect(r.code).toBe(403);expect(m.trusted).not.toHaveBeenCalled();});
+ it('rejects non-PDF upload before reserving or storing a document',async()=>{const r=res();await handler({method:'POST',headers:{},body:{action:'payroll.upload',organizationId:org,unitId:unit,payload:{},pdf:Buffer.from('not a PDF').toString('base64')}},r);expect(r.data.error).toBe('INVALID_INPUT');expect(m.rpc).not.toHaveBeenCalled();expect(m.trusted).not.toHaveBeenCalled();});
+ it('returns a saved decision even if push fails, without fabricating delivery',async()=>{m.rpc.mockImplementation(async(_c,name)=>name==='personnel_hr_admin'?{id:org}:Promise.reject(Error('transport unavailable')));const r=res();await handler({method:'POST',headers:{},body:{action:'leave.decide',organizationId:org,unitId:unit,payload:{}}},r);expect(r.code).toBe(200);expect(r.data).toEqual({id:org,notification:'FAILED'});});
+});

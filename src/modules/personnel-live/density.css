@@ -59,7 +59,7 @@
 .per-dialog-compact .per-activation-result textarea { display: block; margin-top: 6px; min-height: 76px; padding: 8px; font: 12px/1.5 var(--font-body); resize: vertical; }
 .per-dialog-compact .per-activation-result small { display: block; margin-top: 4px; color: #196240; }
 .per-dialog-compact .per-form { gap: 10px; }
-@media (min-width: 769px) { .personnel-dense > .per-tabs { display: none; } }
+@media (min-width: 769px) { .personnel-dense > .per-tabs:not(.per-profile-tabs) { display: none; } }
 @media (min-width: 1101px) and (max-width: 1279px) { .personnel-dense .per-week { grid-template-columns: repeat(4,minmax(0,1fr)); } }
 @media (max-width: 1100px) {
   .personnel-dense .per-attendance-card { grid-template-columns: repeat(4,minmax(0,1fr)); }

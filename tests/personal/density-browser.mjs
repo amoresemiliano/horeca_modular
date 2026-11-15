@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';import fs from 'node:fs';
 import {fixtures,org,unit,user,activationUrl} from './density-fixtures.mjs';
+const fixtureOrigin=process.env.PERSONNEL_BROWSER_ORIGIN||'http://127.0.0.1:5201';
 const {chromium}=await import('../../../el_criollo_modular/.local-data/tooling/node_modules/playwright/index.mjs');
 const browser=await chromium.launch({channel:'chrome',headless:true}),context=await browser.newContext({viewport:{width:1440,height:1000},permissions:['clipboard-read','clipboard-write']});
 const page=await context.newPage(),raw=fixtures(),actions=[],checks=[],errors=[];
@@ -8,10 +9,11 @@ page.on('pageerror',e=>errors.push(e.message));
 await context.addInitScript(({org,unit,user})=>{sessionStorage.setItem('fixture-platform','true');const key='horeca-context-v1:'+user;if(!localStorage.getItem(key)&&!sessionStorage.getItem('signed-out'))localStorage.setItem(key,JSON.stringify({organizationId:org,unitId:unit,navigationScope:'platform',module:'Personal',section:'Horarios'}));},{org,unit,user});
 await page.clock.install({time:new Date('2040-11-05T08:00:00Z')});
 await page.route('**/api/personnel',async route=>{const b=route.request().postDataJSON();actions.push(b);let result={};if(b.action==='snapshot')result=raw;if(b.action==='device.activate')result={activationUrl,expiresIn:600};if(b.action==='device.revoke')raw.devices.find(d=>d.id===b.payload.deviceId).revoked_at='2040-11-05T08:00:00Z';if(b.action==='pin.reset')result={pin:'1648'};await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});});
+await context.route('**/api/personnel-hr',async route=>{const body=route.request().postDataJSON();assert.equal(body.action,'leave.context');await route.fulfill({status:200,contentType:'application/json',body:'[]'});});
 const button=(name,scope=page)=>scope.getByRole('button',{name,exact:true}),tab=name=>button(name,page.locator('aside')),dialog=()=>page.getByRole('dialog');
 const rows=()=>page.locator('.per-employee-row'),pagination=name=>page.getByRole('group',{name:'Paginación: '+name,exact:true});
 try{
- await page.goto('http://127.0.0.1:5201/context.html?module=Personal&section=Horarios');await page.locator('.per-calendar-item').first().waitFor();
+ await page.goto(fixtureOrigin+'/context.html?module=Personal&section=Horarios');await page.locator('.per-calendar-item').first().waitFor();
  assert.equal(new URL(page.url()).searchParams.get('section'),'Horarios');
  const nav=await page.getByRole('navigation',{name:'Módulos operativos'}).locator('button').evaluateAll(nodes=>nodes.map(e=>e.getBoundingClientRect().y));assert(nav.length>8);assert(Math.max(...nav)-Math.min(...nav)<2);checks.push('All desktop module buttons remain one horizontal row with overflow');
  await button('Clonar turno').first().click();await button('Guardar',dialog()).click();await dialog().waitFor({state:'hidden'});assert(!('id' in actions.filter(a=>a.action==='schedule.save').at(-1).payload));

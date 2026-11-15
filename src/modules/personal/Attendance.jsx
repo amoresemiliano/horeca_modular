@@ -1,3 +1,4 @@
+import { leaveProjection } from '../personnel-live/hr/leaveContext';
 import { useEffect, useState } from 'react';
 import Pagination, { usePagedList } from '../personnel-live/Pagination';
 import { usePersonnelUi } from '../personnel-live/uiState';
@@ -16,7 +17,7 @@ export function Attendance({ state, unit, today = false, employeeId, open, detai
   const start = today || period === 'today' ? state.date : period === 'week' ? addDays(state.date, -((new Date(state.date + 'T12:00Z').getUTCDay() + 6) % 7)) : from;
   const end = today || period === 'today' ? state.date : period === 'week' ? addDays(start, 6) : to;
   useEffect(() => { if (live && !today) onRange?.(start, end); }, [live, today, start, end, onRange]);
-  const rows = state.schedules.filter(s => s.unitId === unit.id && s.date >= (live && today ? addDays(start, -1) : start) && s.date <= end && (!live || !today || s.date === state.date || (s.expectedEndAt && localDate(s.expectedEndAt, s.timeZone || unit.timeZone) === state.date)) && (!employeeId || s.employeeId === employeeId)).map(s => attendanceProjection(state, state.employees.find(e => e.id === s.employeeId), s, now, unit.timeZone));
+  const rows = state.schedules.filter(s => s.unitId === unit.id && s.date >= (live && today ? addDays(start, -1) : start) && s.date <= end && (!live || !today || s.date === state.date || (s.expectedEndAt && localDate(s.expectedEndAt, s.timeZone || unit.timeZone) === state.date)) && (!employeeId || s.employeeId === employeeId)).map(s => leaveProjection(attendanceProjection(state, state.employees.find(e => e.id === s.employeeId), s, now, unit.timeZone),state.approvedLeave||[]));
   const filtered = rows.filter(r => (!status || (status === 'INCIDENT' ? r.incidents.length > 0 : status === 'LATE' ? r.late : status === 'PRESENT' ? r.clockIn && !r.clockOut : status === 'MISSING_CLOCK_IN' ? ['ABSENT', 'MISSING_CLOCK_IN'].includes(r.status) : r.status === status)) && (!person || r.employee.id === person) && r.employee.name.toLowerCase().includes(search.toLowerCase()));
   const summary = [['Programados', rows.length, ''], ['Presentes', rows.filter(r => r.clockIn && !r.clockOut).length, 'PRESENT'], ['Retrasos', rows.filter(r => r.late).length, 'LATE'], [live ? 'Sin fichar' : 'Ausentes', rows.filter(r => ['ABSENT', 'MISSING_CLOCK_IN'].includes(r.status)).length, 'MISSING_CLOCK_IN'], ...(live ? [['Finalizados', rows.filter(r => r.status === 'COMPLETED').length, 'COMPLETED'], ['Falta salida', rows.filter(r => r.status === 'MISSING_CLOCK_OUT').length, 'MISSING_CLOCK_OUT']] : [['Incidencias', rows.reduce((n, r) => n + r.incidents.length, 0), 'INCIDENT']])];
   const list = usePagedList(filtered,viewKey,JSON.stringify([search,status,period,from,to,person]));

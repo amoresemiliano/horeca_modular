@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';import fs from 'node:fs';
 import {fixtures,org,unit,user,activationUrl} from './density-fixtures.mjs';
+const fixtureOrigin=process.env.PERSONNEL_BROWSER_ORIGIN||'http://127.0.0.1:5201';
 const {chromium}=await import('../../../el_criollo_modular/.local-data/tooling/node_modules/playwright/index.mjs');
 const browser=await chromium.launch({channel:'chrome',headless:true}),context=await browser.newContext({viewport:{width:1440,height:1000},permissions:['clipboard-read','clipboard-write']});
 const page=await context.newPage(),raw=fixtures(),actions=[],checks=[],errors=[];
@@ -25,6 +26,7 @@ await context.route('**/api/personnel',async route=>{
  await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});
 });
 await context.route('**/api/personnel-punch',async route=>{const b=route.request().postDataJSON();assert.equal(b.action,'activate');raw.devices.push({id:'activated-new',label:'Acceptance tablet',created_at:'2040-11-05T08:00:00Z',expires_at:'2041-01-01T00:00:00Z',revoked_at:null,organization_id:org,operational_unit_id:unit});await route.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'});});
+await context.route('**/api/personnel-hr',async route=>{const body=route.request().postDataJSON();assert.equal(body.action,'leave.context');await route.fulfill({status:200,contentType:'application/json',body:'[]'});});
 const button=(name,scope=page)=>scope.getByRole('button',{name,exact:true}),dialog=()=>page.getByRole('dialog'),tab=name=>button(name,page.locator('aside'));
 const pagination=name=>page.getByRole('group',{name:'Paginación: '+name,exact:true});
 const refresh=async()=>{const response=page.waitForResponse(r=>r.url().endsWith('/api/personnel')&&r.request().postDataJSON().action==='snapshot');await button('Actualizar').click();await response;};

@@ -6,6 +6,9 @@
     }
   },
   "functions": {
+    "api/personnel-hr.ts": {
+      "maxDuration": 60
+    },
     "api/sales.ts": {
       "maxDuration": 60
     },
