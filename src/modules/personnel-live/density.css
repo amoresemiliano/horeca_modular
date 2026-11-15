@@ -39,11 +39,19 @@
 .personnel-dense .per-day { padding: 6px; }
 .personnel-dense .per-day h3 { margin: 4px 0 8px; }
 .personnel-dense .per-day-shifts { display: grid; align-content: start; gap: 6px; max-height: 62vh; overflow-y: auto; scrollbar-gutter: stable; }
-.personnel-dense .per-calendar-item { display: grid; gap: 3px; padding: 7px; }
+.personnel-dense .per-calendar-item { display: grid; gap: 3px; padding: 7px; text-align: center; justify-items: center; align-content: center; }
 .personnel-dense .per-calendar-item > strong { font-size: 13px; line-height: 1.35; }
 .personnel-dense .per-calendar-item > span { font-size: 12px; color: var(--c-text-3); }
-.personnel-dense .per-calendar-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 3px; max-width: 144px; }
-.personnel-dense .per-calendar-actions button { display: grid; place-items: center; padding: 5px; min-width: 0; min-height: 44px; }
+.personnel-dense .per-calendar-actions { display: grid; grid-template-columns: repeat(3,36px); gap: 4px; justify-content: center; }
+.personnel-dense .per-calendar-actions button { display: grid; place-items: center; padding: 4px; min-width: 36px; min-height: 36px; }
+.personnel-dense .per-day-view .per-day-shifts { grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); }
+.personnel-dense .per-month { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; }
+.personnel-dense .per-month-weekday { text-align: center; font-size: 12px; padding-block: 6px; }
+.personnel-dense button.per-month-day { display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-width: 0; min-height: 100px; padding: 6px; text-align: center; }
+.personnel-dense .per-month-day > span { font-size: 11px; }
+.personnel-dense .per-month-day > small { font-size: 10px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+@media (pointer: coarse) { .personnel-dense .per-calendar-actions { grid-template-columns: repeat(3,44px); } .personnel-dense .per-calendar-actions button { min-width:44px; min-height:44px; } }
+@media (max-width: 700px) { .personnel-dense button.per-month-day { padding: 3px; min-height: 78px; } .personnel-dense .per-month { gap: 2px; } .personnel-dense .per-month-day > span { font-size: 9px; } }
 .personnel-dense button:disabled { opacity: .45; cursor: default; }
 .per-dialog-compact .per-copy-line { display: flex; align-items: center; gap: 8px; }
 .per-dialog-compact .per-copy-line p { margin: 0; flex: 1; font-size: 13px; }

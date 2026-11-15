@@ -89,6 +89,16 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
   const shifts=snapshot.schedules as {local_date:string;expected_start_time:string}[];
   expect(shifts.find(s=>s.local_date==='2040-01-03')?.expected_start_time).toBe('11:00:00');expect(shifts.some(s=>s.local_date>'2040-01-06')).toBe(false);
  });
+ it('lists all independently activated devices in their unit, retaining revoked status',async()=>{
+  await activated('Shared tablet');await activated('Personal phone');
+  const first=await admin('snapshot',{from:'2026-01-01',to:'2026-01-02'});
+  const devices=first.devices as {id:string;organization_id:string;operational_unit_id:string;revoked_at:string|null}[];
+  expect(devices).toHaveLength(2);expect(devices.every(d=>d.organization_id===org&&d.operational_unit_id===unit&&!d.revoked_at)).toBe(true);
+  expect((await admin('snapshot',{from:'2026-01-01',to:'2026-01-02'},owner,org,other)).devices).toEqual([]);
+  await admin('device.revoke',{deviceId:devices[0].id});
+  const refreshed=(await admin('snapshot',{from:'2026-01-01',to:'2026-01-02'})).devices as typeof devices;
+  expect(refreshed).toHaveLength(2);expect(refreshed.find(d=>d.id===devices[0].id)?.revoked_at).toBeTruthy();
+ });
  it('keeps a shared activated device usable by different employees without phone verification',async()=>{
   const first=await employee(),second=await employee(),a=await activated('Shared tablet');
   await pin(first,'1648');await pin(second,'2839');

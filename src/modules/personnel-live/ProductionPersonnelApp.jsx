@@ -12,12 +12,19 @@ import '../personal/personal.css';
 import './density.css';
 import Pagination, { usePagedList } from './Pagination';
 import { usePersonnelUi } from './uiState';
+import { getAppConfig } from '../../shared/config/env';
+import { devScheduleDiagnostic } from './schedule/calendarPresentation';
 
 function Session({ org, activeUnit, units, tab, can, onNavigate, onUnitChange }) {
   const [unitId, setUnitId] = useState(activeUnit?.id || ''), [state, setState] = useState(null), [error, setError] = useState(''), [loading, setLoading] = useState(false), [modal, setModal] = useState(null), [row, setRow] = useState(null);
   const [search,setSearch] = usePersonnelUi('employees:search','');
-  const devices = usePagedList(state?.devices || [],'devices');
-  const command = useCallback((action, payload) => personnelCommand(org.id, unitId, action, payload), [org.id, unitId]);
+  const devices = usePagedList(state?.devices || [],'devices',(state?.devices || []).map(d=>d.id).join(','));
+  const ruleSupport = state?.scheduleSupport?.rules, exceptionSupport = state?.scheduleSupport?.exceptions;
+  const command = useCallback((action, payload) => {
+    const diagnostic = devScheduleDiagnostic(action, {rules:ruleSupport, exceptions:exceptionSupport}, getAppConfig());
+    if (diagnostic) return Promise.reject(new Error(diagnostic));
+    return personnelCommand(org.id, unitId, action, payload);
+  }, [org.id, unitId, ruleSupport, exceptionSupport]);
   const [from, setFrom] = usePersonnelUi(`range:${tab}:from`,addDays(todayIn(org.timezone || 'UTC'), tab==='Hoy'?-2:-31)), [to, setTo] = usePersonnelUi(`range:${tab}:to`,addDays(todayIn(org.timezone || 'UTC'),tab==='Hoy'?2:31));
   const requestVersion = useRef(null);
   const onRange = useCallback((start, end) => { setFrom(start); setTo(end); }, [setFrom,setTo]);
@@ -35,11 +42,18 @@ function Session({ org, activeUnit, units, tab, can, onNavigate, onUnitChange })
       if (version === requestVersion.current) setState(normalizeSnapshot(raw, todayIn(zone)));
     } catch (err) { if (version === requestVersion.current) { setState(null); setError(err.message); } } finally { if (version === requestVersion.current) setLoading(false); }
   }, [command, unitId, from, to]);
-  useEffect(() => { refresh(); return () => { requestVersion.current = Symbol(); }; }, [refresh]);
+  useEffect(() => { refresh(); return () => { requestVersion.current = Symbol(); }; }, [refresh, tab]);
   useEffect(() => {
     setModal(null); setRow(null);
   }, [tab]);
   useEffect(() => { const timer = setInterval(() => { if (!document.hidden) refresh(); }, 60000); return () => clearInterval(timer); }, [refresh]);
+  useEffect(() => {
+    const resume = () => { if (!document.hidden) refresh(); };
+    window.addEventListener('focus', resume);
+    window.addEventListener('pageshow', resume);
+    document.addEventListener('visibilitychange', resume);
+    return () => { window.removeEventListener('focus', resume); window.removeEventListener('pageshow', resume); document.removeEventListener('visibilitychange', resume); };
+  }, [refresh]);
   const unit = state?.units.find(u => u.id === unitId);
   const open = m => { if (m.kind === 'incident') { setError('Las incidencias siguen pendientes de una entrega posterior.'); return; } if (m.kind === 'correction' && !can('personnel.fichajes.audit')) { setError('La corrección requiere permiso de auditoría de fichajes.'); return; } setRow(null); setModal(m); };
   const employees = state?.employees.filter(e => e.unitIds.includes(unitId) && e.name.toLowerCase().includes(search.toLowerCase())) || [];

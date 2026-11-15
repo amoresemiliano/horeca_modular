@@ -4,20 +4,23 @@ import { addDays } from '../../personal/domain';
 import { Empty, Field } from '../../personal/ui';
 import { usePersonnelUi } from '../uiState';
 import Pagination, { usePagedList } from '../Pagination';
+import { adjacentDate, calendarRange } from './calendarPresentation';
 
 export default function ScheduleView({ state, unit, open, command, refresh, onError, employeeId, onRange }) {
   const [view, setView] = usePersonnelUi(`schedule:${employeeId || 'all'}:view`,'week');
   const [start, setStart] = usePersonnelUi(`schedule:${employeeId || 'all'}:week`,state.date);
-  useEffect(()=>{if(view==='week') onRange?.(start,addDays(start,6));},[start,view,onRange]);
-  const changeStart = date => { setStart(date); onRange?.(date, addDays(date, 6)); };
-  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const [first, last] = calendarRange(view, start);
+  useEffect(()=>{if(view!=='list') onRange?.(first,last);},[first,last,view,onRange]);
+  const changeStart = date => { if(date) setStart(date); };
+  const days = Array.from({ length: Math.round((Date.parse(last)-Date.parse(first))/86400000)+1 }, (_, i) => addDays(first, i));
   const schedules = state.schedules.filter(s => s.unitId === unit.id && (!employeeId || s.employeeId === employeeId));
   const rules = (state.scheduleRules || []).filter(r=>!employeeId || r.employeeId===employeeId);
   const exceptions = (state.scheduleExceptions || []).filter(r=>!employeeId || r.employeeId===employeeId);
   const ruleList = usePagedList(rules,`rules:${employeeId || 'all'}`);
   const exceptionList = usePagedList(exceptions,`exceptions:${employeeId || 'all'}`);
   const shiftList = usePagedList(schedules,`schedule-list:${employeeId || 'all'}`,start);
-  const displayed = view==='week'?schedules:shiftList.items;
+  const displayed = view==='list'?shiftList.items:schedules.filter(s=>s.date>=first && s.date<=last);
+  const monthOffset = (new Date(first+'T12:00Z').getUTCDay()+6)%7;
   const changeDay = s => open({kind:'exception',record:exceptions.find(e=>e.employeeId===s.employeeId && e.date===s.date) || {employeeId:s.employeeId,date:s.date,start:s.start,end:s.end,cancelled:false,note:''}});
   async function cancel(schedule) {
     try {
@@ -27,11 +30,15 @@ export default function ScheduleView({ state, unit, open, command, refresh, onEr
     } catch (error) { onError(error.message); }
   }
   return <>
-    <div className="per-section-heading"><div><h2>Horarios previstos</h2><p className="per-muted">Semana o lista. Los turnos históricos conservan su horario original.</p></div><div className="per-actions"><button className="per-primary" onClick={() => open({ kind: 'rule', employeeId })}>+ Horario habitual</button><button onClick={()=>open({kind:'exception',employeeId})}>Cambiar un día</button><button onClick={() => open({ kind: 'schedule', employeeId })}>+ Programar turno</button></div></div>
+    <div className="per-section-heading"><div><h2>Horarios previstos</h2><p className="per-muted">Los turnos históricos conservan su horario original.</p></div><div className="per-actions"><button className="per-primary" onClick={() => open({ kind: 'rule', employeeId })}>+ Horario habitual</button><button onClick={()=>open({kind:'exception',employeeId})}>Cambiar un día</button><button onClick={() => open({ kind: 'schedule', employeeId })}>+ Programar turno</button></div></div>
     <h3>Horarios habituales</h3><div className="per-record-grid">{ruleList.items.map(r=><article className="per-record per-rule-row" key={r.id}><strong>{state.employees.find(e=>e.id===r.employeeId)?.name}</strong><p>{r.weekdays.map(d=>['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'][d-1]).join(' · ')} · {r.start}–{r.end}</p><p>Desde {r.validFrom} · {r.validUntil ? `Hasta ${r.validUntil}` : 'Sin fecha de fin'}</p><button onClick={()=>open({kind:'rule',record:r})}>Editar / finalizar horario</button></article>)}</div>{rules.length>0 && <Pagination list={ruleList} label="Horarios habituales" />}
     {exceptions.length>0 && <><h3>Cambios de un día</h3>{exceptionList.items.map(e=><article className="per-record" key={e.id}><strong>{state.employees.find(p=>p.id===e.employeeId)?.name} · {e.date}</strong><p>{e.cancelled?'Día sin trabajo':`${e.start}–${e.end}`}</p><button disabled={e.date<state.date} onClick={()=>open({kind:'exception',record:e})}>Editar cambio</button></article>)}<Pagination list={exceptionList} label="Cambios de un día" /></>}
-    <div className="per-toolbar"><Field label="Semana desde"><input type="date" value={start} onChange={e => changeStart(e.target.value)} /></Field><Field label="Vista"><select value={view} onChange={e => setView(e.target.value)}><option value="week">Semana</option><option value="list">Lista del periodo consultado</option></select></Field><button onClick={() => changeStart(addDays(start, -7))}>Semana anterior</button><button onClick={() => changeStart(addDays(start, 7))}>Semana siguiente</button></div>
-    <div className={view === 'week' ? 'per-week' : 'per-schedule-list'}>{(view === 'week' ? days : [...new Set(displayed.map(s => s.date))]).map(date => <section className="per-day" key={date} tabIndex={0} aria-label={`Turnos: ${date}`}><h3>{new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00Z`))}</h3><div className="per-day-shifts">{displayed.filter(s => s.date === date).map(s => {
+    <div className="per-toolbar"><Field label={view==='week'?'Semana desde':view==='month'?'Mes de':'Fecha'}><input type="date" value={start} onChange={e => changeStart(e.target.value)} /></Field><Field label="Vista"><select value={view} onChange={e => setView(e.target.value)}><option value="day">Día</option><option value="week">Semana</option><option value="month">Mes</option><option value="list">Lista del periodo consultado</option></select></Field>{view!=='list' && <><button onClick={() => changeStart(adjacentDate(view,start,-1))}>Anterior</button><button onClick={() => changeStart(adjacentDate(view,start,1))}>Siguiente</button></>}</div>
+    {view==='month' ? <div className="per-month" aria-label="Calendario mensual">
+      {['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(day=><strong className="per-month-weekday" key={day}>{day}</strong>)}
+      {Array.from({length:monthOffset},(_,i)=><div aria-hidden="true" key={'blank-'+i} />)}
+      {days.map(date=>{const shifts=displayed.filter(s=>s.date===date);return <button className="per-month-day" key={date} aria-label={`${date}: ${shifts.length} turnos. Ver día`} onClick={()=>{setStart(date);setView('day');}}><strong>{Number(date.slice(8))}</strong><span>{shifts.length} turnos</span>{shifts.slice(0,2).map(s=><small key={s.id} title={`${state.employees.find(e=>e.id===s.employeeId)?.name} ${s.start}–${s.end}`}>{state.employees.find(e=>e.id===s.employeeId)?.name} · {s.start}</small>)}{shifts.length>2 && <small>+{shifts.length-2}</small>}</button>;})}
+    </div> : <div className={view === 'week' ? 'per-week' : view==='day'?'per-day-view':'per-schedule-list'}>{(view !== 'list' ? days : [...new Set(displayed.map(s => s.date))].sort()).map(date => <section className="per-day" key={date} tabIndex={0} aria-label={`Turnos: ${date}`}><h3>{new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00Z`))}</h3><div className="per-day-shifts">{displayed.filter(s => s.date === date).map(s => {
       const historical = Date.parse(s.expectedStartAt) <= Date.now();
       return <article className="per-record per-calendar-item" key={s.id} title={s.note || undefined}>
         <strong>{state.employees.find(e => e.id === s.employeeId)?.name}</strong>
@@ -43,7 +50,7 @@ export default function ScheduleView({ state, unit, open, command, refresh, onEr
         </div>
         {historical && <span className="per-sr">Turno histórico</span>}
       </article>;
-    })}{!displayed.some(s => s.date === date) && <p className="per-muted">Sin turnos</p>}</div></section>)}</div>{view==='list' && <Pagination list={shiftList} label="Turnos" />}
+    })}{!displayed.some(s => s.date === date) && <p className="per-muted">Sin turnos</p>}</div></section>)}</div>}{view==='list' && <Pagination list={shiftList} label="Turnos" />}
     {!schedules.length && <Empty title="Sin turnos en el periodo consultado" />}
   </>;
 }
