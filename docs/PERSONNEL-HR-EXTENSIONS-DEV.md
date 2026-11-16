@@ -82,7 +82,7 @@ are unchanged. A separate synthetic PDF is uploaded, checked against public/anon
 read denial, downloaded through a 60-second signed URL, then fully deleted.
 No test business records are retained. Catalogs are intentionally empty initially.
 
-Focused Personnel unit/integration suite: 13 files / 102 tests passed. Coverage
+Focused Personnel unit/integration suite: 13 files / 103 tests passed. Coverage
 includes RLS/private grants, tenant/unit/employee boundaries, proof replay and
 revocation, immutable incident audit, acknowledgement, payroll versions/provenance,
 storage restrictive policy and leave workflows/push claim/invalid-provider cleanup.
@@ -90,6 +90,10 @@ Lint/typecheck/build pass; six existing unrelated lint warnings remain.
 The HR browser suite and existing density/exact-context/acceptance browser suites
 pass with isolated fixtures. Responsive HR checks: 360/390/768/1024/1440 px.
 Evidence is ignored under `.local-data/hr-evidence/` and `.local-data/hr-dev-*.json`.
+
+The live Preview check caught prototype-backed Node request headers being lost
+when the upload guard copied the request with object spread. The handler now
+forwards method/headers explicitly; a transport regression covers this case.
 
 DEV still lacks recurring schedule tables/RPCs. This package does not install the
 inherited recurrence migration. HR leave context works independently of recurrence;

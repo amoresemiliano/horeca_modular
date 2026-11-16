@@ -8,7 +8,7 @@ import {incidentPdf} from '../server/personnel/hrPdf.js';
 export default async function handler(req:Request,res:Response){
  try{
   // Binary upload has a separate bounded size; reuse the origin/config guards.
-  const config=secureRequest({...req,body:{}},res),body=req.body||{};
+  const config=secureRequest({method:req.method,headers:req.headers,body:{}},res),body=req.body||{};
   if(JSON.stringify(body).length>2900000)throw Error('INVALID_INPUT');
   // Deliberately DEV-first, including the server. Promotion requires a separate review.
   if(config.url!=='https://vmxjqwlfwnphorthhcwu.supabase.co')throw Error('DENIED');
