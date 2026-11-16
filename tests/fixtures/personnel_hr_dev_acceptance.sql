@@ -35,4 +35,10 @@ BEGIN
  reply:=public.personnel_hr_employee(repeat('a',64),jsonb_build_object('action','snapshot','attemptId',attempt,'verified',true));
  IF reply->'leave'->0->>'status'<>'APPROVED' OR reply::text LIKE '%Private manager note%' OR reply::text LIKE '%Synthetic manager follow-up%' OR reply->'communications'->0->>'acknowledged_at' IS NULL THEN RAISE EXCEPTION 'HR employee privacy/workflow mismatch'; END IF;
  IF jsonb_array_length(public.personnel_hr_leave_context(org,unit,'2040-01-01','2040-01-31'))<>1 THEN RAISE EXCEPTION 'Approved leave overlay missing'; END IF;
+ request:=(public.personnel_hr_admin(org,unit,'leave.create',jsonb_build_object('employeeId',emp,'typeId',leave_type,'start','2040-02-01','end','2040-02-02','status','APPROVED','note','Synthetic manager request'))->>'id')::uuid;
+ IF NOT EXISTS(SELECT 1 FROM personnel_private.hr_leave WHERE id=request AND status='APPROVED' AND revision=2 AND managed_by=actor AND created_by_device IS NULL)
+  OR NOT EXISTS(SELECT 1 FROM personnel_private.hr_history WHERE entity_id=request AND event='leave.create' AND detail->>'origin'='MANAGER' AND hr_history.actor=auth.uid())
+ THEN RAISE EXCEPTION 'Manager leave creation/audit mismatch'; END IF;
+ PERFORM public.personnel_hr_admin(org,unit,'payroll.delivery.initiate',jsonb_build_object('id',payroll,'channel','NATIVE_SHARE'));
+ IF NOT EXISTS(SELECT 1 FROM personnel_private.hr_history WHERE entity_id=payroll AND event='payroll.delivery.initiate' AND detail->>'status'='INITIATED' AND detail->>'channel'='NATIVE_SHARE') THEN RAISE EXCEPTION 'Payroll initiation audit missing'; END IF;
 END $test$;

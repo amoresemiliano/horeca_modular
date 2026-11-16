@@ -1,9 +1,11 @@
 import {randomUUID} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {join} from 'node:path';
 import * as webpush from 'web-push';
 import {callerClient,deviceCookie,requestKey,rpc,secureRequest,tokenHash,trustedClient,type Request,type Response} from '../server/personnel/runtime.js';
 import {pinLookup,verifyPin,UUID} from '../server/personnel/security.js';
 import {pushConfiguration,validateSubscription} from '../server/personnel/push.js';
-import {incidentPdf} from '../server/personnel/hrPdf.js';
+import {incidentDocumentPdf} from '../server/personnel/hrPdf.js';
 
 export default async function handler(req:Request,res:Response){
  try{
@@ -31,9 +33,12 @@ export default async function handler(req:Request,res:Response){
   if(action==='leave.context'){res.status(200).json(await rpc(client,'personnel_hr_leave_context',{p_org:org,p_unit:unit,p_from:payload.from,p_to:payload.to}));return;}
   if(action==='incident.pdf'){
    const item=await command('incident.document',payload);
-   const author=(value:string)=>value||'Responsable de Personal';
-   const lines=['HORECA Personal — Comunicación de incidencia',item.organization+' · '+item.unit,'Empleado: '+item.employee,'Fecha: '+item.date,'Tipo: '+item.type+' · Gravedad: '+item.severity,'Estado: '+item.status,'Responsable: '+author(item.author),'Descripción:',item.description,'Objetivo / acuerdo:',item.objective,'Seguimiento:',...item.entries.flatMap((e:{date:string;text:string;author:string})=>[e.date+' · '+author(e.author),e.text]),'Generado: '+new Date().toISOString(),'El acuse acredita recepción, no conformidad con el contenido.'];
-   res.status(200).json({pdf:incidentPdf(lines).toString('base64')});return;
+   const snapshot=await command('snapshot');
+   // Incident access is already authorized above; read only that organization's branding.
+   const brand=await trustedClient().from('eco_organizations').select('code').eq('id',org).maybeSingle();
+   const logo=brand.data?.code==='EL_CRIOLLO'?readFileSync(join(process.cwd(),'public/personal/fichaje/el-criollo-logo.jpg')):undefined;
+   res.status(200).json({pdf:incidentDocumentPdf({...item,author:item.author||'Responsable de Personal',status:({OPEN:'Abierta',FOLLOW_UP:'En seguimiento',CLOSED:'Cerrada'} as Record<string,string>)[item.status]||item.status,
+    deliveries:snapshot.deliveries.filter((d:{incident_id:string})=>d.incident_id===payload.id),generatedAt:new Date().toISOString(),logo}).toString('base64')});return;
   }
   if(action==='payroll.upload'||action==='payroll.replace'){
    if(typeof body.pdf!=='string'||!/^[A-Za-z0-9+/]*={0,2}$/.test(body.pdf))throw Error('INVALID_INPUT');
@@ -47,12 +52,12 @@ export default async function handler(req:Request,res:Response){
    res.status(200).json({id:reserved.id});return;
   }
   if(action==='payroll.download'){
-   const file=await command('payroll.file',payload),signed=await trustedClient().storage.from('personnel-hr-payroll').createSignedUrl(file.path,60);
+   const file=await command('payroll.file',payload),signed=await trustedClient().storage.from('personnel-hr-payroll').createSignedUrl(file.path,60,{download:true});
    if(signed.error)throw Error('OPERATION_UNAVAILABLE');res.status(200).json({url:signed.data.signedUrl});return;
   }
-  if(!['snapshot','catalog.save','incident.save','incident.entry','incident.share','payroll.review','leave.decide'].includes(action))throw Error('INVALID_INPUT');
+  if(!['snapshot','catalog.save','incident.save','incident.entry','incident.share','payroll.review','payroll.delivery.initiate','leave.create','leave.decide'].includes(action))throw Error('INVALID_INPUT');
   const result=await command(action,payload);
-  if(action==='leave.decide'){
+  if(action==='leave.decide'||(action==='leave.create'&&['APPROVED','REJECTED'].includes(String(payload.status)))){
    // Outbox claim is restricted to the just-authorized leave and revalidates opt-in/device.
    const service=trustedClient();let notification='FAILED';
    try{

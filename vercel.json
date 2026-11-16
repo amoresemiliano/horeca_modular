@@ -7,7 +7,8 @@
   },
   "functions": {
     "api/personnel-hr.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "public/personal/fichaje/el-criollo-logo.jpg"
     },
     "api/sales.ts": {
       "maxDuration": 60

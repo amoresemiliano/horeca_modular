@@ -54,7 +54,8 @@ try{
  const touch=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  await touch.addInitScript(({org,unit,user})=>localStorage.setItem('horeca-context-v1:'+user,JSON.stringify({organizationId:org,unitId:unit,navigationScope:'organization',module:'Personal',section:'Horarios'})),{org,unit,user});
  await touch.route('**/api/personnel',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(raw)}));
- const touchPage=await touch.newPage();await touchPage.clock.install({time:new Date('2040-11-05T08:00:00Z')});await touchPage.goto('http://127.0.0.1:5202/context.html?module=Personal&section=Horarios');await touchPage.locator('.per-calendar-item').first().waitFor();
+ await touch.route('**/api/personnel-hr',r=>r.fulfill({status:200,contentType:'application/json',body:'[]'}));
+ const touchPage=await touch.newPage();await touchPage.clock.install({time:new Date('2040-11-05T08:00:00Z')});await touchPage.goto(fixtureOrigin+'/context.html?module=Personal&section=Horarios');await touchPage.locator('.per-calendar-item').first().waitFor();
  assert(await touchPage.evaluate(()=>matchMedia('(pointer: coarse)').matches));const touchIcon=await touchPage.getByRole('button',{name:'Clonar turno',exact:true}).first().boundingBox();assert(touchIcon.width>=44&&touchIcon.height>=44);
  for(const width of [390,768,1024,1280]){await touchPage.setViewportSize({width,height:900});assert(await touchPage.locator('.personnel').evaluate(e=>e.scrollWidth<=e.clientWidth+1));}
  await touch.close();checks.push('Four views fit 360/390/768/1024/1280/1440; actual coarse-pointer calendar buttons retain 44px targets without overflow');
