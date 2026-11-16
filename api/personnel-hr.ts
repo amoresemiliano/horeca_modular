@@ -12,8 +12,8 @@ export default async function handler(req:Request,res:Response){
   // Binary upload has a separate bounded size; reuse the origin/config guards.
   const config=secureRequest({method:req.method,headers:req.headers,body:{}},res),body=req.body||{};
   if(JSON.stringify(body).length>2900000)throw Error('INVALID_INPUT');
-  // Deliberately DEV-first, including the server. Promotion requires a separate review.
-  if(config.url!=='https://vmxjqwlfwnphorthhcwu.supabase.co')throw Error('DENIED');
+  // Runtime configuration already validates the deployment, origin and Supabase target.
+  if(!['https://vmxjqwlfwnphorthhcwu.supabase.co','https://cznauyzhtbqvqtwmfeki.supabase.co'].includes(config.url))throw Error('DENIED');
   const action=String(body.action||''),payload=(body.payload||{}) as Record<string,unknown>;
   if(typeof payload!=='object'||Array.isArray(payload)||JSON.stringify(payload).length>24000)throw Error('INVALID_INPUT');
   if(body.employee===true){

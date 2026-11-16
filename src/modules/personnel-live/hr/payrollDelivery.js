@@ -1,7 +1,8 @@
+import {getAppConfig} from '../../../shared/config/env';
 export async function payrollFile(command,record){
  const signed=await command('payroll.download',{id:record.id});
  const url=new URL(signed.url);
- if(url.protocol!=='https:'||url.hostname!=='vmxjqwlfwnphorthhcwu.supabase.co'||!url.pathname.startsWith('/storage/v1/object/sign/personnel-hr-payroll/'))throw Error('Acceso al PDF no válido.');
+ if(url.protocol!=='https:'||url.origin!==getAppConfig().supabase.url||!url.pathname.startsWith('/storage/v1/object/sign/personnel-hr-payroll/'))throw Error('Acceso al PDF no válido.');
  const response=await fetch(url.href,{cache:'no-store',referrerPolicy:'no-referrer'});
  if(!response.ok)throw Error('No se pudo descargar el PDF. Actualiza y vuelve a intentarlo.');
  const blob=await response.blob();return new File([blob],record.filename||'nomina.pdf',{type:'application/pdf'});
