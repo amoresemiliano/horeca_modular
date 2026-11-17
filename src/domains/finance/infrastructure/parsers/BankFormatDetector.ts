@@ -77,6 +77,11 @@ export function detectBankSourceFormat(
     }
 
     // Extract BBVA Account IBAN & Titular from metadata rows
+    const normalized = row.map(c=>String(c ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase());
+    if (['FECHA PROCESO','FECHA VALOR','CONCEPTO','OBSERVACIONES','IMPORTE','SALDO','REMESA'].every(h=>normalized.includes(h))) {
+      scores.BBVA_ACCOUNT.score += 15;
+      scores.BBVA_ACCOUNT.markers.push('Header: BBVA account current CSV structure');
+    }
     if (rowStr.includes('CUENTA') && !metadata.iban) {
       for (const cell of row) {
         const cStr = String(cell || '').trim();

@@ -121,6 +121,10 @@ export class BankStatementImportService {
     const fileDupCheck = await this.repo.checkFileDuplicate(parsedResult.fileHash, organizationId);
     const isExactFileDuplicate = fileDupCheck.isDuplicate;
     const existingImportId = fileDupCheck.isDuplicate ? fileDupCheck.file.import_id : null;
+    if (!overrideAccountId && fileDupCheck.isDuplicate) {
+      const original = compatibleAccounts.find(a => a.id === fileDupCheck.file.bank_account_id);
+      if (original) { targetAccount = original; requiresSelection = false; }
+    }
 
     // 5. Generate fingerprints for movements
     const resolvedAccountId = targetAccount?.id;
@@ -143,7 +147,7 @@ export class BankStatementImportService {
 
     // 6. Level C: Check existing fingerprints in organization (fail-closed if DB error)
     const fps = movementsWithFp.map(m => m.fingerprint).filter(Boolean);
-    const existingFpSet = await this.repo.fetchExistingFingerprints(fps, organizationId);
+    const existingFpSet = isExactFileDuplicate ? new Set<string>() : await this.repo.fetchExistingFingerprints(fps, organizationId);
 
     let totalIncome = 0;
     let totalExpense = 0;
@@ -187,6 +191,8 @@ export class BankStatementImportService {
     if (!Number.isSafeInteger(totalIncome) || !Number.isSafeInteger(totalExpense)) throw new Error('Money totals exceed the supported range.');
     return {
       organizationId,
+      periodStart: parsedResult.periodStart || previewMovements.map(m=>m.bookingDate).sort()[0] || null,
+      periodEnd: parsedResult.periodEnd || previewMovements.map(m=>m.bookingDate).sort().at(-1) || null,
       rejectedRows: parsedResult.rejectedRows,
       fileName,
       fileHash: parsedResult.fileHash,

@@ -20,5 +20,5 @@ export const hasCell = (value: unknown): boolean => value !== null && value !== 
 export function isStructuralRow(row: unknown[], dateIndex: number): boolean {
   if (!row.some(hasCell)) return true;
   const first = row.find(hasCell);
-  return /^(?:TOTAL(?:\s|$)|SALDO (?:ANTERIOR|INICIAL|FINAL))/i.test(String(first)) && !/^\d/.test(String(row[dateIndex] ?? ''));
+  return /^(?:TOTAL(?:\s|$)|SALDO (?:ANTERIOR|INICIAL|FINAL))/i.test(String(first).trim()) && !/^\d/.test(String(row[dateIndex] ?? '').trim());
 }

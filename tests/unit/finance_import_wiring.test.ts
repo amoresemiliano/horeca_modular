@@ -25,13 +25,14 @@ describe('Finance active UI wiring after Core integration', () => {
     expect(app).toMatch(/<ImportModal[\s\S]*?onImportCompleted=\{handleImportCompleted\}/);
     const modal = read('modules/extractos/ImportModal.jsx');
     expect(modal).toContain('new BankStatementImportService(new SupabaseFinanceRepository())');
-    expect(modal).toContain('await importService.confirmBankImport(preview, targetAccId, organizationId)');
-    expect(modal).toContain('accept=".xls,.xlsx"');
+    expect(modal).toContain('await confirmBankBatch(items,organizationId,service)');
+    expect(read('domains/finance/application/batchImport.ts')).toContain('await service.confirmBankImport(');
+    expect(modal).toContain('accept=".csv,.xls,.xlsx" multiple');
     expect(modal).not.toMatch(/extractosService|\.insert\(/);
   });
   it('reloads after import and keeps classification, catalog, splits and rules connected', () => {
     const app = read('modules/extractos/ExtractosApp.jsx');
-    expect(app).toMatch(/const handleImportCompleted = \(summary\) => \{[\s\S]*?loadData\(\);\s*\};/);
+    expect(app).toMatch(/const handleImportCompleted = async \(summary\) => \{[\s\S]*?await loadData\(\);\s*\};/);
     expect(app).toContain('fetchConsolidatedMovements(organizationId,');
     expect(app).toMatch(/<ClassificationModal[^\r\n]*onSaved=\{loadData\}/);
     expect(app).toMatch(/<FinanceCatalogModal[^\r\n]*onSaved=\{loadData\}/);

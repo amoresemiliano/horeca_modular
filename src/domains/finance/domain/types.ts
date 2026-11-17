@@ -60,12 +60,15 @@ export interface BankAccount {
 }
 
 export interface MinimizedSourceProvenance {
+  bankCode?: string;
+  office?: string;
   sourceRowNumber: number;
   rawConcept?: string;
   beneficiary?: string;
   observations?: string;
   originalCurrency?: string;
   originalFxAmount?: number;
+  fxDetail?: string;
   bankNativeId?: string;
   reference1?: string;
   reference2?: string;
@@ -119,6 +122,8 @@ export interface ParsedBankFileResult {
 }
 
 export interface ImportPreviewDTO {
+  periodStart?: string | null;
+  periodEnd?: string | null;
   organizationId: string;
   fileName: string;
   fileHash: string;

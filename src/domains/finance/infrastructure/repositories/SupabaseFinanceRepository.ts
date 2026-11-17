@@ -109,17 +109,18 @@ export class SupabaseFinanceRepository implements FinanceRepository {
     const activeOrgId = this.requireOrg(orgId);
     if (!fingerprints || fingerprints.length === 0) return new Set();
 
-    const { data, error } = await supabase
-      .from('eco_financial_movements')
-      .select('financial_fingerprint')
-      .eq('organization_id', activeOrgId)
-      .in('financial_fingerprint', fingerprints);
-
-    if (error) {
-      throw new Error(`FAIL-CLOSED: Error de infraestructura al verificar huellas de movimientos (Level C): ${error.message}`);
+    const found = new Set<string>(), unique = [...new Set(fingerprints)];
+    // Bound the GET query length and paginate repeated overlap exports too.
+    for (let start=0;start<unique.length;start+=100) {
+      for (let offset=0;;offset+=500) {
+        const {data,error}=await supabase.from('eco_financial_movements').select('financial_fingerprint')
+          .eq('organization_id',activeOrgId).in('financial_fingerprint',unique.slice(start,start+100)).order('id').range(offset,offset+499);
+        if(error)throw new Error(`FAIL-CLOSED: Error de infraestructura al verificar huellas de movimientos (Level C): ${error.message}`);
+        for(const row of data||[])if(row.financial_fingerprint)found.add(row.financial_fingerprint);
+        if(!data||data.length<500)break;
+      }
     }
-
-    return new Set((data || []).map(r => r.financial_fingerprint).filter(Boolean));
+    return found;
   }
 
   /**
@@ -140,6 +141,7 @@ export class SupabaseFinanceRepository implements FinanceRepository {
         amount: moneyToDecimal(m.amount), currency: m.currency, direction: m.direction,
         runningBalance: m.runningBalance === null ? null : moneyToDecimal(m.runningBalance),
         sourceRowNumber: m.sourceRowNumber, bankNativeId: m.bankNativeId, externalReference: m.externalReference,
+        provenance: Object.fromEntries((['bankCode','office','originalCurrency','originalFxAmount','fxDetail'] as const).filter(key=>m.minimizedProvenance?.[key] !== undefined && m.minimizedProvenance[key] !== '').map(key=>[key,m.minimizedProvenance[key]])),
       })),
       rejected_rows: input.rejectedRows.map(r => ({ sourceRowNumber: r.sourceRowNumber, code: r.code })),
     });

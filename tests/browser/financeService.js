@@ -34,3 +34,43 @@ export async function fetchTransferCandidates(){return clone(candidates)}
 export async function detectTransferCandidates(){return 0}
 export async function reviewTransferCandidate(org,id,decision){log('transfer-review',org,id,decision);candidates.find(c=>c.id===id).status=decision}
 export async function confirmFinanceSuggestions(org,selected){log('bulk',org,selected);for(const item of selected){const a=movements.flatMap(m=>m.allocations).find(a=>a.id===item.id);a.classification_status='CONFIRMED';a.updated_at=crypto.randomUUID();}return selected.length}
+import {buildPatternReviewGroups} from '../../src/domains/finance/application/patternLearning';
+import {generateMovementFingerprint} from '../../src/domains/finance/domain/fingerprint';
+const scale=new URL(location.href).searchParams.has('scale');
+if(scale){
+ movements.splice(0);catalogs.categories.splice(0);catalogs.subcategories.splice(0);catalogs.counterparties.splice(0);
+ accounts.push({id:'bbva-card',name:'Tarjeta BBVA ficticia',institution:'BBVA',product_type:'CARD',masked_identifier:'0003',external_reference:'SYNTHETIC_BBVA_CARD',is_active:true,currency:'EUR'},
+ {id:'saba-account',name:'Cuenta Sabadell ficticia',institution:'SABADELL',product_type:'BANK_ACCOUNT',masked_identifier:'0004',external_reference:'ES9900810000000000000001',is_active:true,currency:'EUR'},
+ {id:'saba-card',name:'Tarjeta Sabadell ficticia',institution:'SABADELL',product_type:'CARD',masked_identifier:'0005',external_reference:'0000000000000005',is_active:true,currency:'EUR'});
+}
+const sourceFiles=new Map();
+export function bankRead(table,filters,inside,start=0,end=499){
+ if(filters.organization_id!=='synthetic-org')return [];
+ if(table==='eco_financial_accounts')return clone(accounts.map(a=>({...a,organization_id:'synthetic-org'})));
+ if(table==='eco_source_files'){const f=sourceFiles.get(filters.sha256_hash);return f?[clone(f)]:[];}
+ if(table==='eco_financial_movements')return clone(movements.filter(m=>!inside||inside.includes(m.financial_fingerprint)).slice(start,end+1));
+ throw Error('Unexpected synthetic table');
+}
+export async function bankRpc(name,p){
+ if(p.requested_organization_id!=='synthetic-org')return {data:null,error:{message:'denied'}};
+ if(name==='can_execute_capability_for_org')return {data:true,error:null};
+ if(name!=='rpc_confirm_bank_statement_import')throw Error('Unexpected synthetic RPC');
+ log('import',p.file_hash,p.bank_account_id,p.movements.length);
+ const old=sourceFiles.get(p.file_hash);if(old)return {data:{status:'COMPLETED',importId:old.import_id,bankAccountId:old.eco_source_imports.bank_account_id,persistedCount:0,potentialOverlapCount:0,totalParsed:p.movements.length,duplicateSuppressedCount:p.movements.length},error:null};
+ const account=accounts.find(a=>a.id===p.bank_account_id);if(!account)throw Error('Invalid target');
+ let overlaps=0;for(const row of p.movements){const fp=await generateMovementFingerprint({bankAccountId:account.id,bookingDate:row.bookingDate,valueDate:row.valueDate,amount:Number(row.amount),normalizedDescription:row.description,runningBalance:row.runningBalance===null?null:Number(row.runningBalance),bankNativeId:row.bankNativeId,externalReference:row.externalReference});const overlap=movements.some(m=>m.financial_fingerprint===fp);if(overlap)overlaps++;
+ const id=crypto.randomUUID(),m=movement(id,Number(row.amount),account.id,row.bookingDate);m.descripcion=row.description;m.financial_fingerprint=fp;m.duplicate_status=overlap?'POTENTIAL_OVERLAP':'UNIQUE';m.allocations[0].classification_source='MANUAL';movements.push(m);}
+ const importId=crypto.randomUUID();sourceFiles.set(p.file_hash,{import_id:importId,eco_source_imports:{bank_account_id:account.id,status:'COMPLETED'}});
+ return {data:{status:'COMPLETED',importId,bankAccountId:account.id,persistedCount:p.movements.length,potentialOverlapCount:overlaps,totalParsed:p.movements.length,duplicateSuppressedCount:0},error:null};
+}
+export async function reviewFinancePattern(org,rows,value){
+ log('pattern-review',org,rows,value);for(const row of rows){const a=movements.flatMap(m=>m.allocations).find(a=>a.id===row.id);if(!a||a.updated_at!==row.updated_at)throw Error('Stale group');}
+ for(const row of rows)Object.assign(movements.flatMap(m=>m.allocations).find(a=>a.id===row.id),{economic_type:value.economic_type,category_id:value.category_id,subcategory_id:value.subcategory_id,counterparty_id:value.counterparty_id},{classification_status:'CONFIRMED',classification_source:'MANUAL',updated_at:crypto.randomUUID()});return rows.length;
+}
+export async function recognizeFinancePatterns(org){
+ let recognized=0,suggested=0;for(const group of buildPatternReviewGroups(movements,org))for(const m of group.rows){if(!group.proposal||group.conflict)continue;const a=m.allocations[0];if(a.classification_status==='SUGGESTED'&&!group.recognized)continue;
+ const status=group.recognized?'CONFIRMED':'SUGGESTED';Object.assign(a,{economic_type:group.proposal.economic_type,category_id:group.proposal.category_id,subcategory_id:group.proposal.subcategory_id,counterparty_id:group.proposal.counterparty_id,classification_status:status,classification_source:'RULE',updated_at:crypto.randomUUID()});if(group.recognized)recognized++;else suggested++;}
+ log('recognize',recognized,suggested);return {recognized,suggested};
+}
+export async function confirmCardSettlement(org,pair){log('settlement',org,pair.bank.id,pair.card.id);for(const [m,target] of [[pair.bank,pair.card],[pair.card,pair.bank]])Object.assign(movements.find(x=>x.id===m.id).allocations[0],{category_id:null,subcategory_id:null,counterparty_id:null,economic_type:'CARD_SETTLEMENT',classification_status:'CONFIRMED',is_card_settlement:true,reconciled_movement_id:target.id,reconciliation_status:'CONFIRMED',updated_at:crypto.randomUUID()});return {settled:2};}
+window.financeFixture={snapshot:()=>clone({catalogs,movements}),add:(description,amount=-18.25,account='bbva-card')=>{const m=movement(crypto.randomUUID(),amount,account,'2023-02-01');m.descripcion=description;m.duplicate_status='UNIQUE';movements.push(m);return m.id;}};

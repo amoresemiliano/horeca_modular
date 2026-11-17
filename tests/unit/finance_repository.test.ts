@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { from, query, rpc } = vi.hoisted(() => {
-  const query = { select: vi.fn(), eq: vi.fn(), in: vi.fn(), maybeSingle: vi.fn(), order: vi.fn() };
+  const query = { select: vi.fn(), eq: vi.fn(), in: vi.fn(), maybeSingle: vi.fn(), order: vi.fn(), range:vi.fn() };
   return { from: vi.fn(), query, rpc: vi.fn() };
 });
 vi.mock('../../src/lib/supabase.js', () => ({ supabase: { from, rpc } }));
@@ -15,7 +15,7 @@ describe('Finance repository boundary (mocked database; no RLS proof)', () => {
     rpc.mockResolvedValue({ data: true, error: null });
     query.select.mockReturnValue(query);
     query.eq.mockReturnValue(query);
-    query.in.mockResolvedValue({ data: [], error: null });
+    query.in.mockReturnValue(query);query.order.mockReturnValue(query);query.range.mockResolvedValue({data:[],error:null});
     query.maybeSingle.mockResolvedValue({ data: null, error: null });
   });
   it('Level A database errors block duplicate classification', async () => {
@@ -24,8 +24,14 @@ describe('Finance repository boundary (mocked database; no RLS proof)', () => {
     expect(query.eq).toHaveBeenCalledWith('organization_id', 'HORECA_TEST_ORG_A');
   });
   it('Level C database errors block duplicate classification', async () => {
-    query.in.mockResolvedValue({ data: null, error: { message: 'unavailable' } });
+    query.range.mockResolvedValue({ data: null, error: { message: 'unavailable' } });
     await expect(repo.fetchExistingFingerprints(['hash'], 'HORECA_TEST_ORG_A')).rejects.toThrow('Level C');
+  });
+  it('bounds fingerprint queries, paginates overlapping history and propagates later-page errors',async()=>{
+    query.range.mockResolvedValueOnce({data:Array.from({length:500},()=>({financial_fingerprint:'f0'})),error:null}).mockResolvedValueOnce({data:[{financial_fingerprint:'f1'}],error:null});
+    const found=await repo.fetchExistingFingerprints(Array.from({length:201},(_,i)=>'f'+i),'org');expect(found).toEqual(new Set(['f0','f1']));
+    expect(query.in.mock.calls.every(c=>c[1].length<=100)).toBe(true);expect(query.range).toHaveBeenCalledWith(500,999);
+    query.range.mockRejectedValueOnce(Error('network'));await expect(repo.fetchExistingFingerprints(['f'],'org')).rejects.toThrow();
   });
   it('an incomplete prior import is an operational error, not a successful duplicate', async () => {
     query.maybeSingle.mockResolvedValue({ data: { import_id: 'partial', eco_source_imports: { bank_account_id: 'a', status: 'FAILED' } }, error: null });

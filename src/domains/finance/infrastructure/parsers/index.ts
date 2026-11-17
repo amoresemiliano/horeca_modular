@@ -11,6 +11,7 @@ import { parseBbvaAccount } from './BbvaAccountParser';
 import { parseBbvaCard } from './BbvaCardParser';
 import { parseSabadellAccount } from './SabadellAccountParser';
 import { parseSabadellCard } from './SabadellCardParser';
+import {readBankCsv} from './csv';
 
 export { detectBankSourceFormat } from './BankFormatDetector';
 export type { DetectionResult } from './BankFormatDetector';
@@ -24,16 +25,18 @@ export async function parseBankStatementBuffer(
   fileName: string
 ): Promise<{ parsedResult: ParsedBankFileResult; detection: DetectionResult }> {
   const fileHash = await computeSha256(arrayBuffer);
-  const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+  const bytes = new Uint8Array(arrayBuffer);
+  const binary = (bytes[0]===0x50 && bytes[1]===0x4b) || (bytes[0]===0xd0 && bytes[1]===0xcf) || (bytes[0]===0x09 && [0x00,0x02,0x04,0x08].includes(bytes[1]));
+  const xml = new TextDecoder().decode(bytes.subarray(0,256)).trimStart().startsWith('<');
+  const workbook = binary || xml ? XLSX.read(bytes, { type: 'array' }) : null;
 
-  if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+  if (workbook && (!workbook.SheetNames || workbook.SheetNames.length === 0)) {
     throw new Error('El archivo no contiene ninguna hoja de cálculo válida.');
   }
 
-  const primarySheet = workbook.Sheets[workbook.SheetNames[0]];
-  const jsonRows = XLSX.utils.sheet_to_json(primarySheet, { header: 1, raw: true }) as Array<any[]>;
+  const jsonRows = workbook ? XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true }) as Array<any[]> : readBankCsv(bytes);
 
-  const detection = detectBankSourceFormat(jsonRows, workbook.SheetNames);
+  const detection = detectBankSourceFormat(jsonRows, workbook?.SheetNames || []);
 
   let parsedResult: ParsedBankFileResult;
 

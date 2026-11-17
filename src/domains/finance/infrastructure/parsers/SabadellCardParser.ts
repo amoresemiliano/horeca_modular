@@ -1,4 +1,4 @@
-import { isStructuralRow, rejectRow } from './rowValidation';
+import { hasCell, isStructuralRow, rejectRow } from './rowValidation';
 /**
  * HORECA Modular — Banco Sabadell Card Statement Parser (WP-FIN-001)
  * Parses Sabadell credit card extracts, reconstructing years from statement header context,
@@ -57,6 +57,17 @@ export function parseSabadellCard(
     if (!row || row.length === 0) continue;
 
     if (isStructuralRow(row, dateIdx)) continue;
+
+    const dateLabel=String(row[dateIdx] ?? '').trim().toUpperCase(),detail=String(row[conceptIdx] ?? '').trim();
+    // Statement summaries are not failed transactions. Require an empty concept.
+    if(!hasCell(row[conceptIdx]) && /^(?:SALDO|IMPORTE TOTAL)\b/.test(dateLabel))continue;
+    const previous=movements.at(-1);
+    if(!hasCell(row[dateIdx]) && /^IMPORTE\b.*\bCAMBIO\b/i.test(detail) && previous?.sourceRowNumber===rIdx){
+      previous.minimizedProvenance.fxDetail=detail.slice(0,400);
+      const original=/(\d[\d.,]*)\s*([A-Z]{3})\b/.exec(detail.toUpperCase());
+      if(original){previous.minimizedProvenance.originalCurrency=original[2];try{previous.minimizedProvenance.originalFxAmount=Math.abs(parseSpanishMoney(original[1]));}catch{/* Keep documentary detail; never guess a rate or amount. */}}
+      continue;
+    }
 
     const rawDate = row[dateIdx];
     const bookingDate = parseSpanishDate(rawDate, context);

@@ -25,7 +25,7 @@ export function parseBbvaAccount(
   for (let i = 0; i < Math.min(30, rows.length); i++) {
     const row = rows[i] || [];
     const rowStr = row.map(c => String(c || '').toUpperCase().trim()).join(' ');
-    if (rowStr.includes('F. CONTABLE') && rowStr.includes('IMPORTE')) {
+    if ((rowStr.includes('F. CONTABLE') || rowStr.includes('FECHA PROCESO')) && rowStr.includes('IMPORTE')) {
       headerRowIndex = i;
       headers = row.map(c => String(c || '').toUpperCase().trim());
       break;
@@ -36,14 +36,15 @@ export function parseBbvaAccount(
     throw new Error('No se encontró la fila de cabecera estándar de extracto BBVA (F. CONTABLE, IMPORTE).');
   }
 
-  const dateIdx = headers.indexOf('F. CONTABLE') >= 0 ? headers.indexOf('F. CONTABLE') : 2;
-  const valueDateIdx = headers.indexOf('F. VALOR') >= 0 ? headers.indexOf('F. VALOR') : 3;
+  const current = headers.includes('FECHA PROCESO');
+  const dateIdx = current ? headers.indexOf('FECHA PROCESO') : headers.indexOf('F. CONTABLE') >= 0 ? headers.indexOf('F. CONTABLE') : 2;
+  const valueDateIdx = current ? headers.indexOf('FECHA VALOR') : headers.indexOf('F. VALOR') >= 0 ? headers.indexOf('F. VALOR') : 3;
   const conceptIdx = headers.indexOf('CONCEPTO') >= 0 ? headers.indexOf('CONCEPTO') : 5;
-  const benIdx = headers.indexOf('BENEFICIARIO/ORDENANTE') >= 0 ? headers.indexOf('BENEFICIARIO/ORDENANTE') : 6;
+  const benIdx = current ? -1 : headers.indexOf('BENEFICIARIO/ORDENANTE') >= 0 ? headers.indexOf('BENEFICIARIO/ORDENANTE') : 6;
   const obsIdx = headers.indexOf('OBSERVACIONES') >= 0 ? headers.indexOf('OBSERVACIONES') : 7;
   const amountIdx = headers.indexOf('IMPORTE') >= 0 ? headers.indexOf('IMPORTE') : 8;
   const balanceIdx = headers.indexOf('SALDO') >= 0 ? headers.indexOf('SALDO') : 9;
-  const currencyIdx = headers.indexOf('DIVISA') >= 0 ? headers.indexOf('DIVISA') : 10;
+  const currencyIdx = current ? -1 : headers.indexOf('DIVISA') >= 0 ? headers.indexOf('DIVISA') : 10;
   const remesaIdx = headers.indexOf('REMESA') >= 0 ? headers.indexOf('REMESA') : 12;
 
   const movements: ParsedBankFileResult['movements'] = [];
@@ -118,6 +119,8 @@ export function parseBbvaAccount(
         beneficiary: beneficiary || undefined,
         observations: obs || undefined,
         bankNativeId: bankNativeId || undefined,
+        bankCode: current ? String(row[headers.findIndex(h=>h.normalize('NFD').replace(/[\u0300-\u036f]/g,'')==='CODIGO')] ?? '').slice(0,40) : undefined,
+        office: current ? String(row[headers.indexOf('OFICINA')] ?? '').slice(0,40) : undefined,
       }
     });
   }
