@@ -16,7 +16,7 @@ const untouched=(a,proposal)=>a.classification_status==='PENDING'&&a.economic_ty
 export function buildPatternKnowledge(movements,org){
  const index=new Map();
  for(const m of movements){const key=patternContext(m,org);if(!key||!eligible(m))continue;const a=m.allocations[0];
-  if(a.classification_status!=='CONFIRMED'||a.classification_source==='RULE'||a.economic_type==='UNCLASSIFIED'||['INTERNAL_TRANSFER','CARD_SETTLEMENT'].includes(a.economic_type)||m.duplicate_status==='POTENTIAL_OVERLAP')continue;
+  if(a.classification_status!=='CONFIRMED'||a.classification_source!=='MANUAL'||a.economic_type==='UNCLASSIFIED'||['INTERNAL_TRANSFER','CARD_SETTLEMENT'].includes(a.economic_type)||m.duplicate_status!=='UNIQUE')continue;
   const tuple=semanticKey(a),bucket=index.get(key)||{examples:new Set(),tuples:new Map()};bucket.examples.add(m.financial_fingerprint||m.id);bucket.tuples.set(tuple,a);index.set(key,bucket);
  }return index;
 }

@@ -3,7 +3,7 @@ const { from, rpc, query } = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn(),
   query: { insert: vi.fn(), update: vi.fn(), upsert: vi.fn(), select: vi.fn(), eq: vi.fn(), single: vi.fn() } }));
 vi.mock('../../src/lib/supabase.js', () => ({ supabase: { from, rpc } }));
 import { updateAllocationClassification, createClassificationRule, updateClassificationRule, updateFinanceAccount,
-  splitMovementAllocations, confirmFinanceSuggestions, reviewTransferCandidate, createFinanceCatalogEntry, findOrCreateCounterparty } from '../../src/lib/extractosService';
+  splitMovementAllocations, confirmFinanceSuggestions, reviewTransferCandidate, createFinanceCatalogEntry, findOrCreateCounterparty, reviewFinancePattern } from '../../src/lib/extractosService';
 
 describe('Finance workflow service boundaries', () => {
   beforeEach(() => {
@@ -17,6 +17,13 @@ describe('Finance workflow service boundaries', () => {
     expect(rpc).toHaveBeenCalledWith('rpc_update_bank_allocation', { requested_organization_id: 'tenant', allocation_id: 'line', patch: {
       economic_type: 'FINANCING_INFLOW', classification_status: 'CONFIRMED', category_id: null, subcategory_id: null, counterparty_id: 'party', notes: 'Loan' } });
     expect(from).not.toHaveBeenCalled();
+  });
+  it('confirms a group through existing allocation RPCs and reports partial failure', async () => {
+    const tuple={economic_type:'OPERATING_EXPENSE',category_id:'cat',subcategory_id:'sub',counterparty_id:'party'};
+    rpc.mockResolvedValueOnce({data:{},error:null}).mockResolvedValueOnce({data:null,error:{message:'denied'}});
+    await expect(reviewFinancePattern('tenant',[{id:'one'},{id:'two'},{id:'three'}],tuple)).rejects.toThrow('1 movimientos confirmados antes del error');
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenNthCalledWith(1,'rpc_update_bank_allocation',expect.objectContaining({requested_organization_id:'tenant',allocation_id:'one',patch:expect.objectContaining({classification_status:'CONFIRMED',category_id:'cat'})}));
   });
   it('creates and edits scoped rules with account/sign/type and can deactivate', async () => {
     await createClassificationRule({ orgId: 'tenant', pattern: 'SHOP', economicType: 'OPERATING_EXPENSE', sourceAccountId: 'bank', matchSign: 'NEGATIVE' });

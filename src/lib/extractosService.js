@@ -190,22 +190,14 @@ export async function confirmFinanceSuggestions(orgId, allocations) {
   return rpc('rpc_confirm_finance_suggestions', { requested_organization_id: requireOrgId(orgId), reviews: allocations.map(a => ({ id: a.id, updated_at: a.updated_at })) });
 }
 
-// WP-FIN-005 proposal: Master installs the reviewed Finance-only RPC. No direct-write fallback.
 export async function reviewFinancePattern(orgId, rows, interpretation) {
  requireOrgId(orgId);if(!rows.length)throw Error('Selecciona un grupo pendiente.');
- const semantic={economic_type:interpretation.economic_type,category_id:interpretation.category_id||null,subcategory_id:interpretation.subcategory_id||null,counterparty_id:interpretation.counterparty_id||null};
- const results=[];
- for(let offset=0;offset<rows.length;offset+=1000){
-  const chunk=rows.slice(offset,offset+1000);
-  try{results.push(await patternCommand(orgId,'REVIEW',chunk,semantic));}
-  catch(e){throw Error(`${results.reduce((n,r)=>n+(r.confirmed||0),0)} movimientos confirmados antes del error. ${e.message} Recarga antes de reintentar.`);}
+ let confirmed=0;
+ for(let offset=0;offset<rows.length;offset+=50){
+  for(const row of rows.slice(offset,offset+50)){
+   try{await updateAllocationClassification({orgId,allocationId:row.id,economicType:interpretation.economic_type,categoryId:interpretation.category_id,subcategoryId:interpretation.subcategory_id,counterpartyId:interpretation.counterparty_id});confirmed++;}
+   catch(e){throw Error(`${confirmed} movimientos confirmados antes del error. ${e.message} Recarga antes de reintentar.`);}
+  }
  }
- return results.reduce((n,r)=>n+(r.confirmed||0),0);
+ return confirmed;
 }
-async function patternCommand(orgId,operation,rows=[],interpretation={}){
- const {data,error}=await supabase.rpc('rpc_review_finance_patterns',{requested_organization_id:requireOrgId(orgId),operation,reviews:rows.map(a=>({id:a.id,updated_at:a.updated_at})),interpretation});
- if(error){if(error.code==='PGRST202'||error.code==='42883')throw Error('La revisión por grupos requiere la integración Finance pendiente en DEV. No se ha aplicado esta operación.');throw Error(error.message);}
- return data;
-}
-export async function recognizeFinancePatterns(orgId){return patternCommand(orgId,'RECOGNIZE');}
-export async function confirmCardSettlement(orgId,pair){return patternCommand(orgId,'SETTLEMENT',[pair.bank.allocations[0],pair.card.allocations[0]]);}

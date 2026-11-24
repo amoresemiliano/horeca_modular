@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { banksSectionAllowed } from '../../application/tenancy/accessNavigation';
 import { useAuth } from '../../context/AuthContext';
 import { getExtractosCatalogs, fetchConsolidatedMovements, splitMovementAllocations, fetchTransferCandidates,
-  detectTransferCandidates, reviewTransferCandidate, confirmFinanceSuggestions, recognizeFinancePatterns } from '../../lib/extractosService';
+  detectTransferCandidates, reviewTransferCandidate, confirmFinanceSuggestions } from '../../lib/extractosService';
 import { financeMetrics, economicLabels } from '../../domains/finance/domain/economic';
 import { paginateMovements, buildConfirmedSimilarityIndex, buildSuggestionGroups, semanticKey } from '../../domains/finance/application/operationalInsights';
 import FinancePagination from './FinancePagination';
@@ -65,7 +65,6 @@ function FinanceWorkspace({ tabActiva }) {
   }, [organizationId]);
   const handleImportCompleted = async (summary) => {
     let text=summary.imported+' movimientos importados';
-    if(editable && summary.imported){try{const r=await recognizeFinancePatterns(organizationId);text+=` / ${r.recognized} reconocidos / ${r.suggested} propuestas`;}catch(e){text+=' / '+e.message;}}
     setMessage(text);await loadData();
   };
   async function handleConfirmSplit(movementId, origAmount, allocations) {

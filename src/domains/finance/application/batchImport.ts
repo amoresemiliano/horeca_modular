@@ -1,6 +1,6 @@
 import {BankStatementImportService} from './BankStatementImportService';
 import type {ImportPreviewDTO} from '../domain/types';
-export interface BatchFile {id:string;file:File;preview?:ImportPreviewDTO;error?:string;accountId:string;duplicateInBatch?:boolean;overlapsInBatch?:number}
+export interface BatchFile {id:string;file:File;preview?:ImportPreviewDTO;error?:string;accountId:string;rejectionsAcknowledged?:boolean;duplicateInBatch?:boolean;overlapsInBatch?:number}
 export async function analyzeBankFiles(files:File[],org:string,service:BankStatementImportService):Promise<BatchFile[]> {
  if(!org||!files.length||files.length>50||files.reduce((n,f)=>n+f.size,0)>100*1024*1024)throw Error('Selecciona entre 1 y 50 archivos, hasta 100 MB por lote.');
  const results:BatchFile[]=[],hashes=new Set<string>(),fingerprints=new Set<string>();
@@ -19,7 +19,7 @@ export function annotateBatch(items:BatchFile[]):BatchFile[]{
   return {...item,duplicateInBatch,overlapsInBatch};
  });
 }
-export const batchBlocker=(item:BatchFile)=>item.error||(!item.preview?.totalMovements?'Sin movimientos válidos':item.preview.rejectedRows.length?'Hay filas rechazadas. Corrige o retira este archivo.':!item.accountId?'Selecciona una cuenta de destino':'');
+export const batchBlocker=(item:BatchFile)=>item.error||(!item.preview?.totalMovements?'Sin movimientos válidos':!item.accountId?'Selecciona una cuenta de destino':item.preview.rejectedRows.length&&!item.rejectionsAcknowledged?'Confirma que has revisado las filas rechazadas.':'');
 export async function confirmBankBatch(items:BatchFile[],org:string,service:BankStatementImportService){
  if(!items.length||items.some(batchBlocker))throw Error('Resuelve todos los archivos antes de confirmar el lote.');
  const results=[];let stopped=false;
