@@ -27,8 +27,8 @@ const MODULOS = {
   Producción:  { icon: '🍳', label: 'Producción',   tabs: ['Registro', 'Historial', 'Resumen'],                                    group: 'operaciones'},
   Personal:    { icon: '👤', label: 'Personal',     tabs: ['Hoy', 'Asistencia', 'Horarios', 'Empleados', 'Fichaje'],                     group: 'rrhh'       },
   Predicción:  { icon: '🔮', label: 'Predicción',   tabs: ['Carga', 'Stock', 'Predicciones'],                                       group: 'analytics' },
-  PlatformAdmin: { icon: '⚙', label: 'Plataforma', tabs: ['Tenants'], group: 'sistema' },
-  Config:      { icon: '⚙',  label: 'Organización', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
+  PlatformAdmin: { icon: '⚙', label: 'Tenants', tabs: ['Tenants'], group: 'sistema' },
+  Config:      { icon: '⚙',  label: 'Configuración', tabs: ['Usuarios y accesos'],                                       group: 'sistema'   },
 };
 
 const GRUPOS = {
@@ -39,6 +39,20 @@ const GRUPOS = {
   analytics:   { label: 'Analytics',   color: '#8B5CF6' },
   sistema:     { label: 'Sistema',      color: '#6B7280' },
 };
+
+const NAV_KEY = 'horeca.shell.navigation';
+function readNavigation() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('module') || params.has('section')) return { module: params.get('module'), section: params.get('section') };
+  try { return JSON.parse(sessionStorage.getItem(NAV_KEY)) || {}; } catch { return {}; }
+}
+function writeNavigation(module, section, replace = false) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('module', module);
+  url.searchParams.set('section', section);
+  window.history[replace ? 'replaceState' : 'pushState'](null, '', url);
+  try { sessionStorage.setItem(NAV_KEY, JSON.stringify({ module, section })); } catch { /* storage can be disabled */ }
+}
 
 /* ─── RENDER DE CONTENIDO ────────────────────────────────────────────────── */
 const renderModulo = (modulo, tab, user, onPersonnelNavigate) => {
@@ -83,18 +97,14 @@ const AccesoRestringido = ({ modulo }) => (
 const MainLayout = ({ user: propsUser }) => {
   const { user: authUser, can, isModuleEnabled, platformCan, navigationScope, setNavigationScope, availableOrganizations, availableOperationalUnits, activeOperationalUnit, switchOperationalUnit, activeOrganization, switchOrganization, logout, updatePassword } = useAuth();
   const user = authUser || propsUser;
-  const [moduloActivo,      setModuloActivo]      = useState(() => navigationScope === 'platform' ? 'PlatformAdmin' : 'Dashboard');
-  const [tabActiva,         setTabActiva]          = useState(() => navigationScope === 'platform' ? 'Tenants' : 'Inicio');
+  const [initialNavigation] = useState(readNavigation);
+  const [moduloActivo,      setModuloActivo]      = useState(() => initialNavigation.module || (activeOrganization ? 'Dashboard' : 'PlatformAdmin'));
+  const [tabActiva,         setTabActiva]          = useState(() => initialNavigation.section || (activeOrganization ? 'Inicio' : 'Tenants'));
   const [sidebarOpen,       setSidebarOpen]        = useState(true);
   const modulosPermitidos = visibleModules(Object.keys(MODULOS), can, isModuleEnabled, platformCan, navigationScope);
+  if (activeOrganization && !modulosPermitidos.includes('Dashboard')) modulosPermitidos.unshift('Dashboard');
   const platformCatalog = navigationScope === 'platform' && platformCan('platform.tenants.provision');
-  const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || platformCatalog || banksSectionAllowed(tab, can));
-  useEffect(() => {
-    if (platformCatalog) {
-      setModuloActivo('PlatformAdmin');
-      setTabActiva('Tenants');
-    }
-  }, [platformCatalog]);
+  const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || banksSectionAllowed(tab, can));
 
   // Change password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -127,21 +137,38 @@ const MainLayout = ({ user: propsUser }) => {
     }
   };
 
-  const navigationKey = modulosPermitidos.map(mod => mod + ':' + permittedTabs(mod).join(',')).join('|');
+  const navigationKey = Object.keys(MODULOS).filter(mod => (mod === 'Dashboard' && activeOrganization || navigationAllowed(mod, can, isModuleEnabled, platformCan)) && (mod === 'PlatformAdmin' || !!activeOrganization)).map(mod => mod + ':' + MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || banksSectionAllowed(tab, can)).join(',')).join('|');
   useEffect(() => {
     const current = navigationKey.split('|').find(entry => entry.startsWith(moduloActivo + ':'));
     const tabs = current?.split(':')[1].split(',') || [];
     if (!current || !tabs.includes(tabActiva)) {
       const entries = navigationKey.split('|');
-      const first = (platformCatalog ? entries.find(entry => entry.startsWith('PlatformAdmin:')) || entries[0] : entries[0]).split(':');
+      const first = (entries.find(entry => entry.startsWith('Dashboard:')) || entries[0] || '').split(':');
       setModuloActivo(first[0] || 'Dashboard');
       setTabActiva(first[1]?.split(',')[0] || 'Sin acceso');
+      if (first[0]) writeNavigation(first[0], first[1]?.split(',')[0] || 'Sin acceso', true);
+    } else {
+      writeNavigation(moduloActivo, tabActiva, true);
     }
-  }, [navigationKey, moduloActivo, tabActiva, platformCatalog]);
+  }, [navigationKey, moduloActivo, tabActiva]);
+
+  useEffect(() => {
+    const restore = () => {
+      const route = readNavigation();
+      setModuloActivo(route.module || 'Dashboard');
+      setTabActiva(route.section || 'Inicio');
+    };
+    window.addEventListener('popstate', restore);
+    return () => window.removeEventListener('popstate', restore);
+  }, []);
+
+  const cambiarTab = tab => { writeNavigation(moduloActivo, tab); setTabActiva(tab); };
 
   const cambiarModulo = (mod) => {
     if (mod === 'PlatformAdmin') setNavigationScope('platform');
     if (mod === 'Config') setNavigationScope('organization');
+    if (mod !== 'PlatformAdmin' && activeOrganization) setNavigationScope('organization');
+    writeNavigation(mod, permittedTabs(mod)[0]);
     setModuloActivo(mod);
     setTabActiva(permittedTabs(mod)[0]);
   };
@@ -378,7 +405,7 @@ const MainLayout = ({ user: propsUser }) => {
               return (
                 <button
                   key={tab}
-                  onClick={() => setTabActiva(tab)}
+                  onClick={() => cambiarTab(tab)}
                   style={{
                     width: '100%',
                     display: 'flex',
@@ -513,9 +540,10 @@ const MainLayout = ({ user: propsUser }) => {
               animation: 'fadeIn 200ms ease',
             }}>
               {moduloActivo !== 'PlatformAdmin' && !activeOrganization ? <div role="status"><h2 className="heading-section">Selecciona una organización</h2><p>Elige un tenant en el selector para abrir {MODULOS[moduloActivo]?.label || 'sus módulos'}. El contexto de plataforma no concede acceso a sus datos.</p></div>
-                : (!navigationAllowed(moduloActivo, can, isModuleEnabled, platformCan) || (moduloActivo === 'Bancos' && !banksSectionAllowed(tabActiva, can)))
+                : ((moduloActivo !== 'Dashboard' && !navigationAllowed(moduloActivo, can, isModuleEnabled, platformCan)) || (moduloActivo === 'Bancos' && !banksSectionAllowed(tabActiva, can)))
                 ? <AccesoRestringido modulo={moduloActivo} />
-                : renderModulo(moduloActivo, tabActiva, user, setTabActiva)
+                : moduloActivo === 'Dashboard' ? <div className="space-y-4"><p className="text-sm text-gray-600">Accede a los módulos disponibles de tu organización.</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && key !== 'Dashboard' && navigationAllowed(key, can, isModuleEnabled, platformCan)).map(([key, mod]) => <button key={key} onClick={() => cambiarModulo(key)} className="rounded-xl border border-gray-200 p-4 text-left hover:border-emerald-600 focus-visible:outline-emerald-700"><span aria-hidden="true">{mod.icon}</span><strong className="block mt-2">{mod.label}</strong><span className="text-xs text-gray-600">Disponible · Abrir módulo →</span></button>)}</div></div>
+                : renderModulo(moduloActivo, tabActiva, user, cambiarTab)
               }
             </div>
           </div>
