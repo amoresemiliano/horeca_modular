@@ -15,9 +15,12 @@ function FinanceMovementRow({ movement:m, editable, canRules = editable, hideDen
   const splitReason = noPermission || (m.allocations.some(x=>x.transfer_candidate_id || x.reconciliation_status === 'CONFIRMED') ? 'Este movimiento vinculado no puede dividirse' : '');
   const detail = m.allocations.map(x=>[economicLabels[x.economic_type || 'UNCLASSIFIED'],x.category?.name,x.subcategory?.name,statuses[x.classification_status],x.notes].filter(Boolean).join(' · ')).join('\n');
   const context = [m.source_account?.institution,m.source_account?.product_type === 'CARD' ? 'Tarjeta' : 'Cuenta',m.source_account?.name,m.source_account?.masked_identifier].filter(Boolean).join(' · ');
+  const segments = (m.descripcion || '').split('·').map(part => part.trim()).filter(Boolean);
+  const concept = segments[0] || '—', bankingDetail = segments.slice(1).join(' · ');
   return <tr className="border-t border-gray-100 h-10 hover:bg-gray-50">
     <td className="px-2 py-1 whitespace-nowrap text-xs">{m.fecha}</td>
-    <td className="px-2 py-1 truncate" title={m.descripcion + '\n' + context}><span>{m.descripcion}</span><span className="sr-only"> · {context}</span></td>
+    <td className="px-2 py-1 truncate" title={m.descripcion + '\n' + context}><span>{concept}</span><span className="sr-only"> · {context}</span></td>
+    <td className="px-2 py-1 text-xs"><span tabIndex={bankingDetail ? 0 : undefined} title={m.descripcion} className="line-clamp-2 break-words">{bankingDetail || '—'}</span></td>
     <td className={'px-2 py-1 text-right whitespace-nowrap tabular-nums ' + (Number(m.monto)<0?'text-red-700':'text-emerald-700')}>{currencyAmount(Number(m.monto)*100,m.currency)}</td>
     <td className="px-2 py-1 truncate" title={detail + (suggestion ? '\n'+suggestion.explanation : '')}><span>{multiple ? `${m.allocations.length} asignaciones` : a?.category?.name || 'Sin clasificar'}</span>{suggestion ? <span className="text-amber-800 text-xs ml-1">· Propuesta</span> : a?.classification_status === 'CONFIRMED' ? <span aria-label={a.classification_source==='RULE'?'Reconocido':'Confirmada'} title={a.classification_source==='RULE'?'Patron exacto reconocido con ejemplos humanos':'Confirmada'} className="text-emerald-700 ml-1">✓</span> : a?.category_id || a?.classification_status === 'SUGGESTED' ? <span className="text-xs text-amber-800 ml-1">· {statuses[a.classification_status]}</span> : null}</td>
     <td className="px-2 py-1 truncate text-xs" title={multiple?'Por asignación':a?.counterparty?.name || ''}>{multiple?'Por asignación':a?.counterparty?.name || '—'}</td>
