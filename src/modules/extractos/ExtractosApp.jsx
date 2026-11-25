@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { banksSectionAllowed } from '../../application/tenancy/accessNavigation';
 import { useAuth } from '../../context/AuthContext';
-import { getExtractosCatalogs, fetchConsolidatedMovements, splitMovementAllocations, fetchTransferCandidates,
+import { getExtractosCatalogs, fetchConsolidatedMovements, fetchConsolidatedPage, fetchTransferMovementContext, splitMovementAllocations, fetchTransferCandidates,
   detectTransferCandidates, reviewTransferCandidate, confirmFinanceSuggestions } from '../../lib/extractosService';
 import { financeMetrics, economicLabels } from '../../domains/finance/domain/economic';
-import { paginateMovements, buildConfirmedSimilarityIndex, buildSuggestionGroups, semanticKey } from '../../domains/finance/application/operationalInsights';
+import { buildConfirmedSimilarityIndex, buildSuggestionGroups } from '../../domains/finance/application/operationalInsights';
 import FinancePagination from './FinancePagination';
 import PatternWorkspace from './PatternWorkspace';
 import TransferReview from './TransferReview';
@@ -21,6 +21,15 @@ import { emptyFilters, filterMovements } from './workflow';
 import ExtractosGraficas, { currencyAmount } from './ExtractosGraficas';
 
 const emptyCatalogs = { accounts: [], categories: [], subcategories: [], counterparties: [], rules: [] };
+function restoredTableState() {
+  const params = new URLSearchParams(window.location.search);
+  const size = Number(params.get('pageSize'));
+  const page = Number(params.get('page'));
+  const status = params.get('status');
+  const month = params.get('month');
+  return { page: Number.isSafeInteger(page) && page > 0 ? page : 1, pageSize: [25,50,100].includes(size) ? size : 25,
+    filters: { ...emptyFilters(), account: params.get('account') || '', month: /^\d{4}-(0[1-9]|1[0-2])$/.test(month || '') ? month : '', status: ['PENDING','SUGGESTED','CONFIRMED'].includes(status) ? status : '' } };
+}
 export default function ExtractosApp(props) {
   const { organizationId, can, isModuleEnabled } = useAuth();
   if (!organizationId || !isModuleEnabled('bancos') || !banksSectionAllowed(props.tabActiva, can)) return <p role="alert">Sección de Bancos no autorizada.</p>;
@@ -35,33 +44,46 @@ function FinanceWorkspace({ tabActiva }) {
   const [importOpen, setImportOpen] = useState(false), [catalogOpen, setCatalogOpen] = useState(false);
   const [classificationMovement, setClassificationMovement] = useState(null), [split, setSplit] = useState(null);
   const [rulesOpen, setRulesOpen] = useState(false), [ruleExample, setRuleExample] = useState(null);
-  const [filters, setFilters] = useState(emptyFilters), [reviewFromSummary, setReviewFromSummary] = useState(false);
+  const [initialTable] = useState(restoredTableState);
+  const [filters, setFilters] = useState(() => tabActiva === 'Consolidado' ? initialTable.filters : emptyFilters()), [reviewFromSummary, setReviewFromSummary] = useState(false);
   const { status, currency } = filters;
-  const [page,setPage]=useState(1),[pageSize,setPageSize]=useState(25),[suggestionGroup,setSuggestionGroup]=useState('');
+  const [page,setPage]=useState(() => tabActiva === 'Consolidado' ? initialTable.page : 1),[pageSize,setPageSize]=useState(() => tabActiva === 'Consolidado' ? initialTable.pageSize : 25);
+  const [total,setTotal]=useState(0),[history,setHistory]=useState(null),[transferMovements,setTransferMovements]=useState([]);
   const [dismissed,setDismissed]=useState(()=>new Set());
   const [selected, setSelected] = useState([]), [confirmOpen, setConfirmOpen] = useState(false);
   const [transfersOpen, setTransfersOpen] = useState(false), [candidates, setCandidates] = useState([]), [busy, setBusy] = useState(false);
   const editable = can('financial.allocation.edit');
   const manageRules = can('banks.rules.manage'), manageAccounts = can('banks.accounts.manage'), manageCategories = can('banks.categories.manage'), manageParties = can('banks.counterparties.manage'), reviewTransfers = can('banks.transfers.review');
   const importing = can('statements.import.upload') && can('statements.import.process') && can('STATEMENTS_IMPORT_CONFIRM');
+  const pageMode = tabActiva === 'Consolidado' || reviewFromSummary;
   const loadData = useCallback(async () => {
     if (currentOrg.current !== organizationId) return;
     const request = ++requestSequence.current;
     setLoading(true); setError('');
     try {
       if (!organizationId) { setCatalogs(emptyCatalogs); setMovements([]); return; }
-      const [cats, rows, pairs] = await Promise.all([getExtractosCatalogs(organizationId), fetchConsolidatedMovements(organizationId, tabActiva === 'Resumen' ? 'summary' : tabActiva === 'Gráficas' || tabActiva === 'Métricas' ? 'metrics' : 'consolidated'), reviewTransfers ? fetchTransferCandidates(organizationId) : Promise.resolve([])]);
+      const [cats, result, pairs] = await Promise.all([getExtractosCatalogs(organizationId), pageMode ? fetchConsolidatedPage(organizationId, {page,pageSize,filters}) : fetchConsolidatedMovements(organizationId, tabActiva === 'Resumen' ? 'summary' : 'metrics'), reviewTransfers ? fetchTransferCandidates(organizationId) : Promise.resolve([])]);
       if (request !== requestSequence.current || currentOrg.current !== organizationId) return;
-      setCatalogs(cats); setMovements(rows); setCandidates(pairs); setSelected([]);
-    } catch (err) { if (request === requestSequence.current && currentOrg.current === organizationId) { setError(err.message); setMovements([]); } }
+      const lastPage = pageMode ? Math.max(1,Math.ceil(result.total/pageSize)) : 1;
+      if (pageMode && page > lastPage) { setPage(lastPage); return; }
+      setCatalogs(cats); setMovements(pageMode ? result.rows : result); setTotal(pageMode ? result.total : 0); setCandidates(pairs); setSelected([]);
+    } catch (err) { if (request === requestSequence.current && currentOrg.current === organizationId) { setError(err.message); setMovements([]); setTotal(0); } }
     finally { if (request === requestSequence.current && currentOrg.current === organizationId) setLoading(false); }
-  }, [organizationId, tabActiva, reviewTransfers]);
+  }, [organizationId, tabActiva, reviewTransfers, pageMode, page, pageSize, filters]);
   const invalidateRequests = useCallback(() => { requestSequence.current++; }, []);
   useEffect(() => { loadData(); return invalidateRequests; }, [loadData, invalidateRequests]);
   useEffect(() => {
+    if (tabActiva !== 'Consolidado') return;
+    const url = new URL(window.location.href);
+    for (const [key,value] of Object.entries({ page, pageSize, account: filters.account, month: filters.month, status: filters.status })) {
+      if (value) url.searchParams.set(key, String(value)); else url.searchParams.delete(key);
+    }
+    window.history.replaceState(window.history.state, '', url);
+  }, [tabActiva,page,pageSize,filters.account,filters.month,filters.status]);
+  useEffect(() => {
     setImportOpen(false); setCatalogOpen(false); setClassificationMovement(null); setSplit(null); setRulesOpen(false);
     setTransfersOpen(false); setCandidates([]); setSelected([]); setConfirmOpen(false);
-    setMovements([]); setCatalogs(emptyCatalogs); setMessage('');
+    setMovements([]); setCatalogs(emptyCatalogs); setMessage(''); setHistory(null); setTransferMovements([]);
   }, [organizationId]);
   const handleImportCompleted = async (summary) => {
     let text=summary.imported+' movimientos importados';
@@ -74,22 +96,23 @@ function FinanceWorkspace({ tabActiva }) {
     setBusy(true); setError('');
     try { await action(); } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
-  async function refreshCandidates() { setCandidates(await fetchTransferCandidates(organizationId)); }
-  const similarityIndex = useMemo(()=>buildConfirmedSimilarityIndex(movements,organizationId),[movements,organizationId]);
-  const assistance = useMemo(()=>buildSuggestionGroups(movements,similarityIndex,organizationId,dismissed),[movements,similarityIndex,organizationId,dismissed]);
-  const filtered = useMemo(()=>filterMovements(movements,filters),[movements,filters]);
-  const visible = useMemo(()=>!suggestionGroup?filtered:filtered.filter(m=>assistance.suggestions.get(m.id)?.groupKey===suggestionGroup || m.allocations.some(a=>a.classification_status==='SUGGESTED'&&semanticKey(a)===suggestionGroup)),[filtered,suggestionGroup,assistance]);
-  const pagination = useMemo(()=>paginateMovements(visible,page,pageSize),[visible,page,pageSize]);
+  async function refreshCandidates() { const pairs=await fetchTransferCandidates(organizationId); setTransferMovements(await fetchTransferMovementContext(organizationId,pairs)); setCandidates(pairs); }
+  const assistanceRows = useMemo(()=>history ? [...new Map([...history,...movements].map(m=>[m.id,m])).values()] : movements,[history,movements]);
+  const similarityIndex = useMemo(()=>buildConfirmedSimilarityIndex(assistanceRows,organizationId),[assistanceRows,organizationId]);
+  const assistance = useMemo(()=>buildSuggestionGroups(assistanceRows,similarityIndex,organizationId,dismissed),[assistanceRows,similarityIndex,organizationId,dismissed]);
+  const filtered = useMemo(()=>pageMode ? movements : filterMovements(movements,filters),[movements,filters,pageMode]);
+  const visible = filtered;
+  const pagination = useMemo(()=>({ rows:visible, page, pageSize, total, totalPages:Math.max(1,Math.ceil(total/pageSize)) }),[visible,page,pageSize,total]);
   const banking = useMemo(()=>financeMetrics(visible,currency).banking,[visible,currency]);
-  const movementMap = useMemo(()=>new Map(movements.map(m=>[m.id,m])),[movements]);
+  const movementMap = useMemo(()=>new Map([...transferMovements,...movements].map(m=>[m.id,m])),[movements,transferMovements]);
   const attention = useMemo(()=>({pending:movements.filter(m=>m.currency===currency&&m.allocations.some(a=>a.classification_status==='PENDING')).length,suggested:movements.filter(m=>m.currency===currency&&m.allocations.some(a=>a.classification_status==='SUGGESTED')).length,transfers:candidates.filter(c=>c.status==='SUGGESTED').length}),[movements,candidates,currency]);
   const reviewable = useMemo(()=>visible.flatMap(m => m.allocations.filter(a => a.classification_status === 'SUGGESTED' && !a.transfer_candidate_id && a.reconciliation_status === 'UNMATCHED'
     && !['UNCLASSIFIED', 'INTERNAL_TRANSFER'].includes(a.economic_type || 'UNCLASSIFIED')).map(a => ({ ...a, movement: m }))),[visible]);
   const pageReviewable = useMemo(()=>{const ids=new Set(pagination.rows.map(m=>m.id));return reviewable.filter(a=>ids.has(a.movement.id));},[pagination,reviewable]);
   const reviewed = useMemo(()=>{const ids=new Set(selected);return reviewable.filter(a=>ids.has(a.id));},[reviewable,selected]);
-  function changeFilters(next) { setFilters(next); setPage(1); setSuggestionGroup(''); setSelected([]); setConfirmOpen(false); }
+  function changeFilters(next) { setFilters(next); setPage(1); setSelected([]); setConfirmOpen(false); }
   if (tabActiva === 'Gráficas' || tabActiva === 'Métricas') return <>{error && <p role="alert">{error}</p>}<ExtractosGraficas movements={movements} /></>;
-  if (tabActiva === 'Resumen' && !reviewFromSummary) return <>{error && <p role="alert">{error}</p>}{loading && <p role="status">Cargando…</p>}<ExtractosResumen movements={movements} onReview={can('banks.consolidated.view') ? nextCurrency => { changeFilters({ ...emptyFilters(), currency: nextCurrency }); setReviewFromSummary(true); } : undefined} /></>;
+  if (tabActiva === 'Resumen' && !reviewFromSummary) return <>{error && <p role="alert">{error}</p>}{loading && <p role="status">Cargando…</p>}<ExtractosResumen movements={movements} onReview={can('banks.consolidated.view') ? nextCurrency => { setMovements([]); setTotal(0); changeFilters({ ...emptyFilters(), currency: nextCurrency }); setReviewFromSummary(true); } : undefined} /></>;
   return <div className="p-3 space-y-2 text-sm text-gray-900">
     {tabActiva === 'Resumen' && <button className="text-sm text-emerald-800 underline" onClick={() => setReviewFromSummary(false)}>Volver al resumen</button>}
     <header className="flex flex-wrap justify-between gap-3 items-center"><div><h2 className="text-base font-semibold">Movimientos bancarios</h2></div>
@@ -98,11 +121,10 @@ function FinanceWorkspace({ tabActiva }) {
     {error && <p role="alert" className="p-3 bg-red-50 text-red-800 rounded">{error}<button className="ml-3 underline" onClick={loadData}>Recargar</button></p>}
     {message && <p role="status" className="text-sm text-emerald-800">{message}</p>}
     <FinanceFilters value={filters} onChange={changeFilters} catalogs={catalogs} movements={movements} />
-    <div aria-label="Atención y revisión" className="flex gap-2 flex-wrap items-center text-xs"><button aria-pressed={status === 'PENDING'} className="bg-amber-50 text-amber-900 rounded px-2 py-1.5" onClick={() => changeFilters({ ...emptyFilters(), currency, status: 'PENDING' })}>Pendientes ({attention.pending})</button><button aria-pressed={status === 'SUGGESTED'} className="bg-amber-50 text-amber-900 rounded px-2 py-1.5" onClick={() => changeFilters({ ...emptyFilters(), currency, status: 'SUGGESTED' })}>Sugeridas · revisar ({attention.suggested})</button>{reviewTransfers && <button disabled={busy} title={!editable?'Tu rol no permite revisar transferencias':'Revisión dedicada de pares'} className="bg-emerald-50 text-emerald-800 rounded px-2 py-1.5 disabled:opacity-40" onClick={()=>run(async()=>{await refreshCandidates();setTransfersOpen(true);})}>Transferencias posibles ({attention.transfers})</button>}<button className="text-gray-600 underline" onClick={() => changeFilters({ ...emptyFilters(), currency })}>Ver todas / limpiar</button>{loading&&<span role="status">Cargando…</span>}</div>
-    {editable && <PatternWorkspace movements={movements.filter(m=>(m.currency||'EUR')===currency)} catalogs={catalogs} orgId={organizationId} canReconcile={can('financial.reconciliation.confirm')} onSaved={async text=>{await loadData();if(text)setMessage(text);}} />}
-    {editable && assistance.groups.size>0 && <details className="text-xs bg-amber-50 rounded-lg px-3 py-2"><summary className="cursor-pointer">Avanzado / Propuestas por historial ({assistance.suggestions.size}) · pendientes de revisión</summary><p className="py-1">No se guardan automáticamente. Revisa cada propuesta o crea una regla para sugerir el grupo en una operación.</p>{[...assistance.groups.values()].slice(0,10).map(g=><div key={g.groupKey} className="flex gap-3 py-1 items-center flex-wrap"><span>{g.merchant} · {g.ids.size} pendientes · {g.explanation}</span><button className="underline" onClick={()=>{changeFilters({...emptyFilters(),currency});setSuggestionGroup(g.groupKey);}}>Revisar grupo</button>{manageRules && <button className="underline" onClick={()=>{setRuleExample(g.example);setRulesOpen(true);}}>Crear regla para este grupo</button>}</div>)}</details>}
-    {suggestionGroup&&<p className="text-xs text-amber-900">Grupo de interpretación similar · {visible.length} movimientos. Las sugerencias guardadas se confirman con selección explícita.</p>}
-    {editable && (status === 'SUGGESTED' || suggestionGroup) && <section className="border border-gray-200 rounded-xl p-4 bg-amber-50 space-y-2"><h3 className="font-semibold">Revisión de sugerencias · selección explícita</h3><p className="text-sm">Las transferencias y las asignaciones sin tipo requieren revisión individual. Selecciona hasta 100 líneas.</p>
+    <div aria-label="Atención y revisión" className="flex gap-2 flex-wrap items-center text-xs"><button aria-pressed={status === 'PENDING'} className="bg-amber-50 text-amber-900 rounded px-2 py-1.5" onClick={() => changeFilters({ ...emptyFilters(), currency, status: 'PENDING' })}>Pendientes (en esta página: {attention.pending})</button><button aria-pressed={status === 'SUGGESTED'} className="bg-amber-50 text-amber-900 rounded px-2 py-1.5" onClick={() => changeFilters({ ...emptyFilters(), currency, status: 'SUGGESTED' })}>Sugeridas · revisar (en esta página: {attention.suggested})</button>{reviewTransfers && <button disabled={busy} title={!editable?'Tu rol no permite revisar transferencias':'Revisión dedicada de pares'} className="bg-emerald-50 text-emerald-800 rounded px-2 py-1.5 disabled:opacity-40" onClick={()=>run(async()=>{const pairs=await fetchTransferCandidates(organizationId);const context=await fetchTransferMovementContext(organizationId,pairs);setCandidates(pairs);setTransferMovements(context);setTransfersOpen(true);})}>Transferencias posibles ({attention.transfers})</button>}<button className="text-gray-600 underline" onClick={() => changeFilters({ ...emptyFilters(), currency })}>Ver todas / limpiar</button>{loading&&<span role="status">Cargando…</span>}</div>
+    {editable && !history && <button disabled={busy} className="text-emerald-800 underline text-xs" onClick={()=>run(async()=>{const result=await fetchConsolidatedPage(organizationId,{page:1,pageSize:100,filters:{currency}});setHistory(result.rows);})}>Abrir clasificación asistida · últimos 100 movimientos</button>}
+    {editable && history && <><p className="text-xs text-gray-600">La clasificación asistida utiliza hasta 100 movimientos recientes y los de la página actual.</p><PatternWorkspace movements={assistanceRows.filter(m=>(m.currency||'EUR')===currency)} catalogs={catalogs} orgId={organizationId} canReconcile={can('financial.reconciliation.confirm')} onSaved={async text=>{setHistory(null);await loadData();if(text)setMessage(text);}} /></>}
+    {editable && status === 'SUGGESTED' && <section className="border border-gray-200 rounded-xl p-4 bg-amber-50 space-y-2"><h3 className="font-semibold">Revisión de sugerencias · selección explícita</h3><p className="text-sm">Las transferencias y las asignaciones sin tipo requieren revisión individual. Selecciona hasta 100 líneas.</p>
       <div className="max-h-52 overflow-y-auto">{pageReviewable.map(a => <label key={a.id} className="block py-1 text-sm"><input disabled={!editable || busy || (!selected.includes(a.id) && selected.length >= 100)} type="checkbox" checked={selected.includes(a.id)} onChange={e => setSelected(e.target.checked ? [...selected, a.id] : selected.filter(id => id !== a.id))} /> {a.movement.descripcion} · {currencyAmount(Number(a.monto) * 100, currency)} · {economicLabels[a.economic_type]} · {a.category?.name || 'Sin categoría'} · {a.counterparty?.name || 'Sin proveedor / contraparte'}</label>)}</div>
       <button disabled={!reviewed.length || !editable || busy} onClick={() => setConfirmOpen(true)} className="border border-gray-200 rounded px-3 py-1.5">Revisar selección ({reviewed.length})</button>
     </section>}
@@ -111,7 +133,7 @@ function FinanceWorkspace({ tabActiva }) {
       {!visible.length && <tr><td colSpan={7} className="p-8 text-center text-gray-500">{loading ? 'Cargando movimientos…' : 'No hay movimientos con estos filtros.'}</td></tr>}
     </tbody></table></div>
     <FinancePagination pagination={pagination} onPage={setPage} onSize={size=>{setPageSize(size);setPage(1);setSelected([]);}} />
-    <p data-testid="filtered-banking-summary" className="text-xs text-gray-500">Flujo bancario de esta selección: {banking.count} movimientos · entradas {currencyAmount(banking.inflows,currency)} · salidas {currencyAmount(banking.outflows,currency)} · neto {currencyAmount(banking.net,currency)}</p>
+    <p data-testid="filtered-banking-summary" className="text-xs text-gray-500">Flujo bancario de esta página: {banking.count} movimientos · entradas {currencyAmount(banking.inflows,currency)} · salidas {currencyAmount(banking.outflows,currency)} · neto {currencyAmount(banking.net,currency)}</p>
     {catalogOpen && <FinanceCatalogModal orgId={organizationId} catalogs={catalogs} canAccounts={manageAccounts} canClassify={manageCategories} canCounterparties={manageParties} onClose={() => setCatalogOpen(false)} onSaved={loadData} />}
     {classificationMovement && <ClassificationModal key={classificationMovement.id} movement={classificationMovement} suggestion={assistance.suggestions.get(classificationMovement.id)} onDismissSuggestion={id=>setDismissed(prev=>new Set([...prev,id]))} catalogs={catalogs} orgId={organizationId} onClose={() => setClassificationMovement(null)} onSaved={loadData} />}
     <ImportModal isOpen={importOpen} onClose={() => setImportOpen(false)} onImportCompleted={handleImportCompleted} />

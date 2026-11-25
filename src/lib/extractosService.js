@@ -11,6 +11,7 @@
 import { supabase } from './supabase.js';
 import { assertGenericEconomicType } from '../domains/finance/domain/economic';
 import { moneyToDecimal } from '../domains/finance/domain/money';
+import { fetchConsolidatedPageWithClient } from '../domains/finance/application/consolidatedPage';
 
 function requireOrgId(orgId) {
   if (!orgId) {
@@ -71,6 +72,27 @@ export async function fetchConsolidatedMovements(orgId, section = 'consolidated'
     if (!page || page.length < 500) break;
     }
     return movements;
+}
+
+export async function fetchConsolidatedPage(orgId, options = {}) {
+  const activeOrgId = requireOrgId(orgId);
+  await rpc('core_banks_view', { requested_organization_id: activeOrgId, section: 'consolidated' });
+  return fetchConsolidatedPageWithClient(supabase, activeOrgId, options);
+}
+
+// Transfer review needs both ends even when they are outside the table page.
+export async function fetchTransferMovementContext(orgId, candidates) {
+  const activeOrgId = requireOrgId(orgId);
+  await rpc('core_banks_view', { requested_organization_id: activeOrgId, section: 'consolidated' });
+  const ids = [...new Set(candidates.flatMap(c => [c.source_movement_id, c.target_movement_id]).filter(Boolean))];
+  const rows = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data, error } = await supabase.from('eco_financial_movements').select('*,source_account:eco_financial_accounts(*)')
+      .eq('organization_id', activeOrgId).eq('status', 'ACTIVE').in('id', ids.slice(i, i + 100));
+    if (error) throw error;
+    rows.push(...(data || []));
+  }
+  return rows;
 }
 
 // ─── Actualiza Asignación Económica / Clasificación ─────────────────────────
