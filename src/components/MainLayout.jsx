@@ -8,6 +8,7 @@ import EscandallosApp from '../modules/escandallos/EscandallosApp';
 import ProductionPersonnelApp from '../modules/personnel-live/ProductionPersonnelApp';
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
 import TenantAdministration from '../modules/administration/TenantAdministration';
+import ConfigurationHome from '../modules/administration/ConfigurationHome';
 import { navigationAllowed, banksSectionAllowed, visibleModules } from '../application/tenancy/accessNavigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -39,6 +40,7 @@ const GRUPOS = {
   analytics:   { label: 'Analytics',   color: '#8B5CF6' },
   sistema:     { label: 'Sistema',      color: '#6B7280' },
 };
+const MODULE_DESCRIPTIONS = { Bancos:'Consulta movimientos y clasifica tus operaciones.', Ventas:'Sigue la actividad comercial.', KPI:'Consulta indicadores del negocio.', Inventario:'Controla existencias y movimientos.', Escandallos:'Gestiona recetas y costes.', Compras:'Organiza pedidos y proveedores.', Producción:'Consulta y registra la producción.', Personal:'Gestiona el equipo y sus jornadas.', Predicción:'Consulta previsiones de la operación.' };
 
 const NAV_KEY = 'horeca.shell.navigation';
 function readNavigation() {
@@ -66,8 +68,8 @@ const renderModulo = (modulo, tab, user, onPersonnelNavigate) => {
     case 'Escandallos': return <EscandallosApp  tabActiva={tab} />;
     case 'Personal':    return <ProductionPersonnelApp tabActiva={tab} onNavigate={onPersonnelNavigate} />;
     case 'Producción':  return <ProduccionApp   tabActiva={tab} />;
-    case 'Config':      return <TenantAdministration />;
-    case 'PlatformAdmin': return <TenantAdministration platform />;
+    case 'Config':      return <div className="shell-admin"><ConfigurationHome /></div>;
+    case 'PlatformAdmin': return <div className="shell-admin"><TenantAdministration platform /></div>;
     default:
       return (
         <div className="flex flex-col items-center justify-center py-24 text-center select-none">
@@ -137,7 +139,7 @@ const MainLayout = ({ user: propsUser }) => {
     }
   };
 
-  const navigationKey = Object.keys(MODULOS).filter(mod => (mod === 'Dashboard' && activeOrganization || navigationAllowed(mod, can, isModuleEnabled, platformCan)) && (mod === 'PlatformAdmin' || !!activeOrganization)).map(mod => mod + ':' + MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || banksSectionAllowed(tab, can)).join(',')).join('|');
+  const navigationKey = Object.keys(MODULOS).filter(mod => (mod === 'Dashboard' && activeOrganization || navigationAllowed(mod, can, isModuleEnabled, platformCan)) && (mod === 'PlatformAdmin' || mod === 'Config' && platformCan('platform.tenants.provision') || !!activeOrganization)).map(mod => mod + ':' + MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || banksSectionAllowed(tab, can)).join(',')).join('|');
   useEffect(() => {
     const current = navigationKey.split('|').find(entry => entry.startsWith(moduloActivo + ':'));
     const tabs = current?.split(':')[1].split(',') || [];
@@ -359,10 +361,10 @@ const MainLayout = ({ user: propsUser }) => {
       {/* ══════════════════════════════════════════════════
           BODY (sidebar + main)
       ══════════════════════════════════════════════════ */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className="shell-workspace" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── SIDEBAR ───────────────────────────────────── */}
-        <aside style={{
+        <aside className="shell-sidebar" style={{
           width: sidebarOpen ? '196px' : '56px',
           background: '#0F172A',
           borderRight: '1px solid rgba(255,255,255,0.05)',
@@ -373,7 +375,7 @@ const MainLayout = ({ user: propsUser }) => {
           flexShrink: 0,
         }}>
           {/* Módulo header */}
-          <div style={{
+          <div className="shell-sidebar-heading" style={{
             padding: '1rem 0.875rem 0.75rem',
             borderBottom: '1px solid rgba(255,255,255,0.07)',
             display: 'flex',
@@ -399,7 +401,7 @@ const MainLayout = ({ user: propsUser }) => {
           </div>
 
           {/* Nav tabs */}
-          <nav style={{ flex: 1, padding: '0.625rem', overflowY: 'auto', overflowX: 'hidden' }}>
+          <nav className="shell-section-navigation" style={{ flex: 1, padding: '0.625rem', overflowY: 'auto', overflowX: 'hidden' }}>
             {tabActual?.tabs.filter(tab => moduloActivo !== 'Bancos' || banksSectionAllowed(tab, can)).map((tab, i) => {
               const isActive = tabActiva === tab;
               return (
@@ -458,7 +460,7 @@ const MainLayout = ({ user: propsUser }) => {
           </nav>
 
           <nav aria-label="Administración" style={{ padding: '0.625rem', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-            {['PlatformAdmin', 'Config'].filter(key => modulosPermitidos.includes(key) || key === 'Config' && platformCan('platform.tenants.provision')).map(key => (
+            {['Config'].filter(key => modulosPermitidos.includes(key)).map(key => (
               <button key={key} aria-label={MODULOS[key].label} aria-current={moduloActivo === key ? 'page' : undefined}
                 title={MODULOS[key].label} onClick={() => cambiarModulo(key)} className="shell-admin-link"
                 style={{ background: moduloActivo === key ? 'rgba(255,255,255,0.15)' : 'transparent' }}>
@@ -469,7 +471,7 @@ const MainLayout = ({ user: propsUser }) => {
           </nav>
 
           {/* Toggle + versión */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '0.625rem' }}>
+          <div className="shell-sidebar-toggle" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '0.625rem' }}>
             <button
               onClick={() => setSidebarOpen(s => !s)}
               style={{
@@ -498,16 +500,16 @@ const MainLayout = ({ user: propsUser }) => {
         </aside>
 
         {/* ── CONTENIDO PRINCIPAL ───────────────────────── */}
-        <main style={{
+        <main className="shell-main" style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '2rem',
+          padding: '1.25rem',
           background: 'var(--c-bg)',
         }}>
           <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
             {/* Page header */}
-            <div style={{ marginBottom: '1.75rem' }}>
+            <div style={{ marginBottom: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
                 <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--c-text-4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {MODULOS[moduloActivo]?.label}
@@ -530,19 +532,19 @@ const MainLayout = ({ user: propsUser }) => {
             </div>
 
             {/* Panel de contenido */}
-            <div style={{
+            <div className="shell-content-panel" style={{
               background: 'var(--c-surface)',
               borderRadius: 'var(--r-2xl)',
               border: '1px solid var(--c-border)',
               boxShadow: 'var(--shadow-sm)',
               minHeight: '480px',
-              padding: '2rem',
+              padding: '1.25rem',
               animation: 'fadeIn 200ms ease',
             }}>
-              {moduloActivo !== 'PlatformAdmin' && !activeOrganization ? <div role="status"><h2 className="heading-section">Selecciona una organización</h2><p>Elige un tenant en el selector para abrir {MODULOS[moduloActivo]?.label || 'sus módulos'}. El contexto de plataforma no concede acceso a sus datos.</p></div>
+              {moduloActivo !== 'PlatformAdmin' && !(moduloActivo === 'Config' && platformCan('platform.tenants.provision')) && !activeOrganization ? <div role="status"><h2 className="heading-section">Selecciona una organización</h2><p>Elige un tenant en el selector para abrir {MODULOS[moduloActivo]?.label || 'sus módulos'}. El contexto de plataforma no concede acceso a sus datos.</p></div>
                 : ((moduloActivo !== 'Dashboard' && !navigationAllowed(moduloActivo, can, isModuleEnabled, platformCan)) || (moduloActivo === 'Bancos' && !banksSectionAllowed(tabActiva, can)))
                 ? <AccesoRestringido modulo={moduloActivo} />
-                : moduloActivo === 'Dashboard' ? <div className="space-y-4"><p className="text-sm text-gray-600">Accede a los módulos disponibles de tu organización.</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && key !== 'Dashboard' && navigationAllowed(key, can, isModuleEnabled, platformCan)).map(([key, mod]) => <button key={key} onClick={() => cambiarModulo(key)} className="rounded-xl border border-gray-200 p-4 text-left hover:border-emerald-600 focus-visible:outline-emerald-700"><span aria-hidden="true">{mod.icon}</span><strong className="block mt-2">{mod.label}</strong><span className="text-xs text-gray-600">Disponible · Abrir módulo →</span></button>)}</div></div>
+                : moduloActivo === 'Dashboard' ? <div className="space-y-4"><p className="text-sm text-gray-600">Accede a los módulos disponibles de tu organización.</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && key !== 'Dashboard' && navigationAllowed(key, can, isModuleEnabled, platformCan)).map(([key, mod]) => <button key={key} onClick={() => cambiarModulo(key)} className="rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm hover:border-emerald-600 focus-visible:outline-emerald-700"><span aria-hidden="true">{mod.icon}</span><strong className="block mt-2">{mod.label}</strong><span className="block mt-1 text-xs text-gray-600">{MODULE_DESCRIPTIONS[key]}</span><span className="block mt-3 text-xs font-semibold text-emerald-800">Disponible · Abrir →</span></button>)}</div></div>
                 : renderModulo(moduloActivo, tabActiva, user, cambiarTab)
               }
             </div>

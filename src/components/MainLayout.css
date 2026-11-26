@@ -46,10 +46,28 @@
   outline: 2px solid #5c7bd3;
   outline-offset: 2px;
 }
+.shell-main { min-width: 0; }
+.shell-finance label, .shell-admin label { display: block; color: #475569; font-size: 12px; font-weight: 600; margin: 0; }
+.shell-finance input:not([type="checkbox"]), .shell-finance select, .shell-admin input:not([type="checkbox"]), .shell-admin select { min-width: 0; height: 36px; padding: 5px 8px; margin: 0; font-size: 13px; font-weight: 400; color: #1f2937; }
+.shell-finance input::placeholder { color: #94a3b8; }
+.shell-finance table { font-size: 12px; }
+.shell-admin .audit-table { min-width: 680px; }
 @media (max-width: 900px) {
   .shell-header { flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem !important; }
   .shell-identity-navigation { flex-wrap: wrap; gap: 0.5rem; flex-basis: 100%; }
   .shell-tenant-control { max-width: calc(100% - 64px); }
   .shell-module-navigation { flex-basis: 100%; }
   .shell-profile { margin-left: auto; max-width: 100%; }
+}
+@media (max-width: 640px) {
+  .shell-workspace { flex-direction: column; }
+  .shell-sidebar { width: 100% !important; flex-direction: row !important; align-items: center; }
+  .shell-sidebar-heading, .shell-sidebar-toggle { display: none !important; }
+  .shell-section-navigation { display: flex; flex: 1; gap: 4px; overflow-x: auto !important; overflow-y: hidden !important; padding: 4px !important; }
+  .shell-section-navigation button { width: auto !important; flex: 0 0 auto; margin: 0 !important; padding: 7px !important; }
+  .shell-sidebar nav[aria-label="Administración"] { border: 0 !important; padding: 4px !important; }
+  .shell-admin-link { width: auto; white-space: nowrap; padding: 7px; }
+  .shell-main { padding: 12px !important; }
+  .shell-content-panel { padding: 12px !important; min-height: 0 !important; }
+  .shell-finance { padding: 0; }
 }

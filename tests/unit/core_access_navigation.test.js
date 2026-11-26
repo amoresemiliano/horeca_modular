@@ -27,9 +27,9 @@ describe('Capability-driven navigation',()=>{
   expect(visibleModules(keys,banks,()=>false,()=>false,'organization')).toEqual([]);
   expect(navigationAllowed('Bancos',c=>c==='banks.summary.view',()=>true)).toBe(false);
  });
- it('platform and tenant administrative entry points are independent',()=>{
+ it('configuration entry is available to platform admins without granting tenant permissions',()=>{
   expect(navigationAllowed('PlatformAdmin',()=>false,()=>false,()=>true)).toBe(true);
-  expect(navigationAllowed('Config',()=>false,()=>false,()=>true)).toBe(false);
+  expect(navigationAllowed('Config',()=>false,()=>false,()=>true)).toBe(true);
   expect(navigationAllowed('PlatformAdmin',()=>true,()=>true,()=>false)).toBe(false);
  });
  it('preset denies unrelated inherited capabilities and explicitly grants only its allowlist',()=>{

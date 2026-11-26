@@ -12,13 +12,13 @@ function fixture() {
 describe('bounded Consolidado query',()=>{
   it('uses exact count, page 2 and all supported server filters without filtering the displayed allocation embed',async()=>{
     const {client,calls}=fixture();
-    const result=await fetchConsolidatedPageWithClient(client,'org',{page:2,pageSize:25,filters:{currency:'EUR',account:'account',month:'2026-12',status:'PENDING',economicType:'OPERATING_EXPENSE',category:'category',counterparty:'party',query:'pan'}});
+    const result=await fetchConsolidatedPageWithClient(client,'org',{page:2,pageSize:25,filters:{currency:'EUR',account:'account',month:'2026-12',status:'PENDING',economicType:'OPERATING_EXPENSE',category:'category',subcategory:'sub',counterparty:'party',query:'pan'}});
     expect(result).toMatchObject({page:2,pageSize:25,total:1207});expect(result.rows).toHaveLength(25);
     expect(calls).toContainEqual(['range',25,49]);
     expect(calls).toContainEqual(['eq','organization_id','org']);expect(calls).toContainEqual(['eq','status','ACTIVE']);
     expect(calls).toContainEqual(['eq','source_account_id','account']);expect(calls).toContainEqual(['eq','currency','EUR']);
     expect(calls).toContainEqual(['gte','fecha','2026-12-01']);expect(calls).toContainEqual(['lt','fecha','2027-01-01']);
-    for(const pair of [['classification_status','PENDING'],['economic_type','OPERATING_EXPENSE'],['category_id','category'],['counterparty_id','party']]) expect(calls).toContainEqual(['eq',`matching.${pair[0]}`,pair[1]]);
+    for(const pair of [['classification_status','PENDING'],['economic_type','OPERATING_EXPENSE'],['category_id','category'],['subcategory_id','sub'],['counterparty_id','party']]) expect(calls).toContainEqual(['eq',`matching.${pair[0]}`,pair[1]]);
     expect(calls).toContainEqual(['ilike','descripcion','%pan%']);
     const select=calls.find(c=>c[0]==='select');expect(select[1]).toContain('!inner()');expect(select[1]).toContain('allocations:');expect(select[2]).toEqual({count:'exact'});
   });

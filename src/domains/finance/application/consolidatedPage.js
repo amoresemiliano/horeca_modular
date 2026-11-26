@@ -7,7 +7,7 @@ export function consolidatedPageRequest(client, orgId, { page = 1, pageSize = 25
   if (!orgId) throw new Error('FAIL-CLOSED: Active organization ID is required for extractos service operations.');
   const size = [25, 50, 100].includes(Number(pageSize)) ? Number(pageSize) : 25;
   const current = Number.isSafeInteger(Number(page)) && Number(page) > 0 ? Number(page) : 1;
-  const relational = Boolean(filters.status || filters.economicType || filters.category || filters.counterparty);
+  const relational = Boolean(filters.status || filters.economicType || filters.category || filters.subcategory || filters.counterparty);
   let query = client.from('eco_financial_movements')
     .select(`*,source_account:eco_financial_accounts(*),${allocationSelect}${relational ? ',' + matchSelect : ''}`, { count: 'exact' })
     .eq('organization_id', orgId).eq('status', 'ACTIVE');
@@ -19,7 +19,7 @@ export function consolidatedPageRequest(client, orgId, { page = 1, pageSize = 25
     query = query.gte('fecha', `${filters.month}-01`).lt('fecha', `${next}-01`);
   }
   if (filters.query?.trim()) query = query.ilike('descripcion', `%${filters.query.trim().replace(/[\\%_]/g, '\\$&')}%`);
-  for (const [key, column] of [['status','classification_status'], ['economicType','economic_type'], ['category','category_id'], ['counterparty','counterparty_id']]) {
+  for (const [key, column] of [['status','classification_status'], ['economicType','economic_type'], ['category','category_id'], ['subcategory','subcategory_id'], ['counterparty','counterparty_id']]) {
     if (filters[key]) query = query.eq(`matching.${column}`, filters[key]);
   }
   return { query: query.order('fecha', { ascending: false }).order('id').range((current - 1) * size, current * size - 1), page: current, pageSize: size };

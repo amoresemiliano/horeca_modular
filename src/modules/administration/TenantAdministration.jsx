@@ -9,13 +9,13 @@ const modules = {bancos:'Bancos',ventas:'Ventas',compras:'Compras',inventario:'I
 const input = 'border rounded p-2 bg-white';
 const platformPages = {tenants:'Tenants',lifecycle:'Ciclo de vida',modules:'Módulos y disponibilidad',users:'Usuarios e invitaciones',audit:'Auditoría'};
 const tenantPages = {general:'Información general',users:'Usuarios y membresías',access:'Perfiles y permisos',scope:'Alcance operativo',audit:'Auditoría'};
-export default function TenantAdministration({ platform = false }) {
+export default function TenantAdministration({ platform = false, initialPage }) {
   const { organizationId, can, platformCan } = useAuth();
   const allowed = platform ? platformCan('platform.tenants.provision') : ['membership.users.invite','membership.roles.assign','membership.users.remove','org.config.write'].some(c => can(c));
-  return allowed ? <AdminWorkspace key={(platform ? 'platform' : organizationId) || 'none'} platform={platform} organizationId={organizationId} can={can} /> : <p role="alert">Administración no autorizada.</p>;
+  return allowed ? <AdminWorkspace key={((platform ? 'platform' : organizationId) || 'none') + ':' + (initialPage || '')} platform={platform} organizationId={organizationId} can={can} initialPage={initialPage} /> : <p role="alert">Administración no autorizada.</p>;
 }
-function AdminWorkspace({ platform, organizationId, can }) {
-  const [org,setOrg] = useState(platform ? '' : organizationId), [page,setPage] = useState(platform?'tenants':'general');
+function AdminWorkspace({ platform, organizationId, can, initialPage }) {
+  const [org,setOrg] = useState(platform ? '' : organizationId), [page,setPage] = useState(initialPage || (platform?'tenants':'general'));
   const [data,setData] = useState(null), [memberId,setMemberId] = useState(''), [unitId,setUnitId] = useState('');
   const [effective,setEffective] = useState([]), [error,setError] = useState(''), [message,setMessage] = useState(''), [busy,setBusy] = useState(false);
   const [email,setEmail] = useState(''), [role,setRole] = useState('CONSULTANT'), [preset,setPreset] = useState('BANKS_IMPORT_OPERATOR');
@@ -39,9 +39,7 @@ function AdminWorkspace({ platform, organizationId, can }) {
     <header><p className="text-gray-600">{platform?'Vegen Digital · HORECA Modular':tenant?.name}</p><h2 className="text-xl font-semibold">{platform?'Administración de plataforma':'Administración de organización'}</h2></header>
     <nav aria-label="Secciones de administración" className="flex flex-wrap gap-2">{Object.entries(pages).map(([key,label])=><button key={key} aria-current={page===key?'page':undefined} className={input+(page===key?' font-semibold border-blue-600 bg-blue-50':'')} onClick={()=>{setPage(key);setError('');setMessage('')}}>{label}</button>)}</nav>
     {error&&<p role="alert" className="text-red-700">{error}</p>}
-    <div role="status" aria-live="polite" aria-atomic="true" className="sticky top-0 z-10 rounded border bg-white p-3 shadow-sm">
-      {message ? <p className="font-semibold text-emerald-800">✓ {message}</p> : busy ? <p>Guardando cambios…</p> : <p className="text-gray-600">Los cambios de módulos, roles, permisos y alcance se guardan automáticamente. Los formularios se guardan al pulsar su botón.</p>}
-    </div>
+    {(message||busy)&&<div role="status" aria-live="polite" aria-atomic="true" className="rounded bg-emerald-50 p-2">{message ? <p className="font-semibold text-emerald-800">✓ {message}</p> : <p>Guardando cambios…</p>}</div>}
     {platform&&<label className="block">Tenant a administrar <select aria-label="Tenant" disabled={busy} className={input} value={org} onChange={e=>{setOrg(e.target.value);setMemberId('');setUnitId('');setError('')}}><option value="">Seleccionar tenant</option>{data?.organizations.map(o=><option key={o.id} value={o.id}>{o.name} · {o.is_active?'Activo':'Inactivo'}</option>)}</select></label>}
     {!data&&<p role="status">Cargando administración…</p>}
     {platform&&page==='tenants'&&<details><summary className="font-semibold cursor-pointer">Crear tenant</summary><TenantDetailsForm disabled={busy} onSave={values=>run(async()=>{const r=await adminMutate('tenant.create',null,values);setOrg(r.organization_id)})}/></details>}

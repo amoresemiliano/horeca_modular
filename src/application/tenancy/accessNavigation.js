@@ -9,7 +9,7 @@ export const MODULE_ACCESS = {
 export const TENANT_ADMIN_CAPS = ['membership.users.invite', 'membership.roles.assign', 'membership.users.remove', 'org.config.write'];
 export function navigationAllowed(module, can, enabled, platformCan = () => false) {
   if (module === 'PlatformAdmin') return platformCan('platform.tenants.provision');
-  if (module === 'Config') return TENANT_ADMIN_CAPS.some(code => can(code));
+  if (module === 'Config') return platformCan('platform.tenants.provision') || TENANT_ADMIN_CAPS.some(code => can(code));
   const [key, ...codes] = MODULE_ACCESS[module] || [];
   if (module === 'Bancos') return Boolean(enabled(key) && can('sensitivedata.banking.read') && codes.some(code => can(code)));
   return Boolean(key && enabled(key) && codes.some(code => can(code)));

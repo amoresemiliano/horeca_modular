@@ -6,7 +6,7 @@ import { interpretationDraft, classificationInput } from './workflow';
 
 export default function ClassificationModal({ movement, catalogs, orgId, onClose, onSaved, suggestion, onDismissSuggestion }) {
   const [index, setIndex] = useState(0);
-  const [value, setValue] = useState(() => interpretationDraft(movement.allocations[0]));
+  const [value, setValue] = useState(() => ({...interpretationDraft(movement.allocations[0]), ...(suggestion || {})}));
   const [error, setError] = useState(''), [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(false);
   const [proposal, setProposal] = useState(false);

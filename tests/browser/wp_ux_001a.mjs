@@ -38,7 +38,8 @@ try {
   await page.goForward();await page.getByRole('heading',{name:'Inicio',exact:true}).waitFor();
   await page.getByRole('navigation',{name:'Módulos operativos'}).getByRole('button',{name:'Bancos'}).click();await heading().waitFor();
   await page.getByRole('button',{name:'Remontar contexto'}).click();await heading().waitFor();
-  if(platform){await page.reload();await heading().waitFor();await page.getByRole('navigation',{name:'Administración'}).getByRole('button',{name:'Tenants'}).click();await page.getByRole('heading',{name:'Tenants',exact:true}).waitFor();await page.goBack();await heading().waitFor();await page.getByRole('button',{name:'Remontar contexto'}).click();await heading().waitFor();await page.reload();await heading().waitFor();}
+  if(platform){await page.reload();await heading().waitFor();await page.getByRole('navigation',{name:'Administración'}).getByRole('button',{name:'Configuración'}).click();await page.getByRole('button',{name:/Tenants.*Administración/}).click();await page.getByRole('heading',{name:'Administración de plataforma'}).waitFor();await page.goBack();await heading().waitFor();await page.getByRole('button',{name:'Remontar contexto'}).click();await heading().waitFor();await page.reload();await heading().waitFor();}
+  else {await page.getByRole('navigation',{name:'Administración'}).getByRole('button',{name:'Configuración'}).click();await page.getByRole('button',{name:/Organización.*Información/}).waitFor();assert.equal(await page.getByRole('button',{name:/Tenants.*Administración/}).count(),0);assert.equal(await page.getByRole('button',{name:/Módulos.*Disponibilidad/}).count(),0);}
   console.log(`PASS ${platform?'platform admin':'authorized Banks'}: navigation and bounded pagination`);
   await page.close();
  }

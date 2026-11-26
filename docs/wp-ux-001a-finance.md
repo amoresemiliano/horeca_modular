@@ -1,5 +1,5 @@
 # WP-UX-001A: Finance data boundaries
 
-Consolidado requests one page of 25, 50 or 100 active movements and an exact matching count. Account, month, currency, description and allocation status, economic type, category and counterparty filters are applied to the database query. An additional allocation relationship selects matching movements while the normal relationship retains every allocation of each selected movement. Description search does not search catalog names.
+Consolidado requests one page of 25, 50 or 100 active movements and an exact matching count. Account, month, currency, description and allocation status, economic type, category, subcategory and counterparty filters are applied to the database query. An additional allocation relationship selects matching movements while the normal relationship retains every allocation of each selected movement. Description search does not search catalog names.
 
 Assisted classification is loaded only when requested. It uses the latest 100 movements in the selected currency plus the current table page, so patterns outside that bounded sample are not represented. Transfer review fetches only the movement IDs referenced by its candidates. Summary and Metrics retain their existing full-history fetch and remain a separate performance debt.

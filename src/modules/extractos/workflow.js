@@ -12,15 +12,15 @@ export function ruleExample(movement) {
   const a = movement.allocations[0];
   return a.classification_status === 'CONFIRMED' && !a.transfer_candidate_id && a.economic_type !== 'UNCLASSIFIED' && genericEconomicTypes.includes(a.economic_type) ? a : null;
 }
-export const emptyFilters = () => ({ query: '', account: '', status: '', month: '', economicType: '', category: '', counterparty: '', currency: 'EUR' });
+export const emptyFilters = () => ({ query: '', account: '', status: '', month: '', economicType: '', category: '', subcategory: '', counterparty: '', currency: 'EUR' });
 export function filterMovements(movements, f) {
   const q = f.query.trim().toLocaleLowerCase();
   return movements.filter(m => (!m.status || m.status === 'ACTIVE') && (m.currency || 'EUR') === f.currency
     && (!f.account || m.source_account_id === f.account) && (!f.month || m.fecha.startsWith(f.month))
     && (!q || [m.descripcion, m.source_account?.name, ...(m.allocations || []).flatMap(a => [a.category?.name, a.subcategory?.name, a.counterparty?.name])].filter(Boolean).join(' ').toLocaleLowerCase().includes(q))
-    && (!(f.status || f.economicType || f.category || f.counterparty) || (m.allocations || []).some(a =>
+    && (!(f.status || f.economicType || f.category || f.subcategory || f.counterparty) || (m.allocations || []).some(a =>
       (!f.status || a.classification_status === f.status) && (!f.economicType || (a.economic_type || 'UNCLASSIFIED') === f.economicType)
-      && (!f.category || a.category_id === f.category) && (!f.counterparty || a.counterparty_id === f.counterparty))));
+      && (!f.category || a.category_id === f.category) && (!f.subcategory || a.subcategory_id === f.subcategory) && (!f.counterparty || a.counterparty_id === f.counterparty))));
 }
 export function reviewSummary(movements, currency = 'EUR') {
   const rows = movements.filter(m => (!m.status || m.status === 'ACTIVE') && (m.currency || 'EUR') === currency), metrics = financeMetrics(rows, currency);
