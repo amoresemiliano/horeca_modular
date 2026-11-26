@@ -10,6 +10,9 @@ const candidates=[];
 if(new URL(location.href).searchParams.has('large')) for(let i=0;i<1205;i++){const m=movement('large-'+String(i).padStart(4,'0'),-i-1,i%2?'a':'b',i%2?'2026-04-10':'2026-05-10');m.descripcion='Movimiento sintético '+i;movements.push(m);}
 if(dense){
  accounts.push({id:'card',name:'Tarjeta sintética',masked_identifier:'8899',institution:'SABADELL',product_type:'CARD',is_active:true,currency:'EUR'});
+ accounts.push({id:'settlement-account',name:'Cuenta liquidación sintética',masked_identifier:'2211',institution:'SABADELL',product_type:'BANK_ACCOUNT',is_active:true,currency:'EUR'});
+ const settlementBank=movement('settlement-bank',-250,'settlement-account','2023-01-10'), settlementCard=movement('settlement-card',250,'card','2023-01-11');
+ settlementBank.descripcion='PAGO TARJETA SINTETICA';settlementCard.descripcion='INGRESO DESDE CUENTA';movements.push(settlementBank,settlementCard);
  for(let i=0;i<2;i++){const m=movement('history-'+i,-20,'a','2026-05-10');m.descripcion='SUMINISTROS OLIVA '+(1111+i);m.duplicate_status='UNIQUE';m.financial_fingerprint='synthetic-'+i;Object.assign(m.allocations[0],{economic_type:'OPERATING_EXPENSE',classification_status:'CONFIRMED',classification_source:'MANUAL',category_id:'food',subcategory_id:'fresh',counterparty_id:'party'});movements.push(m);}
  for(let i=0;i<11;i++){const m=movement('proposal-'+i,-10,'a','2026-05-09');m.descripcion='PANADERIA DEMO '+(3333+i);m.duplicate_status='UNIQUE';m.financial_fingerprint='proposal-synthetic-'+i;if(i===0)Object.assign(m.allocations[0],{economic_type:'OPERATING_EXPENSE',classification_status:'CONFIRMED',classification_source:'MANUAL',category_id:'food',subcategory_id:'fresh',counterparty_id:'party'});movements.push(m);}
  for(let i=0;i<130;i++){const m=movement('dense-'+i,-(i+1),i===129?'card':'a','2026-04-10');m.descripcion=i<12?'SUMINISTROS OLIVA '+(2222+i):'Movimiento denso '+i;movements.push(m);}
