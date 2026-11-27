@@ -7,6 +7,9 @@ export const Capability = {
   // 2. Organizations & Memberships
   ORG_CONFIG_READ: 'org.config.read',
   ORG_CONFIG_WRITE: 'org.config.write',
+  ORG_USERS_VIEW: 'org.users.view',
+  ORG_ROLES_VIEW: 'org.roles.view',
+  ORG_AUDIT_VIEW: 'org.audit.view',
   MEMBERSHIP_USERS_INVITE: 'membership.users.invite',
   MEMBERSHIP_ROLES_ASSIGN: 'membership.roles.assign',
   MEMBERSHIP_USERS_REMOVE: 'membership.users.remove',

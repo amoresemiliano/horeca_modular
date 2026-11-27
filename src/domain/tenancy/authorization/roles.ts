@@ -52,6 +52,9 @@ export const DEFAULT_ROLE_CAPABILITIES: Record<RoleTemplate, readonly Capability
     Capability.INTEGRATIONS_CONFIG_MANAGE,
   ],
   OWNER: [
+    Capability.ORG_USERS_VIEW,
+    Capability.ORG_ROLES_VIEW,
+    Capability.ORG_AUDIT_VIEW,
     Capability.BANKS_CONSOLIDATED_VIEW,
     Capability.BANKS_SUMMARY_VIEW,
     Capability.BANKS_METRICS_VIEW,

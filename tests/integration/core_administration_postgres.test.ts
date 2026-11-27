@@ -43,6 +43,30 @@ describe('WP-CORE-003 complete migration chain: embedded PostgreSQL, real roles/
  const mutate=(actor:string,action:string,payload:object,organization=org)=>call(actor,'SELECT public.core_admin_mutate($1,$2,$3::jsonb) result',[action,organization,JSON.stringify(payload)]);
  const allowed=async(actor:string,code:string,organization=org)=>(await call(actor,'SELECT public.can_execute_capability_for_org($1,$2) allowed',[organization,code]))[0].allowed;
  const preset=(key:string)=>mutate(owner,'member.preset',{membership_id:userMember,preset:key});
+ it('limits read-only administration to the requested section and tenant, without write authority',async()=>{
+  await db.exec("INSERT INTO public.eco_role_templates(code,name,tier) VALUES('TEST_READ_MANAGER','Synthetic manager','ORGANIZATION')");
+  await db.exec("INSERT INTO public.eco_role_template_capabilities SELECT r.id,c.id FROM public.eco_role_templates r CROSS JOIN public.eco_capabilities c WHERE r.code='TEST_READ_MANAGER' AND c.code IN ('org.users.view','org.roles.view','org.audit.view')");
+  await db.query("UPDATE public.eco_organization_members SET role_template_id=(SELECT id FROM public.eco_role_templates WHERE code='TEST_READ_MANAGER') WHERE id=$1",[userMember]);
+  await db.query("INSERT INTO public.eco_access_audit(actor,action,organization_id,change) VALUES($1,'tenant.update',$2,'{\"secret\":\"not returned\"}'),($1,'foreign.event',$3,'{}')",[owner,org,foreign]);
+  const read=async(actor:string,section:string,organization=org)=>(await call(actor,'SELECT public.core_admin_read_snapshot($1,$2) result',[organization,section]))[0].result as Record<string,unknown>[];
+  for(const section of ['users','roles','audit']) { expect(await read(owner,section)).toBeInstanceOf(Array); expect(await read(user,section)).toBeInstanceOf(Array); await expect(read(platform,section)).rejects.toThrow(/denied/); await expect(read(user,section,foreign)).rejects.toThrow(/denied/); }
+  const users=await read(user,'users'); expect(users).toHaveLength(2); expect(users[0]).not.toHaveProperty('auth_user_id');
+  const roles=await read(user,'roles'); expect(roles.some(r=>r.code==='VEGEN_PLATFORM_ADMIN')).toBe(false);
+  expect(JSON.stringify(roles)).not.toContain('platform.tenants.provision');
+  const audit=await read(user,'audit'); expect(audit).toHaveLength(1); expect(audit[0]).not.toHaveProperty('change');
+  await expect(read(user,'invalid')).rejects.toThrow(/denied/);
+  await expect(call(user,'SELECT public.core_admin_snapshot($1,false)',[org])).rejects.toThrow(/denied/);
+  await expect(call(user,'SELECT public.core_prepare_invitation($1,$2,$3)',[org,'test@example.invalid','CONSULTANT'])).rejects.toThrow(/denied/);
+  for(const [action,payload] of [['member.role',{membership_id:ownerMember,role:'CONSULTANT'}],['tenant.update',{name:'Denied'}],['entitlement.set',{module:'bancos',enabled:false}],['member.scope',{membership_id:ownerMember,organization_wide:false,units:[]}],['member.override',{membership_id:ownerMember,capability:'org.users.view',effect:'GRANT'}]] as const) await expect(mutate(user,action,payload)).rejects.toThrow(/denied/);
+  await db.query("INSERT INTO public.eco_member_capability_overrides(membership_id,organization_id,capability_id,effect) SELECT $1,$2,id,'REVOKE' FROM public.eco_capabilities WHERE code='org.users.view'",[userMember,org]);
+  await expect(read(user,'users')).rejects.toThrow(/denied/); expect(await read(user,'roles')).toBeInstanceOf(Array);
+  await db.query('UPDATE public.eco_organization_members SET is_organization_wide=false WHERE id=$1',[userMember]); await expect(read(user,'roles')).rejects.toThrow(/denied/);
+  await db.query('UPDATE public.eco_organization_members SET is_organization_wide=true,is_active=false WHERE id=$1',[userMember]); await expect(read(user,'roles')).rejects.toThrow(/denied/);
+  await db.query('UPDATE public.eco_organization_members SET is_active=true WHERE id=$1',[userMember]);
+  await db.query('UPDATE public.eco_organizations SET is_active=false WHERE id=$1',[org]); await expect(read(user,'roles')).rejects.toThrow(/denied/);
+  await db.query('UPDATE public.eco_organizations SET is_active=true WHERE id=$1',[org]);
+  await db.query('UPDATE public.eco_user_profiles SET is_active=false WHERE id=$1',[user]); await expect(read(user,'roles')).rejects.toThrow(/denied/);
+ });
  it('platform creates full tenant metadata; tenant owner edits only its own organization with audit',async()=>{
   const fields={code:'C',name:'Synthetic C',trade_name:'Synthetic trade',legal_name:'Synthetic legal',tax_id:'TEST-ONLY',tax_id_type:'OTHER',business_address:'Synthetic address',country_code:'ES',currency:'EUR',timezone:'Europe/Madrid',contact_email:'test@example.com',contact_phone:'000'};
   const created=(await mutate(platform,'tenant.create',fields))[0].result as {organization_id:string,result:Record<string,unknown>};

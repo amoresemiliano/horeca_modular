@@ -7,9 +7,10 @@ export const MODULE_ACCESS = {
   Personal: ['personal', 'personnel.employees.manage', 'personnel.fichajes.write'], 'Predicción': ['prediccion', 'reporting.operational.view'],
 };
 export const TENANT_ADMIN_CAPS = ['membership.users.invite', 'membership.roles.assign', 'membership.users.remove', 'org.config.write'];
+export const TENANT_READ_CAPS = ['org.users.view', 'org.roles.view', 'org.audit.view'];
 export function navigationAllowed(module, can, enabled, platformCan = () => false) {
   if (module === 'PlatformAdmin') return platformCan('platform.tenants.provision');
-  if (module === 'Config') return platformCan('platform.tenants.provision') || TENANT_ADMIN_CAPS.some(code => can(code));
+  if (module === 'Config') return platformCan('platform.tenants.provision') || [...TENANT_ADMIN_CAPS, ...TENANT_READ_CAPS].some(code => can(code));
   const [key, ...codes] = MODULE_ACCESS[module] || [];
   if (module === 'Bancos') return Boolean(enabled(key) && can('sensitivedata.banking.read') && codes.some(code => can(code)));
   return Boolean(key && enabled(key) && codes.some(code => can(code)));
