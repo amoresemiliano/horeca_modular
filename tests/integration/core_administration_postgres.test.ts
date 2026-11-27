@@ -43,6 +43,61 @@ describe('WP-CORE-003 complete migration chain: embedded PostgreSQL, real roles/
  const mutate=(actor:string,action:string,payload:object,organization=org)=>call(actor,'SELECT public.core_admin_mutate($1,$2,$3::jsonb) result',[action,organization,JSON.stringify(payload)]);
  const allowed=async(actor:string,code:string,organization=org)=>(await call(actor,'SELECT public.can_execute_capability_for_org($1,$2) allowed',[organization,code]))[0].allowed;
  const preset=(key:string)=>mutate(owner,'member.preset',{membership_id:userMember,preset:key});
+ it('governs custom tenant roles atomically and preserves reserved roles and assignment invariants',async()=>{
+  const command=async(actor:string,action:string,id:string|null,payload:object)=>(await call(actor,'SELECT public.core_role_admin_command($1,$2,$3::jsonb) result',[action,id,JSON.stringify(payload)]))[0].result as {id:string};
+  const payload={code:'TEST_GOVERNED',name:'Synthetic role',description:'Test',capabilities:['org.users.view','personnel.schedules.view']};
+  await expect(command(owner,'create',null,payload)).rejects.toThrow(/denied/);
+  for(const cap of ['platform.tenants.provision','unknown.capability','data.records.purge_hard']) await expect(command(platform,'create',null,{...payload,capabilities:[cap]})).rejects.toThrow(/capability/);
+  await db.exec("UPDATE public.eco_capabilities SET is_active=false WHERE code='org.users.view'");
+  await expect(command(platform,'create',null,payload)).rejects.toThrow(/capability/);
+  await db.exec("UPDATE public.eco_capabilities SET is_active=true WHERE code='org.users.view'");
+  const ownerId=(await db.query<{id:string}>("SELECT id FROM public.eco_role_templates WHERE code='OWNER'")).rows[0].id;
+  await expect(command(platform,'deactivate',ownerId,{})).rejects.toThrow(/Reserved/);
+  const created=await command(platform,'create',null,payload);
+  await command(platform,'update',created.id,{name:'Edited',description:'Updated',capabilities:['org.roles.view']});
+  const clone=await command(platform,'clone',created.id,{code:'TEST_CLONED',name:'Clone'});
+  await mutate(owner,'member.role',{membership_id:userMember,role:'TEST_GOVERNED'});
+  await mutate(owner,'member.override',{membership_id:userMember,capability:'membership.roles.assign',effect:'GRANT'});
+  await expect(mutate(user,'member.role',{membership_id:ownerMember,role:'TEST_GOVERNED'})).rejects.toThrow(/OWNER/);
+  await mutate(owner,'member.role',{membership_id:userMember,role:'TEST_CLONED'});
+  await expect(command(platform,'deactivate',clone.id,{expected_users:0,confirm_assigned:true})).rejects.toThrow(/count changed/);
+  await expect(command(platform,'deactivate',clone.id,{expected_users:1})).rejects.toThrow(/confirmation/);
+  await command(platform,'deactivate',clone.id,{expected_users:1,confirm_assigned:true});
+  expect((await db.query<{role_template_id:string}>('SELECT role_template_id FROM public.eco_organization_members WHERE id=$1',[userMember])).rows[0].role_template_id).toBe(clone.id);
+  expect(await allowed(user,'org.roles.view')).toBe(false);
+  await expect(mutate(owner,'member.role',{membership_id:userMember,role:'TEST_CLONED'})).rejects.toThrow(/Tenant role/);
+  await expect(mutate(owner,'member.role',{membership_id:userMember,role:'VEGEN_PLATFORM_ADMIN'})).rejects.toThrow(/Tenant role/);
+  await expect(mutate(owner,'member.role',{membership_id:ownerMember,role:'TEST_GOVERNED'})).rejects.toThrow(/own access/);
+  await expect(mutate(owner,'member.role',{membership_id:userMember,role:'TEST_GOVERNED'},foreign)).rejects.toThrow(/denied/);
+  const actions=(await db.query<{action:string}>('SELECT action FROM public.eco_access_audit')).rows.map(x=>x.action);
+  for(const action of ['role.created','role.updated','role.capabilities.updated','role.cloned','role.deactivated','member.role.changed']) expect(actions).toContain(action);
+ });
+ it('Gerente has explicit read and schedule grants without administrative or finance writes',async()=>{
+  await mutate(owner,'member.role',{membership_id:userMember,role:'MANAGER_READ_OPERATIONAL'});
+  for(const section of ['users','roles','audit']) expect((await call(user,'SELECT public.core_admin_read_snapshot($1,$2) result',[org,section]))[0].result).toBeInstanceOf(Array);
+  const roles=(await call(user,"SELECT public.core_admin_read_snapshot($1,'roles') result",[org]))[0].result as {code:string;capabilities:{code:string}[]}[];
+  expect(roles.find(r=>r.code==='MANAGER_READ_OPERATIONAL')?.capabilities.map(x=>x.code)).toContain('personnel.schedules.manage');
+  for(const code of ['org.config.read','org.users.view','org.roles.view','org.audit.view','banks.consolidated.view','banks.summary.view','banks.metrics.view','sensitivedata.banking.read']) expect(await allowed(user,code),code).toBe(true);
+  for(const code of ['membership.users.invite','membership.roles.assign','membership.users.remove','org.config.write','statements.import.upload','STATEMENTS_IMPORT_CONFIRM','financial.allocation.edit','banks.accounts.manage','personnel.employees.manage','personnel.fichajes.audit']) expect(await allowed(user,code),code).toBe(false);
+  for(const sql of ["SELECT public.core_banks_view($1,'consolidated')","SELECT public.core_banks_view($1,'summary')","SELECT public.core_banks_view($1,'metrics')"]) expect((await call(user,sql,[org]))[0]).toBeTruthy();
+  await expect(mutate(user,'member.role',{membership_id:ownerMember,role:'CONSULTANT'})).rejects.toThrow(/denied/);
+  await expect(call(user,'SELECT public.core_prepare_invitation($1,$2,$3)',[org,'synthetic@example.invalid','CONSULTANT'])).rejects.toThrow(/denied/);
+  await expect(mutate(user,'tenant.update',{name:'Denied'})).rejects.toThrow(/denied/);
+  await expect(mutate(user,'entitlement.set',{module:'bancos',enabled:false})).rejects.toThrow(/denied/);
+  await expect(call(user,'SELECT public.rpc_apply_finance_rules($1)',[org])).rejects.toThrow(/denied/);
+  await expect(call(user,"SELECT public.core_role_admin_command('create',NULL,'{}'::jsonb)")).rejects.toThrow(/denied/);
+  await expect(call(user,'SELECT public.core_admin_read_snapshot($1,$2)',[foreign,'users'])).rejects.toThrow(/denied/);
+  const unit=(await db.query<{id:string}>("INSERT INTO public.eco_operational_units(organization_id,code,name,unit_type) VALUES($1,'U','Synthetic unit','OTHER') RETURNING id",[org])).rows[0].id;
+  await db.query("INSERT INTO public.eco_organization_module_entitlements(organization_id,module_key,is_enabled) VALUES($1,'personal',true)",[org]);
+  const personnel=async(actor:string,action:string,payload:object)=>(await call(actor,'SELECT public.personnel_admin_command($1,$2,$3,$4::jsonb) result',[org,unit,action,JSON.stringify(payload)]))[0].result as Record<string,unknown>;
+  const employee=await personnel(owner,'employee.save',{firstName:'Synthetic',lastName:'Employee',position:'Sala',startDate:'2026-01-01',unitIds:[unit]});
+  const shift={employeeId:employee.id,date:'2040-01-02',start:'09:00',end:'17:00'};
+  const created=await personnel(user,'schedule.save',shift); await personnel(user,'schedule.save',{...shift,id:created.id,revision:1,end:'18:00'}); await personnel(user,'schedule.cancel',{employeeId:employee.id,id:created.id,revision:2});
+  for(const action of ['employee.save','pin.reset','device.activate','attendance.correct']) await expect(personnel(user,action,{})).rejects.toThrow(/ACCESS_DENIED/);
+  await db.query("INSERT INTO public.eco_member_capability_overrides(membership_id,organization_id,capability_id,effect,operational_unit_id) SELECT $1,$2,id,'REVOKE',$3 FROM public.eco_capabilities WHERE code='personnel.schedules.manage'",[userMember,org,unit]);
+  await expect(personnel(user,'schedule.save',shift)).rejects.toThrow(/ACCESS_DENIED/);
+  await db.query("UPDATE public.eco_organization_module_entitlements SET is_enabled=false WHERE organization_id=$1 AND module_key='bancos'",[org]); expect(await allowed(user,'banks.consolidated.view')).toBe(false);
+ });
  it('limits read-only administration to the requested section and tenant, without write authority',async()=>{
   await db.exec("INSERT INTO public.eco_role_templates(code,name,tier) VALUES('TEST_READ_MANAGER','Synthetic manager','ORGANIZATION')");
   await db.exec("INSERT INTO public.eco_role_template_capabilities SELECT r.id,c.id FROM public.eco_role_templates r CROSS JOIN public.eco_capabilities c WHERE r.code='TEST_READ_MANAGER' AND c.code IN ('org.users.view','org.roles.view','org.audit.view')");
@@ -88,7 +143,7 @@ describe('WP-CORE-003 complete migration chain: embedded PostgreSQL, real roles/
  });
  it('matches all 13 canonical templates and the current capability registry without broadening MANAGER',async()=>{
   expect((await db.query<{code:string}>('SELECT code FROM public.eco_capabilities')).rows.map(r=>r.code).sort()).toEqual(Object.values(Capability).sort());
-  expect((await db.query<{code:string}>('SELECT code FROM public.eco_role_templates')).rows.map(r=>r.code).sort()).toEqual(Object.values(RoleTemplate).sort());
+  expect((await db.query<{code:string}>('SELECT code FROM public.eco_role_templates')).rows.map(r=>r.code).sort()).toEqual([...Object.values(RoleTemplate),'MANAGER_READ_OPERATIONAL'].sort());
   for(const role of Object.values(RoleTemplate)) expect((await db.query<{code:string}>('SELECT c.code FROM public.eco_role_template_capabilities rc JOIN public.eco_capabilities c ON c.id=rc.capability_id JOIN public.eco_role_templates r ON r.id=rc.role_template_id WHERE r.code=$1',[role])).rows.map(r=>r.code).sort()).toEqual([...DEFAULT_ROLE_CAPABILITIES[role]].sort());
  });
  it('platform-only identity manages tenant metadata but receives zero business rows and cannot classify',async()=>{
@@ -146,7 +201,7 @@ describe('WP-CORE-003 complete migration chain: embedded PostgreSQL, real roles/
   await expect(mutate(owner,'member.scope',{membership_id:userMember,organization_wide:false,units:[foreign]})).rejects.toThrow(/Foreign/);
   await mutate(owner,'member.active',{membership_id:userMember,active:false});
   await mutate(owner,'member.role',{membership_id:userMember,role:'ADMINISTRATIVE'});
-  expect((await db.query('SELECT * FROM public.eco_access_audit')).rows).toHaveLength(5);
+  expect((await db.query('SELECT * FROM public.eco_access_audit')).rows).toHaveLength(6);
  });
  it('invitation completion is service-only, cannot bind self, and rechecks revoked authority',async()=>{
   const ticket=(await call(owner,'SELECT public.core_prepare_invitation($1,$2,$3) id',[org,'new@example.com','CONSULTANT']))[0].id;

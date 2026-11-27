@@ -6,6 +6,8 @@ async function rpc(name, args) {
 }
 export const adminSnapshot = (organizationId, platform = false) => rpc('core_admin_snapshot', { requested_organization_id: organizationId || null, platform });
 export const adminReadSnapshot = (organizationId, section) => rpc('core_admin_read_snapshot', { requested_organization_id: organizationId, section });
+export const roleAdminSnapshot = () => rpc('core_role_admin_snapshot', {});
+export const roleAdminCommand = (action, roleId, payload) => rpc('core_role_admin_command', { action, role_id: roleId || null, payload });
 export const inspectPermissions = (organizationId, membershipId, unitId) => rpc('core_inspect_permissions', { requested_organization_id: organizationId, membership_id: membershipId, unit_id: unitId || null });
 export const adminMutate = (action, organizationId, payload) => rpc('core_admin_mutate', { action, requested_organization_id: organizationId || null, payload });
 export async function inviteTenantUser(organizationId, email, role) {

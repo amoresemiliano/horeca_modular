@@ -14,7 +14,7 @@ function request(body:Record<string,unknown>,admin=false):Request{return {method
 beforeEach(()=>{
  vi.stubEnv('PERSONNEL_BACKEND_ENABLED','true');vi.stubEnv('SUPABASE_URL','https://vmxjqwlfwnphorthhcwu.supabase.co');vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY','synthetic-service-test-only');vi.stubEnv('SUPABASE_ANON_KEY','synthetic-anon-test-only');vi.stubEnv('PERSONNEL_ORIGIN','https://personnel.example.invalid');vi.stubEnv('PERSONNEL_PIN_PEPPER',pepper);
  mocks.rpc.mockReset();mocks.getUser.mockReset();mocks.clients.mockClear();mocks.getUser.mockResolvedValue({data:{user:{id:'synthetic-admin'}},error:null});
- mocks.rpc.mockImplementation(async(name:string,params:Record<string,unknown>)=>{
+ mocks.rpc.mockImplementation(async(_name:string,params:Record<string,unknown>)=>{
   const action=params.p_action;
   if(action==='org')return {data:{org},error:null};
   if(action==='prepare')return {data:{attemptId:'attempt',hash:stored},error:null};
