@@ -52,6 +52,10 @@ export const DEFAULT_ROLE_CAPABILITIES: Record<RoleTemplate, readonly Capability
     Capability.INTEGRATIONS_CONFIG_MANAGE,
   ],
   OWNER: [
+    Capability.PERSONNEL_EMPLOYEES_VIEW,
+    Capability.PERSONNEL_ATTENDANCE_VIEW,
+    Capability.PERSONNEL_SCHEDULES_VIEW,
+    Capability.PERSONNEL_SCHEDULES_MANAGE,
     Capability.ORG_USERS_VIEW,
     Capability.ORG_ROLES_VIEW,
     Capability.ORG_AUDIT_VIEW,

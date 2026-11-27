@@ -4,10 +4,14 @@ export const MODULE_ACCESS = {
   Ventas: ['ventas', 'sales.view', 'sales.tickets.read'], KPI: ['reporting', 'reporting.operational.view', 'reporting.pnl.view'],
   Inventario: ['inventario', 'inventory.stock.view', 'inventory.count.run'], Escandallos: ['escandallos', 'recipes.view', 'costsheets.view'],
   Compras: ['compras', 'purchases.order.create', 'purchases.invoices.manage'], 'Producción': ['produccion', 'production.view', 'production.batch.log', 'production.waste.log'],
-  Personal: ['personal', 'personnel.employees.manage', 'personnel.fichajes.write'], 'Predicción': ['prediccion', 'reporting.operational.view'],
+  Personal: ['personal', 'personnel.employees.view', 'personnel.attendance.view', 'personnel.schedules.view', 'personnel.employees.manage'], 'Predicción': ['prediccion', 'reporting.operational.view'],
 };
 export const TENANT_ADMIN_CAPS = ['membership.users.invite', 'membership.roles.assign', 'membership.users.remove', 'org.config.write'];
 export const TENANT_READ_CAPS = ['org.users.view', 'org.roles.view', 'org.audit.view'];
+export function personnelTabAllowed(tab, can) {
+  const cap = { Hoy:'personnel.attendance.view', Asistencia:'personnel.attendance.view', Horarios:'personnel.schedules.view', Empleados:'personnel.employees.view', Fichaje:'personnel.employees.manage' }[tab];
+  return Boolean(cap && can(cap));
+}
 export function navigationAllowed(module, can, enabled, platformCan = () => false) {
   if (module === 'PlatformAdmin') return platformCan('platform.tenants.provision');
   if (module === 'Config') return platformCan('platform.tenants.provision') || [...TENANT_ADMIN_CAPS, ...TENANT_READ_CAPS].some(code => can(code));

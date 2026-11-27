@@ -13,7 +13,7 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE SCHEMA auth;
    CREATE TABLE auth.users(id uuid PRIMARY KEY);
    CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$; GRANT USAGE ON SCHEMA auth TO authenticated,anon;`);
-  for(const name of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql','20261002030000_core_module_entitlement_registry.sql','20261110090000_personnel_attendance_foundation.sql','20261111100000_personnel_push_reminders.sql']) await db.exec(readFileSync('supabase/migrations/'+name,'utf8'));
+  for(const name of ['20260926000000_horeca_core_baseline.sql','20260927000000_ccr_fin_001_core_authorization.sql','20261002030000_core_module_entitlement_registry.sql','20261110090000_personnel_attendance_foundation.sql','20261111100000_personnel_push_reminders.sql','20261127010000_personnel_schedule_capabilities.sql']) await db.exec(readFileSync('supabase/migrations/'+name,'utf8'));
  },60000);
  afterAll(async()=>{await db?.close()});
  beforeEach(async()=>{
@@ -39,6 +39,43 @@ describe('Personnel real PostgreSQL contracts, RLS and device commands (ephemera
  async function activated(label='Test mobile') {const token=randomUUID(); await admin('device.activate',{tokenHash:tokenHash(token),label}); const credential=randomUUID(); expect(await device('activate',token,{deviceHash:tokenHash(credential)})).toEqual({ok:true});return {credential,token};}
  async function pin(eid:string,raw='1648') {await admin('pin.reset',{employeeId:eid,lookup:pinLookup(org,raw,pepper),hash:await hashPin(raw,pepper)});return raw;}
  async function punch(credential:string,raw:string,requestId=randomUUID()) {const prepared=await device('prepare',credential,{lookup:pinLookup(org,raw,pepper),requestId});if(prepared.error)return prepared;return device('execute',credential,{attemptId:prepared.attemptId,verified:prepared.hash?await verifyPin(raw,String(prepared.hash),pepper):false});}
+
+ it('isolates schedule management, view datasets, unit scope and revoke precedence',async()=>{
+  const eid=await employee();
+  await db.exec("INSERT INTO public.eco_role_templates(code,name,tier) VALUES('SYNTHETIC_SCHEDULE','Schedule test','ORGANIZATION')");
+  await db.exec("INSERT INTO public.eco_role_template_capabilities SELECT r.id,c.id FROM public.eco_role_templates r CROSS JOIN public.eco_capabilities c WHERE r.code='SYNTHETIC_SCHEDULE' AND c.code IN ('personnel.employees.view','personnel.attendance.view','personnel.schedules.view')");
+  await db.query("UPDATE public.eco_organization_members SET role_template_id=(SELECT id FROM public.eco_role_templates WHERE code='SYNTHETIC_SCHEDULE'),is_organization_wide=false WHERE user_id=$1",[worker]);
+  await db.query('INSERT INTO public.eco_membership_operational_unit_scopes SELECT id,$2,$3 FROM public.eco_organization_members WHERE user_id=$1',[worker,org,unit]);
+  const period={from:'2040-01-01',to:'2040-01-31'}, shift={employeeId:eid,date:'2040-01-02',start:'09:00',end:'17:00'};
+  const initial=await admin('snapshot',period,worker); expect(initial.employees).toHaveLength(1); expect(initial.employment).toEqual([]); expect(initial.devices).toEqual([]); expect(JSON.stringify(initial)).not.toMatch(/hourly_cost|pinSet|phone|email/);
+  await expect(admin('snapshot',period,worker,org,other)).rejects.toThrow('ACCESS_DENIED');
+  await expect(admin('schedule.save',shift,worker)).rejects.toThrow('ACCESS_DENIED');
+  await db.exec("INSERT INTO public.eco_role_template_capabilities SELECT r.id,c.id FROM public.eco_role_templates r CROSS JOIN public.eco_capabilities c WHERE r.code='SYNTHETIC_SCHEDULE' AND c.code='personnel.schedules.manage'");
+  const saved=await admin('schedule.save',shift,worker); const id=String(saved.id);
+  await admin('schedule.save',{...shift,id,revision:1,end:'18:00'},worker);
+  expect((await admin('snapshot',period,worker)).schedules).toHaveLength(1);
+  for(const action of ['employee.save','pin.reset','device.activate','device.revoke','attendance.correct']) await expect(admin(action,{},worker)).rejects.toThrow('ACCESS_DENIED');
+  await admin('schedule.cancel',{id,revision:2,employeeId:eid},worker);
+  expect((await admin('snapshot',period,worker)).schedules).toHaveLength(0);
+  await db.query("INSERT INTO public.eco_member_capability_overrides(membership_id,organization_id,capability_id,effect,operational_unit_id) SELECT m.id,$1,c.id,'REVOKE',$3 FROM public.eco_organization_members m CROSS JOIN public.eco_capabilities c WHERE m.user_id=$2 AND c.code='personnel.schedules.manage'",[org,worker,unit]);
+  await expect(admin('schedule.save',shift,worker)).rejects.toThrow('ACCESS_DENIED');
+  await db.query("UPDATE public.eco_organization_module_entitlements SET is_enabled=false WHERE organization_id=$1 AND module_key='personal'",[org]);
+  await expect(admin('snapshot',period,worker)).rejects.toThrow('ACCESS_DENIED');
+ });
+ it('exposes only the requested personnel datasets for independent view grants',async()=>{
+  const eid=await employee(); await admin('schedule.save',{employeeId:eid,date:'2040-01-02',start:'09:00',end:'17:00'});
+  await db.exec("INSERT INTO public.eco_role_templates(code,name,tier) VALUES('SYNTHETIC_VIEW','View test','ORGANIZATION')");
+  await db.query("UPDATE public.eco_organization_members SET role_template_id=(SELECT id FROM public.eco_role_templates WHERE code='SYNTHETIC_VIEW') WHERE user_id=$1",[worker]);
+  const period={from:'2040-01-01',to:'2040-01-31'};
+  for(const code of ['personnel.employees.view','personnel.attendance.view','personnel.schedules.view']) {
+   await db.exec("DELETE FROM public.eco_role_template_capabilities WHERE role_template_id=(SELECT id FROM public.eco_role_templates WHERE code='SYNTHETIC_VIEW')");
+   await db.query("INSERT INTO public.eco_role_template_capabilities SELECT r.id,c.id FROM public.eco_role_templates r CROSS JOIN public.eco_capabilities c WHERE r.code='SYNTHETIC_VIEW' AND c.code=$1",[code]);
+   const snapshot=await admin('snapshot',period,worker); expect(snapshot.employees).toHaveLength(1); expect(snapshot.devices).toEqual([]); expect(snapshot.employment).toEqual([]);
+   expect(snapshot.schedules).toHaveLength(code==='personnel.employees.view'?0:1);
+   expect(JSON.stringify(snapshot)).not.toMatch(/hourly_cost|pinSet|phone|email/);
+   await expect(admin('employee.save',{},worker)).rejects.toThrow('ACCESS_DENIED');
+  }
+ });
 
  it('gates admin by canonical capability, entitlement, revoke and tenant',async()=>{
   await expect(admin('employee.save',{},worker)).rejects.toThrow('ACCESS_DENIED');

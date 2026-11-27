@@ -9,7 +9,7 @@ import ProductionPersonnelApp from '../modules/personnel-live/ProductionPersonne
 import ProduccionApp  from '../modules/produccion/ProduccionApp';
 import TenantAdministration from '../modules/administration/TenantAdministration';
 import ConfigurationHome from '../modules/administration/ConfigurationHome';
-import { navigationAllowed, banksSectionAllowed, visibleModules } from '../application/tenancy/accessNavigation';
+import { navigationAllowed, banksSectionAllowed, visibleModules, personnelTabAllowed } from '../application/tenancy/accessNavigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoCliente from '../assets/logo_cliente.png';
@@ -106,7 +106,7 @@ const MainLayout = ({ user: propsUser }) => {
   const modulosPermitidos = visibleModules(Object.keys(MODULOS), can, isModuleEnabled, platformCan, navigationScope);
   if (activeOrganization && !modulosPermitidos.includes('Dashboard')) modulosPermitidos.unshift('Dashboard');
   const platformCatalog = navigationScope === 'platform' && platformCan('platform.tenants.provision');
-  const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || banksSectionAllowed(tab, can));
+  const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => (mod !== 'Bancos' || banksSectionAllowed(tab, can)) && (mod !== 'Personal' || personnelTabAllowed(tab, can)));
 
   // Change password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -139,7 +139,7 @@ const MainLayout = ({ user: propsUser }) => {
     }
   };
 
-  const navigationKey = Object.keys(MODULOS).filter(mod => (mod === 'Dashboard' && activeOrganization || navigationAllowed(mod, can, isModuleEnabled, platformCan)) && (mod === 'PlatformAdmin' || mod === 'Config' && platformCan('platform.tenants.provision') || !!activeOrganization)).map(mod => mod + ':' + MODULOS[mod].tabs.filter(tab => mod !== 'Bancos' || banksSectionAllowed(tab, can)).join(',')).join('|');
+  const navigationKey = Object.keys(MODULOS).filter(mod => (mod === 'Dashboard' && activeOrganization || navigationAllowed(mod, can, isModuleEnabled, platformCan)) && (mod === 'PlatformAdmin' || mod === 'Config' && platformCan('platform.tenants.provision') || !!activeOrganization)).map(mod => mod + ':' + permittedTabs(mod).join(',')).join('|');
   useEffect(() => {
     const current = navigationKey.split('|').find(entry => entry.startsWith(moduloActivo + ':'));
     const tabs = current?.split(':')[1].split(',') || [];

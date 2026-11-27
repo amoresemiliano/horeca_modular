@@ -78,6 +78,10 @@ export const Capability = {
   DOCUMENTS_OCR_VERIFY: 'documents.ocr.verify',
 
   // 12. Personnel & HR
+  PERSONNEL_EMPLOYEES_VIEW: 'personnel.employees.view',
+  PERSONNEL_ATTENDANCE_VIEW: 'personnel.attendance.view',
+  PERSONNEL_SCHEDULES_VIEW: 'personnel.schedules.view',
+  PERSONNEL_SCHEDULES_MANAGE: 'personnel.schedules.manage',
   PERSONNEL_EMPLOYEES_MANAGE: 'personnel.employees.manage',
   PERSONNEL_FICHAJES_WRITE: 'personnel.fichajes.write',
   PERSONNEL_FICHAJES_AUDIT: 'personnel.fichajes.audit',

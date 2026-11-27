@@ -15,7 +15,6 @@ beforeEach(()=>{
  vi.stubEnv('PERSONNEL_BACKEND_ENABLED','true');vi.stubEnv('SUPABASE_URL','https://vmxjqwlfwnphorthhcwu.supabase.co');vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY','synthetic-service-test-only');vi.stubEnv('SUPABASE_ANON_KEY','synthetic-anon-test-only');vi.stubEnv('PERSONNEL_ORIGIN','https://personnel.example.invalid');vi.stubEnv('PERSONNEL_PIN_PEPPER',pepper);
  mocks.rpc.mockReset();mocks.getUser.mockReset();mocks.clients.mockClear();mocks.getUser.mockResolvedValue({data:{user:{id:'synthetic-admin'}},error:null});
  mocks.rpc.mockImplementation(async(name:string,params:Record<string,unknown>)=>{
-  if(name==='personnel_admin_allowed')return {data:true,error:null};
   const action=params.p_action;
   if(action==='org')return {data:{org},error:null};
   if(action==='prepare')return {data:{attemptId:'attempt',hash:stored},error:null};
@@ -41,8 +40,8 @@ describe('Personnel backend HTTP boundary and scrypt credentials',()=>{
   const res=response();await punchHandler(request({action:'activate',token:'A'.repeat(43)}),res);expect(res.code).toBe(200);expect(res.body).toEqual({ok:true});expect(res.headers['Set-Cookie']).toMatch(/HttpOnly; Secure; SameSite=Strict/);expect(res.headers['Set-Cookie']).toContain('Path=/;');
  });
  it('prevents device credentials from authorizing the admin API',async()=>{const res=response();await adminHandler(request({action:'snapshot',organizationId:org,unitId:unit}),res);expect(res.code).toBe(403);expect(mocks.rpc).not.toHaveBeenCalled();});
- it('requires canonical admin authorization, never active context alone',async()=>{
-  mocks.rpc.mockResolvedValue({data:false,error:null});const res=response();await adminHandler(request({action:'snapshot',organizationId:org,unitId:unit},true),res);expect(res.code).toBe(403);expect(mocks.rpc).toHaveBeenCalledWith('personnel_admin_allowed',{org,unit});
+ it('propagates the action-specific database authorization denial',async()=>{
+  mocks.rpc.mockResolvedValue({data:null,error:{message:'ACCESS_DENIED'}});const res=response();await adminHandler(request({action:'snapshot',organizationId:org,unitId:unit},true),res);expect(res.code).toBe(403);expect(mocks.rpc).toHaveBeenCalledWith('personnel_admin_command',{p_org:org,p_unit:unit,p_action:'snapshot',p_body:{}});
  });
  it('fails closed when disabled or cross-origin; cookie cannot become permanent URL state',()=>{
   expect(cookieHeader('secret')).not.toContain('http');expect(()=>secureRequest({...request({}),headers:{origin:'https://foreign.invalid'}},response() as Response)).toThrow('DENIED');
