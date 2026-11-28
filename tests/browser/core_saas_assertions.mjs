@@ -11,7 +11,7 @@ export async function assertBanksProfile(page, profile) {
   assert((await page.locator('header nav').innerText()).includes('Bancos'));
   for(const name of ['Ventas','Inventario','Compras','Personal','Administración de plataforma','Administración de organización'])assert.equal(await page.getByRole('button',{name:new RegExp(name+'$')}).count(),0);
   for(const name of ['Resumen','Métricas'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),profile==='import'?0:1);
-  assert.equal(await page.getByRole('button',{name:'Cargar',exact:true}).count(),profile==='viewer'?0:1);
+  assert.equal(await page.getByRole('button',{name:'Cargar extracto',exact:true}).count(),profile==='viewer'?0:1);
   for(const name of ['Cuentas y categorías','Reglas'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),profile==='admin'?1:0);
 }
 

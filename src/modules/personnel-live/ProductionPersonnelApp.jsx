@@ -10,7 +10,7 @@ import { addDays } from '../personal/domain';
 import { personnelTabAllowed } from '../../application/tenancy/accessNavigation';
 import '../personal/personal.css';
 
-function Session({ org, activeUnit, units, tab, can, onNavigate, switchUnit }) {
+function Session({ org, activeUnit, units, tab, can, switchUnit }) {
   const [unitId, setUnitId] = useState(activeUnit?.id || ''), [state, setState] = useState(null), [error, setError] = useState(''), [loading, setLoading] = useState(false), [modal, setModal] = useState(null), [row, setRow] = useState(null), [search, setSearch] = useState('');
   const command = useCallback((action, payload) => personnelCommand(org.id, unitId, action, payload), [org.id, unitId]);
   const [from, setFrom] = useState(addDays(todayIn(org.timezone || 'UTC'), -31)), [to, setTo] = useState(addDays(todayIn(org.timezone || 'UTC'), 31));
@@ -42,7 +42,7 @@ function Session({ org, activeUnit, units, tab, can, onNavigate, switchUnit }) {
   const employees = state?.employees.filter(e => e.unitIds.includes(unitId) && e.name.toLowerCase().includes(search.toLowerCase())) || [];
   async function revoke(deviceId) { try { await command('device.revoke', { deviceId }); await refresh(); } catch (err) { setError(err.message); } }
   const canSchedule = can('personnel.schedules.view') && can('personnel.schedules.manage');
-  return <section className="personnel"><nav className="per-tabs" aria-label="Personal persistente">{['Hoy', 'Asistencia', 'Horarios', 'Empleados', 'Fichaje'].filter(name => personnelTabAllowed(name, can)).map(name => <button key={name} aria-current={tab === name ? 'page' : undefined} onClick={() => onNavigate?.(name)}>{name}</button>)}</nav><div className="per-context"><strong>{org.name} · Personal</strong><Field label="Unidad operativa"><select value={unitId} onChange={e => { setState(null); setModal(null); setRow(null); setUnitId(e.target.value); switchUnit(e.target.value || null); }}><option value="">Selecciona unidad</option>{units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select></Field><button onClick={refresh}>Actualizar</button></div>
+  return <section className="personnel"><div className="per-context"><strong>{org.name} · Personal</strong><Field label="Unidad operativa"><select value={unitId} onChange={e => { setState(null); setModal(null); setRow(null); setUnitId(e.target.value); switchUnit(e.target.value || null); }}><option value="">Selecciona unidad</option>{units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select></Field><button onClick={refresh}>Actualizar</button></div>
     {error && <p role="alert" className="per-error">{error}</p>}{loading && <p role="status">Cargando personal…</p>}
     {!unitId && <Empty title="Selecciona una unidad operativa" description="Selecciona el local cuyo equipo quieres gestionar." />}
     {unitId && tab === 'Horarios' && <div className="per-toolbar"><Field label="Historial desde"><input type="date" value={from} onChange={e => setFrom(e.target.value)} /></Field><Field label="Hasta"><input type="date" value={to} min={from} onChange={e => setTo(e.target.value)} /></Field><small>Consulta hasta 93 días por periodo.</small></div>}{state && unit && <><p className="per-muted">{state.date} · {unit.timeZone} · Horario local de la unidad</p>
@@ -56,8 +56,8 @@ function Session({ org, activeUnit, units, tab, can, onNavigate, switchUnit }) {
     <details className="per-info"><summary>Funciones futuras</summary><p>Incidencias, ausencias, documentos, nóminas y WhatsApp: próximamente. No guardan datos en esta versión.</p></details>
   </section>;
 }
-export default function ProductionPersonnelApp({ tabActiva = 'Hoy', onNavigate }) {
+export default function ProductionPersonnelApp({ tabActiva = 'Hoy' }) {
   const { activeOrganization, activeOperationalUnit, availableOperationalUnits, can, switchOperationalUnit } = useAuth();
   if (!activeOrganization || !personnelTabAllowed(tabActiva, can)) return <p role="alert">Acceso restringido a esta sección de Personal.</p>;
-  return <Session key={`${activeOrganization.id}:${activeOperationalUnit?.id || ''}`} org={activeOrganization} activeUnit={activeOperationalUnit} units={availableOperationalUnits || []} tab={tabActiva} can={can} onNavigate={onNavigate} switchUnit={switchOperationalUnit} />;
+  return <Session key={`${activeOrganization.id}:${activeOperationalUnit?.id || ''}`} org={activeOrganization} activeUnit={activeOperationalUnit} units={availableOperationalUnits || []} tab={tabActiva} can={can} switchUnit={switchOperationalUnit} />;
 }

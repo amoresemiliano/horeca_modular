@@ -6,6 +6,6 @@ const org={id:'10000000-0000-4000-8000-000000000001',name:'Tenant sintético',ti
 function Fixture() {
  const [tab,setTab]=useState('Horarios'); const readOnly=new URLSearchParams(location.search).has('readonly');
  const caps=['personnel.employees.view','personnel.attendance.view','personnel.schedules.view',...(readOnly?[]:['personnel.schedules.manage'])];
- return <TestAuth.Provider value={{activeOrganization:org,activeOperationalUnit:unit,availableOperationalUnits:[unit],switchOperationalUnit:()=>{},can:code=>caps.includes(code)}}><ProductionPersonnelApp tabActiva={tab} onNavigate={setTab}/></TestAuth.Provider>;
+ return <TestAuth.Provider value={{activeOrganization:org,activeOperationalUnit:unit,availableOperationalUnits:[unit],switchOperationalUnit:()=>{},can:code=>caps.includes(code)}}><nav aria-label="Navegación contextual">{['Horarios','Empleados','Asistencia'].map(name=><button key={name} onClick={()=>setTab(name)}>{name}</button>)}</nav><ProductionPersonnelApp tabActiva={tab}/></TestAuth.Provider>;
 }
 createRoot(document.getElementById('root')).render(<Fixture/>);

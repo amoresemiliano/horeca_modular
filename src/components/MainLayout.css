@@ -1,7 +1,7 @@
 .shell-identity-navigation {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.65rem;
   flex: 1;
   min-width: 0;
 }
@@ -27,6 +27,13 @@
   padding: 0.25rem 0;
 }
 .shell-profile { flex-shrink: 0; margin-left: 1rem; }
+.shell-launcher { margin-left: auto; position: relative; flex-shrink: 0; }
+.shell-launcher > summary { list-style: none; cursor: pointer; padding: 0.55rem 0.75rem; border: 1px solid var(--c-border); border-radius: var(--r-lg); font-size: 0.8125rem; font-weight: 650; white-space: nowrap; }
+.shell-launcher > summary::-webkit-details-marker { display: none; }
+.shell-launcher-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 50; min-width: 185px; max-height: min(70vh, 480px); overflow: auto; padding: 6px; border: 1px solid var(--c-border); border-radius: 10px; background: white; box-shadow: var(--shadow-lg); }
+.shell-launcher-menu button { display: block; width: 100%; padding: 9px 10px; border: 0; border-radius: 6px; background: transparent; text-align: left; cursor: pointer; }
+.shell-launcher-menu button:hover, .shell-launcher-menu button[aria-current] { background: var(--c-brand-light); color: var(--c-brand); }
+.shell-profile-identity { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shell-admin-link {
   display: flex;
   align-items: center;
@@ -51,15 +58,24 @@
 .shell-finance input:not([type="checkbox"]), .shell-finance select, .shell-admin input:not([type="checkbox"]), .shell-admin select { min-width: 0; height: 36px; padding: 5px 8px; margin: 0; font-size: 13px; font-weight: 400; color: #1f2937; }
 .shell-finance input::placeholder { color: #94a3b8; }
 .shell-finance table { font-size: 12px; }
+.finance-loading { min-height: 220px; padding: 1rem; border-radius: 12px; background: #f8fafc; color: #64748b; }
+.finance-skeleton-row { height: 28px; border-radius: 6px; background: #f1f5f9; }
 .shell-admin .audit-table { min-width: 680px; }
 @media (max-width: 900px) {
-  .shell-header { flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem !important; }
-  .shell-identity-navigation { flex-wrap: wrap; gap: 0.5rem; flex-basis: 100%; }
-  .shell-tenant-control { max-width: calc(100% - 64px); }
-  .shell-module-navigation { flex-basis: 100%; }
-  .shell-profile { margin-left: auto; max-width: 100%; }
+  .shell-header { gap: 0.5rem; padding: 0.5rem !important; }
+  .shell-identity-navigation { gap: 0.4rem; }
+  .shell-profile { margin-left: 0; gap: 0.35rem !important; }
+  .shell-profile-identity { display: none; }
 }
 @media (max-width: 640px) {
+  .shell-header { flex-wrap: wrap; }
+  .shell-identity-navigation { flex-wrap: wrap; }
+  .shell-identity-navigation > div:first-child img { width: 82px !important; height: 32px !important; }
+  .shell-tenant-control { max-width: 180px; }
+  .shell-identity-navigation > select { max-width: 160px !important; }
+  .shell-profile img, .shell-profile > div:nth-child(3) { display: none !important; }
+  .shell-launcher { margin-left: 0; }
+  .shell-launcher-menu { position: fixed; left: 8px; right: 8px; top: 68px; }
   .shell-workspace { flex-direction: column; }
   .shell-sidebar { width: 100% !important; flex-direction: row !important; align-items: center; }
   .shell-sidebar-heading, .shell-sidebar-toggle { display: none !important; }

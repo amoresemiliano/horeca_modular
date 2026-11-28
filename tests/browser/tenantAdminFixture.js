@@ -3,3 +3,6 @@ export async function adminSnapshot(){return {organizations:[org],audit:Array.fr
 export async function adminMutate(){throw new Error('Synthetic fixture is read-only');}
 export async function inviteTenantUser(){throw new Error('Synthetic fixture is read-only');}
 export async function inspectPermissions(){return [];}
+export async function adminReadSnapshot(){return [];}
+export async function roleAdminSnapshot(){return {roles:[],capabilities:[]};}
+export async function roleAdminCommand(){throw new Error('Synthetic fixture is read-only');}

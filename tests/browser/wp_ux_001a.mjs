@@ -33,10 +33,10 @@ try {
   assert.equal(await page.getByLabel('Mes',{exact:true}).inputValue(),'2026-04');assert.equal(await page.getByLabel('Estado',{exact:true}).inputValue(),'PENDING');
   const calls=await page.evaluate(()=>window.financeCalls);
   assert(!calls.some(c=>c[0]==='full-history'));assert(calls.filter(c=>c[0]==='page').every(c=>c[2]<=100));
-  await page.getByRole('navigation',{name:'Módulos operativos'}).getByRole('button',{name:'Dashboard'}).click();
+  await page.getByLabel('Abrir módulos').click();await page.getByRole('navigation',{name:'Módulos operativos'}).getByRole('button',{name:'Dashboard'}).click();
   await page.getByRole('heading',{name:'Inicio',exact:true}).waitFor();await page.goBack();await heading().waitFor();
   await page.goForward();await page.getByRole('heading',{name:'Inicio',exact:true}).waitFor();
-  await page.getByRole('navigation',{name:'Módulos operativos'}).getByRole('button',{name:'Bancos'}).click();await heading().waitFor();
+  await page.getByLabel('Abrir módulos').click();await page.getByRole('navigation',{name:'Módulos operativos'}).getByRole('button',{name:'Bancos'}).click();await heading().waitFor();
   await page.getByRole('button',{name:'Remontar contexto'}).click();await heading().waitFor();
   if(platform){await page.reload();await heading().waitFor();await page.getByRole('navigation',{name:'Administración'}).getByRole('button',{name:'Configuración'}).click();await page.getByRole('button',{name:/Tenants.*Administración/}).click();await page.getByRole('heading',{name:'Administración de plataforma'}).waitFor();await page.goBack();await heading().waitFor();await page.getByRole('button',{name:'Remontar contexto'}).click();await heading().waitFor();await page.reload();await heading().waitFor();}
   else {await page.getByRole('navigation',{name:'Administración'}).getByRole('button',{name:'Configuración'}).click();await page.getByRole('button',{name:/Organización.*Información/}).waitFor();assert.equal(await page.getByRole('button',{name:/Tenants.*Administración/}).count(),0);assert.equal(await page.getByRole('button',{name:/Módulos.*Disponibilidad/}).count(),0);}

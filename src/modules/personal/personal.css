@@ -119,7 +119,6 @@
    navigation replaces the expanded section sidebar at narrow widths. */
 .shell-personnel-prototype main { min-width: 0; }
 @media (max-width: 768px) {
-  .shell-personnel-prototype aside { display: none !important; }
   .shell-personnel-prototype main { padding: 12px !important; }
   .shell-personnel-prototype main > div > div:first-child { display: none; }
   .shell-personnel-prototype main > div > div:last-child { padding: 14px !important; }

@@ -105,7 +105,6 @@ const MainLayout = ({ user: propsUser }) => {
   const [sidebarOpen,       setSidebarOpen]        = useState(true);
   const modulosPermitidos = visibleModules(Object.keys(MODULOS), can, isModuleEnabled, platformCan, navigationScope);
   if (activeOrganization && !modulosPermitidos.includes('Dashboard')) modulosPermitidos.unshift('Dashboard');
-  const platformCatalog = navigationScope === 'platform' && platformCan('platform.tenants.provision');
   const permittedTabs = mod => MODULOS[mod].tabs.filter(tab => (mod !== 'Bancos' || banksSectionAllowed(tab, can)) && (mod !== 'Personal' || personnelTabAllowed(tab, can)));
 
   // Change password modal state
@@ -245,49 +244,13 @@ const MainLayout = ({ user: propsUser }) => {
           <div style={{ width: '1px', height: '28px', background: 'var(--c-border)' }} />
 
           {activeOrganization && availableOperationalUnits?.length > 0 && <select style={{maxWidth:210}} aria-label="Unidad operativa activa" value={activeOperationalUnit?.id || ''} onChange={e=>switchOperationalUnit(e.target.value || null)}><option value="">Contexto de organización</option>{availableOperationalUnits?.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select>}
-          {/* Navegación por grupos */}
-          <nav aria-label="Módulos operativos" className={'shell-module-navigation' + (platformCatalog ? ' shell-module-catalog' : '')}>
-            {Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && modulosPermitidos.includes(key)).map(([key, mod]) => {
-              const isActive = moduloActivo === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => cambiarModulo(key)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.375rem 0.75rem',
-                    fontSize: '0.8125rem',
-                    fontWeight: isActive ? 600 : 500,
-                    borderRadius: 'var(--r-lg)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'all var(--t-fast)',
-                    background:  isActive ? 'var(--c-brand-light)' : 'transparent',
-                    color:       isActive ? 'var(--c-brand)' : 'var(--c-text-3)',
-                    fontFamily:  'var(--font-body)',
-                    whiteSpace:  'nowrap',
-                  }}
-                  onMouseEnter={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'var(--c-surface-2)';
-                      e.currentTarget.style.color = 'var(--c-text-1)';
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = 'var(--c-text-3)';
-                    }
-                  }}
-                >
-                  <span style={{ fontSize: '0.875rem' }}>{mod.icon}</span>
-                  <span>{mod.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+          <details className="shell-launcher">
+            <summary aria-label="Abrir módulos">Módulos <span aria-hidden="true">▾</span></summary>
+            <nav aria-label="Módulos operativos" className="shell-launcher-menu">
+              {Object.entries(MODULOS).filter(([key, mod]) => mod.group !== 'sistema' && modulosPermitidos.includes(key)).map(([key, mod]) =>
+                <button key={key} aria-current={moduloActivo === key ? 'page' : undefined} onClick={e => { cambiarModulo(key); e.currentTarget.closest('details').open = false; }}><span aria-hidden="true">{mod.icon}</span> {mod.label}</button>)}
+            </nav>
+          </details>
         </div>
 
         {/* Perfil */}
@@ -301,7 +264,7 @@ const MainLayout = ({ user: propsUser }) => {
               alt="avatar"
               style={{ width: '34px', height: '34px', borderRadius: '50%', border: '2px solid var(--c-border)', objectFit: 'cover' }}
             />
-            <div style={{ lineHeight: 1.2 }}>
+            <div className="shell-profile-identity" style={{ lineHeight: 1.2 }}>
               <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--c-text-1)', margin: 0 }}>
                 {user?.displayName || 'Usuario'}
               </p>

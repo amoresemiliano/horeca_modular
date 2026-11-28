@@ -36,7 +36,7 @@ function AdminWorkspace({ platform, organizationId, can, initialPage }) {
   const member=data?.members.find(m=>m.id===memberId), tenant=data?.organizations.find(o=>o.id===org);
   const canAssign=!platform&&can('membership.roles.assign'), pages=platform?platformPages:tenantPages;
   return <div className="p-5 space-y-5 max-w-6xl text-sm">
-    <header><p className="text-gray-600">{platform?'Vegen Digital · HORECA Modular':tenant?.name}</p><h2 className="text-xl font-semibold">{platform?'Administración de plataforma':'Administración de organización'}</h2></header>
+    <header className="rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="text-gray-600">{platform?'Vegen Digital · HORECA Modular':tenant?.name}</p><h2 className="text-xl font-semibold">{platform?'Administración de plataforma':'Administración de organización'}</h2><p className="mt-1 text-gray-600">{platform?'Selecciona una organización para revisar su disponibilidad y administración.':'Gestiona la información y el acceso de esta organización.'}</p></header>
     <nav aria-label="Secciones de administración" className="flex flex-wrap gap-2">{Object.entries(pages).map(([key,label])=><button key={key} aria-current={page===key?'page':undefined} className={input+(page===key?' font-semibold border-blue-600 bg-blue-50':'')} onClick={()=>{setPage(key);setError('');setMessage('')}}>{label}</button>)}</nav>
     {error&&<p role="alert" className="text-red-700">{error}</p>}
     {(message||busy)&&<div role="status" aria-live="polite" aria-atomic="true" className="rounded bg-emerald-50 p-2">{message ? <p className="font-semibold text-emerald-800">✓ {message}</p> : <p>Guardando cambios…</p>}</div>}
